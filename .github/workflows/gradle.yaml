@@ -1,0 +1,60 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Release CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ release ]
+  pull_request:
+    branches: [ release ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 11 ]
+
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Java ${{ matrix.node-version }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - run: chmod +x gradlew
+      - run: gradlew installDist
+
+      - name: Stop Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            source /etc/profile
+            ps -aux | grep emss-backend-[0-9].[0-9].[0-9]\.jar | grep -v grep | awk '{print $2}' | xargs kill -9
+      - name: Upload Files
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: "build/install/emss-backend"
+          REMOTE_HOST: ${{ secrets.HOST }}
+          REMOTE_USER: ${{ secrets.USERNAME }}
+          TARGET: "~/emss/emss-backend/"
+
+      - name: Start Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            source /etc/profile
+            cd ~/emss/emss-backend
+            chmod +x bin/emss-backend
+            nohup ./bin/emss-backend &

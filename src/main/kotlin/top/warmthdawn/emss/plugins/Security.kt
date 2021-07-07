@@ -12,18 +12,18 @@ import io.ktor.request.*
 
 fun Application.configureSecurity() {
 
-    val jwtIssuer = environment.config.property("jwt.domain").getString()
-    val jwtAudience = environment.config.property("jwt.audience").getString()
-    val jwtRealm = environment.config.property("jwt.realm").getString()
-    authentication {
-        jwt {
-            realm = jwtRealm
-            verifier(makeJwtVerifier(jwtIssuer, jwtAudience))
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
-            }
-        }
-    }
+//    val jwtIssuer = environment.config.property("jwt.domain").getString()
+//    val jwtAudience = environment.config.property("jwt.audience").getString()
+//    val jwtRealm = environment.config.property("jwt.realm").getString()
+//    authentication {
+//        jwt {
+//            realm = jwtRealm
+//            verifier(makeJwtVerifier(jwtIssuer, jwtAudience))
+//            validate { credential ->
+//                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
+//            }
+//        }
+//    }
 
 }
 
