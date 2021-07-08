@@ -15,6 +15,8 @@ interface Server : Entity<Server> {
     var name: String //服务器名
     var createDate: String //创建时间
     var lastDate: String //最后启动时间
+    var dockerImageName: String //Docker容器的镜像名
+    var dockerPorts: String //Docker容器端口
 }
 
 interface User : Entity<User> {
@@ -31,6 +33,8 @@ object Servers : Table<Server>("t_server") {
     val name = varchar("name").bindTo { it.name }
     val createDate = varchar("create_date").bindTo { it.createDate }
     val lastDate = varchar("last_date").bindTo { it.lastDate }
+    val dockerImageName = varchar("docker_image_name").bindTo { it.dockerImageName }
+    val dockerPorts = varchar("docker_ports").bindTo { it.dockerPorts }
 }
 
 object Users : Table<User>("t_user") {
