@@ -24,7 +24,17 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - run: chmod +x gradlew
-      - run: ./gradlew distZip
+      - run: ./gradlew installDist
+
+      - name: Upload Files
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: "build/install/emss-backend/"
+          REMOTE_HOST: ${{ secrets.HOST }}
+          REMOTE_USER: ${{ secrets.USERNAME }}
+          TARGET: "~/emss/emss-backend/"
 
       - name: Start Server
         uses: appleboy/ssh-action@master
