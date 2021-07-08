@@ -5,6 +5,17 @@ import org.junit.Test
 
 internal class DockerManagerTest {
     @Test
+    fun buildImageTest()
+    {
+        val dockerManager = DockerManager(registryUser = "takanashirikka1412",registryPass = "docg20092010ker",
+            registryMail = "1303170174@qq.com",registryUrl = "https://index.docker.io/v1/")
+
+        dockerManager.buildImage("DockerfileDir/Dockerfile", "testImage001")
+    }
+
+
+
+    @Test
     fun createContainerTest() {
         val dockerManager = DockerManager(registryUser = "takanashirikka1412",registryPass = "docg20092010ker",
             registryMail = "1303170174@qq.com",registryUrl = "https://index.docker.io/v1/")
