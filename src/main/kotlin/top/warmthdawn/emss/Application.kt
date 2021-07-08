@@ -15,6 +15,7 @@ import org.koin.ktor.ext.inject
 import org.koin.logger.slf4jLogger
 import org.koin.core.module.Module
 import org.slf4j.event.Level
+import top.warmthdawn.emss.database.DatabaseFactory
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
@@ -23,6 +24,7 @@ fun main(args: Array<String>) = EngineMain.main(args)
 fun Application.module(testing: Boolean = false, koinModules: List<Module> = listOf(appModule)) {
     configureKoin(koinModules)
     setupConfig()
+    configureDatabase()
     configureLogging()
     configureSecurity()
     configureSerialization()
