@@ -2,6 +2,7 @@ val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
 val koin_version: String by project
+val docker_java_version: String by project
 val ktorm_version: String by project
 
 plugins {
@@ -31,6 +32,10 @@ dependencies {
     // Koin
     implementation("io.insert-koin:koin-ktor:$koin_version")
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+    // Docker-Java
+    implementation("com.github.docker-java:docker-java-core:$docker_java_version")
+    implementation("com.github.docker-java:docker-java-transport-httpclient5:$docker_java_version")
+
     // Ktorm
     implementation("org.ktorm:ktorm-core:$ktorm_version")
     // Testing
