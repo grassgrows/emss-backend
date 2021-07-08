@@ -2,17 +2,29 @@ package top.warmthdawn.emss.database.entity
 
 import org.ktorm.entity.Entity
 import org.ktorm.schema.Table
+import org.ktorm.schema.enum
+import org.ktorm.schema.int
 import org.ktorm.schema.varchar
+
+/**
+ *
+ * @author sunday7994
+ * @date 2021/7/8
+ */
+
+enum class SettingType {
+    Name,
+    ServerRootDirectory
+}
 
 interface Setting : Entity<Setting> {
     companion object : Entity.Factory<Setting>()
 
-    var name: String //系统名称
-    var serverRootDirectory: String //系统服务端路径
-
+    var type: SettingType
+    var value: String
 }
 
 object Settings : Table<Setting>("t_settings") {
-    val name = varchar("name").bindTo { it.name }
-    val serverRootDirectory = varchar(("server_root_directory")).bindTo { it.serverRootDirectory }
+    val type = enum<SettingType>("type").primaryKey().bindTo { it.type }
+    val value = varchar("value").bindTo { it.value }
 }

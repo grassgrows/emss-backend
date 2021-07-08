@@ -3,6 +3,7 @@ package top.warmthdawn.emss.plugins
 import ch.qos.logback.classic.Logger
 import io.ktor.application.*
 import io.ktor.features.*
+import org.koin.ktor.ext.getKoin
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
@@ -16,5 +17,6 @@ import top.warmthdawn.emss.database.DatabaseFactory
  */
 fun Application.configureDatabase() {
     val databaseFactory by inject<DatabaseFactory>()
-    databaseFactory.connect()
+    val db = databaseFactory.connect()
+    getKoin().declare(db)
 }

@@ -17,5 +17,8 @@ fun Route.settingEndpoint() {
     get("/settings/base") {
         call.respond(settingService.getBaseSetting())
     }
+    get("/settings/image"){
+        call.respond(settingService.getDockerImage())
+    }
 
 }
