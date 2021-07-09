@@ -2,12 +2,15 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.PullImageResultCallback
+import com.github.dockerjava.api.exception.InternalServerErrorException
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import java.io.Closeable
 import java.time.Duration
 
@@ -146,7 +149,7 @@ object DockerManager {
 
     }
 
-    // 创建容器(需添加启动命令)
+    // 创建容器
     fun createContainer(
         containerName: String, imageName: String,
         hostIp: String, hostPortId: Int, exposedPortId: Int,
@@ -171,17 +174,41 @@ object DockerManager {
 
 
     // 开启容器
-    fun startContainer(containerName: String) {
+    fun startContainer(containerId: String) {
         dockerClient
-            .startContainerCmd(containerName)
+            .startContainerCmd(containerId)
             .exec()
     }
 
     // 关闭容器
-    fun stopContainer(containerName: String) {
+    fun stopContainer(containerId: String) {
         dockerClient
-            .stopContainerCmd(containerName)
+            .stopContainerCmd(containerId)
             .exec()
     }
+
+
+
+
+    // 获取容器信息
+    fun inspectContainer(containerId: String): ContainerInfo? {
+
+        return try {
+            val container = dockerClient
+                .inspectContainerCmd(containerId)
+                .exec()
+
+            ContainerInfo(
+                container.id,
+                container.name,
+                container.created,
+                container.imageId,
+                container.state.status
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
+
 

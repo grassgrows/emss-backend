@@ -17,7 +17,7 @@ internal class DockerManagerTest {
 
     @Test
     fun createContainerTest() {
-        val containerName = "testContainer005"
+        val containerName = "testContainer006"
         val bind = Bind("/data/$containerName", Volume("/data"))
         val cmd = listOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
         //if()
@@ -41,16 +41,22 @@ internal class DockerManagerTest {
         DockerManager.stopContainer(containerName)
     }
 
+    @Test
+    fun inspectContainerTest() {
+        val containerName = "0" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
+        val container = DockerManager.inspectContainer(containerName)
 
-    /*
-@Test
-fun buildImageTest()
-{
-    val dockerManager = DockerManager(registryUser = "takanashirikka1412",registryPass = "docg20092010ker",
-        registryMail = "1303170174@qq.com",registryUrl = "https://index.docker.io/v1/")
+        if (container != null) {
+            print("******** "+container.id+" ********\n")
+            print("******** "+container.name+" ********\n")
+            print("******** "+container.imageId+" ********\n")
+            print("******** "+container.status+" ********\n")
+        }
+        else
+        {
+            print("******** not found ********\n")
+        }
 
-    print(dockerManager.buildImage("DockerfileDir/Dockerfile", "testimage001"))
-}
-*/
+    }
 
 }
