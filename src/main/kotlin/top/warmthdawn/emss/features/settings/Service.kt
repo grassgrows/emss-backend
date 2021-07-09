@@ -1,13 +1,8 @@
 package top.warmthdawn.emss.features.settings
 
-import io.ktor.application.*
 import org.ktorm.database.Database
 import org.ktorm.dsl.*
-import top.warmthdawn.emss.database.DatabaseFactory
-import top.warmthdawn.emss.database.entity.Image
-import top.warmthdawn.emss.database.entity.Images
-import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.database.entity.Settings
+import top.warmthdawn.emss.database.entity.*
 
 /**
  *
@@ -27,5 +22,15 @@ class SettingService(
         return db.from(Images)
             .select()
             .map { Images.createEntity(it) }
+    }
+}
+
+class ServerService(
+    val db: Database
+){
+    suspend fun getServerInfo(): List<Server>{
+        return db.from(Servers)
+            .select()
+            .map{Servers.createEntity(it)}
     }
 }
