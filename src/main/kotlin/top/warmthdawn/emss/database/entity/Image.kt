@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.database.entity
 
+import javax.management.loading.ClassLoaderRepository
 import javax.persistence.Entity
 
 
@@ -18,6 +19,9 @@ import javax.persistence.Entity
 //}
 @Entity
 class Image(
+    var imageId: String? = null,
     var name: String,
-    var dockerfileRootDirectory: String
+    var repository: String,
+    var tag: String = "latest",
+    var canRemove: Boolean = true,
 ) : BaseEntity()

@@ -10,6 +10,6 @@ import top.warmthdawn.emss.database.entity.User
  */
 
 data class BaseSetting(
-    val name: String,
-    val serverRootDirectory: String,
+    val name: String?,
+    val serverRootDirectory: String?,
 )

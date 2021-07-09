@@ -1,6 +1,13 @@
 package top.warmthdawn.emss.database.entity
 
+import io.ebean.Database
+import io.ebean.Model
+import io.ebean.annotation.Identity
+import io.ebean.annotation.WhenCreated
+import io.ebean.annotation.WhenModified
+import java.time.Instant
 import javax.persistence.Entity
+import javax.persistence.Id
 
 
 /**
@@ -8,8 +15,6 @@ import javax.persistence.Entity
  * @author sunday7994
  * @date 2021/7/8
  */
-val Database.settings get() = this.sequenceOf(Settings)
-
 enum class SettingType {
     Name,
     ServerRootDirectory
@@ -17,18 +22,14 @@ enum class SettingType {
 
 @Entity
 class Setting(
+    @Identity
+    @Id
     var type: SettingType,
-    var value: String
-) : BaseEntity()
+    var value: String,
 
-//interface Setting : Entity<Setting> {
-//    companion object : Entity.Factory<Setting>()
-//
-//    var type: SettingType
-//    var value: String
-//}
-//
-//object Settings : Table<Setting>("t_settings") {
-//    val type = enum<SettingType>("type").primaryKey().bindTo { it.type }
-//    val value = varchar("value").bindTo { it.value }
-//}
+) : Model() {
+    @WhenCreated
+    lateinit var whenCreated: Instant
+    @WhenModified
+    lateinit var whenModified: Instant
+}

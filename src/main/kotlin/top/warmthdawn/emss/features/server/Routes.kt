@@ -5,8 +5,7 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.server.dto.DTOImageInfo
-import top.warmthdawn.emss.features.server.dto.DTOServerInfo
+import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 
 /**
  *
@@ -18,14 +17,12 @@ fun Route.settingEndpoint() {
 
     val serverService by inject<ServerService>()
     route("/server"){
-        get("/info") {
+        get("/list") {
             call.respond(serverService.getServerInfo())
         }
-        post("/create"){
-            val dtoServerInfo = call.receive<DTOServerInfo>()
-            val dtoImageInfo = call.receive<DTOImageInfo>()
-            serverService.updateServerInfo(dtoServerInfo, dtoImageInfo)
-
+        post("/create") {
+            val dtoServerInfo = call.receive<ServerInfoDTO>()
+            serverService.createServerInfo(dtoServerInfo)
         }
     }
 

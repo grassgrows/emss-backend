@@ -16,7 +16,7 @@ import javax.persistence.OneToOne
  */
 @Entity
 class Server(
-    var containerId: String, //服务器Docker容器ID
+    var containerId: String? = null, //服务器Docker容器ID
     var name: String, //服务器名
     var aliasName: String = "", //服务器别名
     var abbr: String, //服务器缩写
@@ -24,11 +24,13 @@ class Server(
     var startCommand: String, //服务器启动命令
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
     var lastStartDate: LocalDateTime? = null, //最后启动时间
-    @OneToOne
-    var image: Image, //Docker镜像
+    var imageId: Long,
     var containerPort: Int, //Docker容器端口
     var hostPort: Int, //主机端口
-): BaseEntity()
+): BaseEntity() {
+    @OneToOne
+    lateinit var image: Image //Docker镜像
+}
 
 
 //interface Server : Entity<Server> {
