@@ -12,7 +12,7 @@ import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
  */
 
 class ServerService(
-    val db: Database
+    private val db: Database
 ) {
     suspend fun getServerInfo(): List<Server> {
         return QServer(db).findList()

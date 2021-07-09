@@ -42,7 +42,7 @@ internal class DockerManagerTest {
 
     @Test
     fun inspectImageTest() {
-        val imageId = "d94051a7e702"
+        val imageId = "2"//"c49355e8fcc5c030257a9ae819c6179dd242eac7f98792f88368dc49fe23c47e"
         val image = DockerManager.inspectImage(imageId)
 
         if(image!=null)
@@ -59,7 +59,7 @@ internal class DockerManagerTest {
 
     @Test
     fun inspectContainerTest() {
-        val containerId = "0" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
+        val containerId = "great_khayyam" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
         val container = DockerManager.inspectContainer(containerId)
 
         if (container != null) {
@@ -73,6 +73,28 @@ internal class DockerManagerTest {
             print("******** not found ********\n")
         }
 
+    }
+
+    @Test
+    fun removeImageTest()
+    {
+        val imageId = "2"//"c49355e8fcc5c030257a9ae819c6179dd242eac7f98792f88368dc49fe23c47e"
+
+        if(DockerManager.removeImage(imageId))
+            print("******** succeed ********\n")
+        else
+            print("******** fail ********\n")
+    }
+
+    @Test
+    fun removeContainerTest()
+    {
+        val containerId = ""//"83d364defa655d5c149eff90ed9fa6cbeb04c8423e5505b9c87f1f939e592687"
+
+        if(DockerManager.removeContainer(containerId))
+            print("******** succeed ********\n")
+        else
+            print("******** fail ********\n")
     }
 
 }

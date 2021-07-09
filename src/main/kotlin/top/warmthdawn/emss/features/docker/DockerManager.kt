@@ -173,17 +173,27 @@ object DockerManager {
 
 
     // 开启容器
-    fun startContainer(containerId: String) {
-        dockerClient
-            .startContainerCmd(containerId)
-            .exec()
+    fun startContainer(containerId: String):Boolean {
+        return try {
+            dockerClient
+                .startContainerCmd(containerId)
+                .exec()
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     // 关闭容器
-    fun stopContainer(containerId: String) {
-        dockerClient
-            .stopContainerCmd(containerId)
-            .exec()
+    fun stopContainer(containerId: String): Boolean {
+        return try {
+            dockerClient
+                .stopContainerCmd(containerId)
+                .exec()
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
 
@@ -203,6 +213,7 @@ object DockerManager {
         } catch (e: Exception) {
             null
         }
+
     }
 
 
@@ -224,6 +235,37 @@ object DockerManager {
         } catch (e: Exception) {
             null
         }
+
+    }
+
+
+    // 删除镜像
+    fun removeImage(imageId: String) :Boolean {
+
+        return try {
+            dockerClient
+                .removeImageCmd(imageId)
+                .exec()
+            true
+        } catch (e: Exception) {
+            false
+        }
+
+    }
+
+    
+    // 删除容器
+    fun removeContainer(containerId: String) :Boolean {
+
+        return try {
+            dockerClient
+                .removeContainerCmd(containerId)
+                .exec()
+            true
+        } catch (e: Exception) {
+            false
+        }
+
     }
 }
 
