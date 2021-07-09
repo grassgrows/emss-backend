@@ -8,6 +8,9 @@ import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
+import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -52,6 +55,29 @@ class SettingService(
         )
         image.save()
     }
+}
+
+class ImageService(
+    private val settingService: SettingService,
+    private val downloadScheduler: ImageDownloadScheduler,
+) {
+
+
+    suspend fun downloadImage(id: Long) {
+        val image = settingService.getImage(id)
+        downloadScheduler.startDownload(id, image)
+    }
+
+    suspend fun getImageStatus(id: Long): ImageStatusVO {
+        val result = downloadScheduler.getStatus(id)
+
+        if(result == null){
+            val status = TODO("查询不处于下载状态的Image")
+            return ImageStatusVO(status)
+        }
+        return result
+    }
+
 }
 
 

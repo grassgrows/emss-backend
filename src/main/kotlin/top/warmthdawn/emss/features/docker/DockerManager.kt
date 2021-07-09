@@ -7,18 +7,25 @@ import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import org.slf4j.LoggerFactory
+import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import java.io.Closeable
 import java.time.Duration
-import javax.swing.text.html.HTML
+
+
+data class DownloadingStatus(
+    var current: Long,
+    var total: Long,
+    var progress: Double,
+)
 
 object DockerManager {
-    val registryUrl = "https://index.docker.io/v1/"
+    private const val registryUrl = "https://index.docker.io/v1/"
     private val dockerClient: DockerClient
     private val log = LoggerFactory.getLogger(DockerManager::class.java)
 
     // 初始化并连接Docker
     init {
-        val dockerHost = if (System.getProperty("os.name").contains(Regex("Windows")))
+        val dockerHost = if (System.getProperty("os.name").contains("Windows"))
             "npipe:////./pipe/docker_engine"
         else
             "unix:///var/run/docker.sock"
@@ -38,51 +45,84 @@ object DockerManager {
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
     }
 
-    private data class DownloadingStatus(
-        var current: Long,
-        var total: Long
-    )
-
-    fun pullImage(repository: String, tag: String? = null): PullImageResultCallback {
+    fun pullImage(
+        repository: String, tag: String? = null,
+        onStateUpdate: (ImageStatus, Map<String, DownloadingStatus>, speed: Double) -> Unit
+    ): PullImageResultCallback {
 
         val imageName = repository + if (!tag.isNullOrEmpty()) ":$tag" else ":latest"
         val status = mutableMapOf<String, DownloadingStatus>()
-        var time: Long? = null
-        var schedule: Double
-        var lastCurrent: Long = 0
 
 
-        val callback = dockerClient
+        //下载速度计算相关代码
+        val deltaTime = 500
+        //上次计算下载速度的时间
+        var lastTime = System.currentTimeMillis()
+        //上次计算时的下载总进度
+        var lastDownloaded = 0L
+        //下载速度
+        var averageSpeed = -1.0
+        var lastSpeed = -1.0
+        val smoothFactor = 0.05
+        val lastSpeedWeight = 0.3
+
+        var execStatus: ImageStatus = ImageStatus.Unknown
+
+
+        return dockerClient
             .pullImageCmd(imageName)
-            .exec(object : PullImageResultCallback() {
+            .exec<PullImageResultCallback>(object : PullImageResultCallback() {
                 override fun onStart(closeable: Closeable) {
                     super.onStart(closeable)
                     log.info("开始下载镜像：$imageName")
+                    execStatus = ImageStatus.Downloading
+                    onStateUpdate(execStatus, status, averageSpeed)
                 }
 
-                override fun onNext(pullResponseItem: PullResponseItem) {
-                    super.onNext(pullResponseItem)
-                    when (pullResponseItem.status!!) {
-                        "Pulling fs layer" -> status[pullResponseItem.id!!] = DownloadingStatus(0, 1)
-                        "Verifying Checksum", "Download complete" -> status.remove(pullResponseItem.status)
-                        "Downloading" -> {
-                            status[pullResponseItem.id]!!.current = pullResponseItem.progressDetail!!.current!!
-                            status[pullResponseItem.id]!!.total = pullResponseItem.progressDetail!!.total!!
-                            var allTotal = 0.00
-                            var allCurrent = 0L
-                            status.values.forEach {
-                                allTotal += it.total
-                                allCurrent += it.current
-                            }
-                            schedule = allCurrent / allTotal
+                override fun onNext(item: PullResponseItem) {
+                    super.onNext(item)
 
-                            if (time != null) {
-                                val thisTime = System.currentTimeMillis()
-                                val speed = (allCurrent - lastCurrent) / (thisTime - time!!)
-                                lastCurrent = allCurrent
-                                log.info("下载进度：${schedule * 100}%, 下载速度：${speed * 1000.0 / (1024 * 1024 * 8)}MB/S")
+                    when (item.status) {
+                        "Pulling fs layer" -> status[item.id!!] = DownloadingStatus(0, 1, 0.0)
+                        "Verifying Checksum", "Download complete" -> status.remove(item.status)
+                        "Downloading" -> {
+                            item.progressDetail!!.let {
+                                status[item.id]!!.apply {
+                                    current = it.current!!
+                                    total = it.total!!
+                                    progress = current * 1.0 / total
+                                }
                             }
-                            time = System.currentTimeMillis()
+                            var total = 0L
+                            var downloaded = 0L
+                            status.values.forEach {
+                                total += it.total
+                                downloaded += it.current
+                            }
+
+                            val elapsedTime = System.currentTimeMillis() - lastTime
+                            if (elapsedTime >= deltaTime) {
+                                val speed = (downloaded - lastDownloaded) * 1000.0 / elapsedTime
+
+                                if (lastSpeed < 0 || averageSpeed < 0) {
+                                    lastSpeed = speed
+                                    averageSpeed = speed
+                                }
+
+                                val weightedSpeed = lastSpeed * lastSpeedWeight + speed * (1 - lastSpeedWeight)
+                                averageSpeed = averageSpeed * smoothFactor + weightedSpeed * (1 - smoothFactor)
+                                lastSpeed = speed
+
+                                val process = downloaded * 1.0 / total
+                                log.debug("下载进度：${process * 100}%, 下载速度：${speed / (1024 * 1024)}MB/S")
+
+                                lastDownloaded = downloaded
+                                lastTime = System.currentTimeMillis()
+                            }
+
+
+                            onStateUpdate(execStatus, status, averageSpeed)
+
                         }
                     }
                 }
@@ -90,16 +130,19 @@ object DockerManager {
                 override fun onError(throwable: Throwable) {
                     super.onError(throwable)
                     log.error("镜像下载失败：$imageName", throwable.message)
-
+                    execStatus = ImageStatus.Failed
+                    onStateUpdate(execStatus, status, averageSpeed)
                 }
 
                 override fun onComplete() {
                     super.onComplete()
                     log.info("镜像下载完成：$imageName")
+                    if(execStatus != ImageStatus.Failed){
+                        execStatus = ImageStatus.Downloaded
+                    }
+                    onStateUpdate(execStatus, status, averageSpeed)
                 }
-            })
-
-        return callback;
+            });
 
     }
 

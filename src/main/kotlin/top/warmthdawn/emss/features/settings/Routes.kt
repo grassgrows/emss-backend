@@ -4,12 +4,7 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.database.entity.Image
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -21,6 +16,7 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
 fun Route.settingEndpoint() {
 
     val settingService by inject<SettingService>()
+    val imageService by inject<ImageService>()
 
     route("/settings") {
         get("/base") {
@@ -29,12 +25,24 @@ fun Route.settingEndpoint() {
         get("/images") {
             call.respond(settingService.getImages())
         }
-        post("/base/update") {
+        post("/base") {
             val baseSetting = call.receive<BaseSetting>()
             settingService.updateBaseSetting(baseSetting)
         }
 
         route("/image") {
+
+            post("/{id}/download") {
+                val id = call.parameters["id"]!!.toLong()
+                imageService.downloadImage(id);
+            }
+
+            get("/{id}/status") {
+                //DockerApi
+                val id = call.parameters["id"]!!.toLong()
+                val result = imageService.getImageStatus(id)
+                call.respond(result)
+            }
 
             get("/{id}") {
                 val id = call.parameters["id"]!!.toLong()
@@ -44,6 +52,7 @@ fun Route.settingEndpoint() {
                 val imageDTO = call.receive<ImageDTO>()
                 settingService.createImage(imageDTO)
             }
+
 
         }
 

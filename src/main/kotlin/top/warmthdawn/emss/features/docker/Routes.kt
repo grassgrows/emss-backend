@@ -13,17 +13,6 @@ fun Route.dockerEndpoint() {
     val settingService by inject<SettingService>()
 
     route("/docker") {
-        route("/image") {
-            post("/{id}/download") {
-                val id = call.parameters["id"]
-            }
-
-            get("/{id}/status") {
-                //DockerApi
-                val id = call.parameters["id"]
-
-            }
-        }
     }
 
 }
