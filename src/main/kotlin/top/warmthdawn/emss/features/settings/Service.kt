@@ -7,6 +7,7 @@ import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QSetting
+import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
@@ -82,8 +83,10 @@ class ImageService(
             if (image.imageId == null) {
                 return ImageStatusVO(ImageStatus.Ready)
             }
-            val status = TODO("查询不处于下载状态的Image")
-            return ImageStatusVO(status)
+            val status = DockerManager.inspectImage(image.imageId!!)
+            return ImageStatusVO(
+                if (status == null) ImageStatus.Ready else ImageStatus.Downloaded
+            )
         }
         return result
     }

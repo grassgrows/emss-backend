@@ -3,7 +3,9 @@ package top.warmthdawn.emss.features.server
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
+import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.dto.ServerVO
 
@@ -19,7 +21,6 @@ class ServerService(
 ) {
     suspend fun getServerInfo(): List<Server> {
         return QServer(db).findList()
-        db.findDto(ServerVO::class.java,"").findList()
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -40,6 +41,8 @@ class ServerService(
         if(config.testing){
             return
         }
+        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
+        DockerManager.startContainer(imageId)
     }
 
     suspend fun stop(id: Long) {
@@ -47,6 +50,8 @@ class ServerService(
             return
         }
 
+        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
+        DockerManager.stopContainer(imageId)
     }
 
     suspend fun restart(id: Long) {
@@ -58,6 +63,8 @@ class ServerService(
         if(config.testing){
             return
         }
+        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
+        DockerManager.stopContainer(imageId)
 
     }
 

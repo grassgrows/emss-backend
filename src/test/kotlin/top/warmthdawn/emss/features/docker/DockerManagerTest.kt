@@ -2,9 +2,13 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Volume
+import org.junit.Ignore
 import org.junit.Test
 
-
+/**
+ * Docker需要客户端参与不方便进行单元测试。Ignore掉
+ */
+@Ignore
 internal class DockerManagerTest {
     @Test
     fun pullImageTest() {
