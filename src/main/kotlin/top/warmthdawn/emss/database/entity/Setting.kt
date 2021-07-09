@@ -8,6 +8,7 @@ import javax.persistence.Entity
  * @author sunday7994
  * @date 2021/7/8
  */
+val Database.settings get() = this.sequenceOf(Settings)
 
 enum class SettingType {
     Name,

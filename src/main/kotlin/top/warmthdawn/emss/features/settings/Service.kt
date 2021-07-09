@@ -30,7 +30,6 @@ class SettingService(
 //            .map { Images.createEntity(it) }
         return QImage(db).findList()
     }
-}
 
 class ServerService(
     val db: Database
@@ -39,3 +38,5 @@ class ServerService(
         return QServer(db).findList()
     }
 }
+
+
