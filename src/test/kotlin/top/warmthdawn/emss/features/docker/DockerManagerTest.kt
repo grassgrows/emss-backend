@@ -10,9 +10,8 @@ internal class DockerManagerTest {
     fun pullImageTest() {
         val imageName = "java"
         print("downloading...")
-        val callback = DockerManager.pullImage(imageName)
-        callback.awaitCompletion()
-
+        //val callback = DockerManager.pullImage(imageName)
+        //callback.awaitCompletion()
     }
 
     @Test
@@ -42,9 +41,26 @@ internal class DockerManagerTest {
     }
 
     @Test
+    fun inspectImageTest() {
+        val imageId = "d94051a7e702"
+        val image = DockerManager.inspectImage(imageId)
+
+        if(image!=null)
+        {
+            print("******** " + image.id + " ********\n")
+            print("******** " + image.created + " ********\n")
+            print("******** " + image.size + " ********\n")
+        }
+        else
+        {
+            print("******** not found ********\n")
+        }
+    }
+
+    @Test
     fun inspectContainerTest() {
-        val containerName = "0" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
-        val container = DockerManager.inspectContainer(containerName)
+        val containerId = "0" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
+        val container = DockerManager.inspectContainer(containerId)
 
         if (container != null) {
             print("******** "+container.id+" ********\n")

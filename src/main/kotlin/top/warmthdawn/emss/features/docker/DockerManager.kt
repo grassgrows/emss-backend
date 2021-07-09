@@ -2,8 +2,6 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.PullImageResultCallback
-import com.github.dockerjava.api.exception.InternalServerErrorException
-import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
@@ -11,6 +9,7 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
+import top.warmthdawn.emss.features.docker.dto.ImageInfo
 import java.io.Closeable
 import java.time.Duration
 
@@ -188,6 +187,23 @@ object DockerManager {
     }
 
 
+    // 获取镜像信息
+    fun inspectImage(imageId: String): ImageInfo? {
+
+        return try {
+            val image = dockerClient
+                .inspectImageCmd(imageId)
+                .exec()
+
+            ImageInfo(
+                image.id,
+                image.created,
+                image.size
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
 
 
     // 获取容器信息
