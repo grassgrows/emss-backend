@@ -1,0 +1,24 @@
+datasource:
+  db:
+    # 大概是bug，必须写
+    username: ''
+    password: ''
+    driver: org.h2.Driver
+    # 数据库地址
+    url: jdbc:h2:file:./application
+    isolationLevel: read_uncommitted
+
+ebean:
+  packages: top.warmthdawn.emss.database.entity
+  migration:
+    run: true
+  debug:
+    sql: true
+    lazyload: false
+    logging:
+      logfilesharing: all
+      directory: logs
+      iud: sql
+      query: sql
+      sqlquery: sql
+      txnCommit: auto

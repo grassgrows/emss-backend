@@ -7,6 +7,9 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.module
 import org.koin.core.module.Module
 import org.koin.dsl.single
+import top.warmthdawn.emss.database.DBFactory
+import top.warmthdawn.emss.database.DBFactoryImpl
+import top.warmthdawn.emss.features.settings.SettingService
 
 fun MapApplicationConfig.createConfigForTesting() {
     // Server config
@@ -34,4 +37,8 @@ fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: Tes
 
 val appTestModule = module {
     single<AppConfig>()
+    single<DBFactory> { DBFactoryImpl() }
+
+    //setting
+    single { SettingService(get()) }
 }

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
+    <changeSet type="apply">
+        <createTable name="image" pkName="pk_image">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="name" type="varchar" notnull="true"/>
+            <column name="dockerfile_root_directory" type="varchar" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+        <createTable name="server" pkName="pk_server">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="container_id" type="varchar" notnull="true"/>
+            <column name="name" type="varchar" notnull="true"/>
+            <column name="alias_name" type="varchar" notnull="true"/>
+            <column name="abbr" type="varchar" notnull="true"/>
+            <column name="location" type="varchar" notnull="true"/>
+            <column name="start_command" type="varchar" notnull="true"/>
+            <column name="last_crash_date" type="timestamp"/>
+            <column name="last_start_date" type="timestamp"/>
+            <column name="container_port" type="integer" notnull="true"/>
+            <column name="host_port" type="integer" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+        <createTable name="setting" pkName="pk_setting">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="type" type="integer" notnull="true" checkConstraint="check ( type in (0,1))" checkConstraintName="ck_setting_type"/>
+            <column name="value" type="varchar" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+        <createTable name="user" pkName="pk_user">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="username" type="varchar" notnull="true"/>
+            <column name="password" type="varchar" notnull="true"/>
+            <column name="permission_level" type="varchar" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+        <createTable name="user_server" pkName="pk_user_server">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="user_id" type="bigint" notnull="true"/>
+            <column name="server_id" type="bigint" notnull="true"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+    </changeSet>
+</migration>

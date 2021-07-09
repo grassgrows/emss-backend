@@ -1,8 +1,12 @@
 package top.warmthdawn.emss.features.settings
 
-import org.ktorm.database.Database
-import org.ktorm.dsl.*
-import top.warmthdawn.emss.database.entity.*
+import io.ebean.Database
+import top.warmthdawn.emss.database.entity.Image
+import top.warmthdawn.emss.database.entity.Server
+import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QImage
+import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QSetting
 
 /**
  *
@@ -14,23 +18,24 @@ class SettingService(
     val db: Database
 ) {
     suspend fun getBaseSetting(): BaseSetting {
-        val result = db.from(Settings).select().associate { it[Settings.type] to it[Settings.value] }
+//        val result = db.from(Settings).select().associate { it[Settings.type] to it[Settings.value] }
+        val result = QSetting(db).findList().associate { it.type to it.value }
         return BaseSetting(result[SettingType.Name]!!, result[SettingType.ServerRootDirectory]!!)
+
     }
 
     suspend fun getDockerImage(): List<Image> {
-        return db.from(Images)
-            .select()
-            .map { Images.createEntity(it) }
+//        return db.from(Images)
+//            .select()
+//            .map { Images.createEntity(it) }
+        return QImage(db).findList()
     }
 }
 
 class ServerService(
     val db: Database
-){
-    suspend fun getServerInfo(): List<Server>{
-        return db.from(Servers)
-            .select()
-            .map{Servers.createEntity(it)}
+) {
+    suspend fun getServerInfo(): List<Server> {
+        return QServer(db).findList()
     }
 }

@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.database
 
+import io.ebean.DB
 import io.ebean.Database
 import io.ebean.DatabaseFactory
 import io.ebean.config.DatabaseConfig
@@ -20,9 +21,8 @@ class DBFactoryImpl : DBFactory {
 //        )
 
         val config = DatabaseConfig().apply {
-            dataSourceConfig = DataSourceConfig().apply {
-                url =  "jdbc:h2:mem:myapp;"
-            }
+            loadFromProperties()
+            isDefaultServer = true
         }
         return DatabaseFactory.create(config)
     }
