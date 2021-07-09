@@ -40,7 +40,7 @@ dependencies {
     implementation("org.ktorm:ktorm-core:$ktorm_version")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:1.6.1")
-    testImplementation("io.insert-koin:ktor-server-tests:$ktor_version")
+    testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("io.insert-koin:koin-test:$koin_version")
     testImplementation("junit:junit:4.12")
 }
