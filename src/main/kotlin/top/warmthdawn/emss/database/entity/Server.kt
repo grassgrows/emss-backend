@@ -3,6 +3,10 @@ package top.warmthdawn.emss.database.entity
 //import org.ktorm.entity.Entity
 //import org.ktorm.schema.*
 import io.ebean.annotation.Length
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import top.warmthdawn.emss.utils.EbeanEntitySerializer
+import top.warmthdawn.emss.utils.JsonDateSerializer
 import java.time.LocalDateTime
 import javax.persistence.Entity
 import javax.persistence.ManyToOne
@@ -27,10 +31,7 @@ class Server(
     var imageId: Long,
     var containerPort: Int, //Docker容器端口
     var hostPort: Int, //主机端口
-): BaseEntity() {
-    @OneToOne
-    lateinit var image: Image //Docker镜像
-}
+): BaseEntity()
 
 
 //interface Server : Entity<Server> {

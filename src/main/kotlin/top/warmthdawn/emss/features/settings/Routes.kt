@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -28,6 +29,7 @@ fun Route.settingEndpoint() {
         post("/base") {
             val baseSetting = call.receive<BaseSetting>()
             settingService.updateBaseSetting(baseSetting)
+            call.response.status(HttpStatusCode.OK)
         }
 
         route("/image") {
@@ -35,6 +37,7 @@ fun Route.settingEndpoint() {
             post("/{id}/download") {
                 val id = call.parameters["id"]!!.toLong()
                 imageService.downloadImage(id);
+                call.response.status(HttpStatusCode.OK)
             }
 
             get("/{id}/status") {
@@ -48,9 +51,11 @@ fun Route.settingEndpoint() {
                 val id = call.parameters["id"]!!.toLong()
                 call.respond(settingService.getImage(id))
             }
+
             post {
                 val imageDTO = call.receive<ImageDTO>()
                 settingService.createImage(imageDTO)
+                call.response.status(HttpStatusCode.OK)
             }
 
 

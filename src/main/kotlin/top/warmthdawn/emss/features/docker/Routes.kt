@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.docker
 
+import io.ebean.DB
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -13,6 +14,7 @@ fun Route.dockerEndpoint() {
     val settingService by inject<SettingService>()
 
     route("/docker") {
+
     }
 
 }

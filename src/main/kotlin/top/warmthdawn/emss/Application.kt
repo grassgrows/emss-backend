@@ -13,7 +13,7 @@ fun main(args: Array<String>) = EngineMain.main(args)
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false, koinModules: List<Module> = listOf(appModule)) {
     configureKoin(koinModules)
-    setupConfig()
+    setupConfig(testing)
     configureDatabase()
     configureLogging()
     configureSecurity()

@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.settings
 
+import kotlinx.serialization.Serializable
 import top.warmthdawn.emss.database.entity.Image
 import top.warmthdawn.emss.database.entity.User
 
@@ -9,7 +10,8 @@ import top.warmthdawn.emss.database.entity.User
  * @since 2021-07-08
  */
 
+@Serializable
 data class BaseSetting(
-    val name: String?,
-    val serverRootDirectory: String?,
+    val name: String? = null,
+    val serverRootDirectory: String? = null,
 )

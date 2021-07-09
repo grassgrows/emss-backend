@@ -16,7 +16,11 @@ class DatabaseTest {
     @Test
     fun testRoot() {
         withTestServer {
-            DB.save(Setting(SettingType.Name, "EMSS"))
+            if(!QSetting().type.eq(SettingType.Name).exists()){
+                DB.insert(Setting(SettingType.Name, "EMSS"))
+            }else{
+                DB.update(Setting(SettingType.Name, "EMSS"))
+            }
             assertEquals(QSetting().type.eq(SettingType.Name).findOne()!!.value, "EMSS")
         }
     }

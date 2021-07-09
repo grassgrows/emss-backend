@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.server
 
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -13,7 +14,7 @@ import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
  * @date 2021/7/9
  */
 
-fun Route.settingEndpoint() {
+fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
     route("/server"){
@@ -23,6 +24,27 @@ fun Route.settingEndpoint() {
         post("/create") {
             val dtoServerInfo = call.receive<ServerInfoDTO>()
             serverService.createServerInfo(dtoServerInfo)
+            call.response.status(HttpStatusCode.OK)
+        }
+        post("/{id}/start") {
+            val id = call.parameters["id"]!!.toLong()
+            serverService.start(id)
+            call.respond(true)
+        }
+        post("/{id}/stop") {
+            val id = call.parameters["id"]!!.toLong()
+            serverService.stop(id)
+            call.respond(true)
+        }
+        post("/{id}/restart") {
+            val id = call.parameters["id"]!!.toLong()
+            serverService.restart(id)
+            call.respond(true)
+        }
+        post("/{id}/terminate") {
+            val id = call.parameters["id"]!!.toLong()
+            serverService.terminate(id)
+            call.respond(true)
         }
     }
 

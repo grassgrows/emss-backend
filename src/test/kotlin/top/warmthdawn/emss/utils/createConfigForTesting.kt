@@ -9,6 +9,9 @@ import org.koin.core.module.Module
 import org.koin.dsl.single
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
+import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.server.ServerService
+import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
 
 fun MapApplicationConfig.createConfigForTesting() {
@@ -17,9 +20,7 @@ fun MapApplicationConfig.createConfigForTesting() {
 
     // Database Config
     put("ktor.database.driverClass", "org.h2.Driver")
-    put("ktor.database.url", "jdbc:h2:mem:;DATABASE_TO_UPPER=false;MODE=MYSQL")
-    put("ktor.database.user", "root")
-    put("ktor.database.password", "password")
+    put("ktor.database.url", "jdbc:h2:mem:test;DATABASE_TO_UPPER=false;MODE=MYSQL")
     put("ktor.database.maxPoolSize", "1")
 }
 
@@ -36,9 +37,15 @@ fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: Tes
 }
 
 val appTestModule = module {
+    // Backend Config
     single<AppConfig>()
-    single<DBFactory> { DBFactoryImpl() }
+    single<DBFactory> { DBFactoryImpl(get()) }
 
     //setting
-    single { SettingService(get()) }
+    single { SettingService(get(), get()) }
+    single { ImageDownloadScheduler() }
+    single { ImageService(get(), get(), get()) }
+
+    //server
+    single { ServerService(get(), get()) }
 }

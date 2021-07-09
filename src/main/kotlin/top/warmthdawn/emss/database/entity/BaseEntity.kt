@@ -4,7 +4,10 @@ import io.ebean.Model
 import io.ebean.annotation.Identity
 import io.ebean.annotation.WhenCreated
 import io.ebean.annotation.WhenModified
+import kotlinx.serialization.Serializable
+import top.warmthdawn.emss.utils.JsonDateSerializer
 import java.time.Instant
+import java.time.LocalDateTime
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -23,8 +26,8 @@ abstract class BaseEntity : Model() {
     var id: Long? = null
 
     @WhenCreated
-    lateinit var whenCreated: Instant
+    lateinit var whenCreated: LocalDateTime
 
     @WhenModified
-    lateinit var whenModified: Instant
+    lateinit var whenModified: LocalDateTime
 }

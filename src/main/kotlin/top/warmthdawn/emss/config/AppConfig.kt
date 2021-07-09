@@ -5,12 +5,13 @@ import org.koin.ktor.ext.inject
 
 class AppConfig {
     lateinit var serverConfig: ServerConfig
+    var testing: Boolean = false
     // Place here other configurations
 }
 
-fun Application.setupConfig() {
+fun Application.setupConfig(testing: Boolean = false) {
     val appConfig by inject<AppConfig>()
-
+    appConfig.testing = testing
     // Server
     val serverObject = environment.config.config("ktor.server")
     val isProd = serverObject.property("isProd").getString().toBoolean()

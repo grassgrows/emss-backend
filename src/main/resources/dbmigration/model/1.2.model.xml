@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
+    <changeSet type="apply">
+        <alterColumn columnName="image_id" tableName="server" dropUnique="uq_server_image_id" dropForeignKey="fk_server_image_id"/>
+        <createTable name="server_vo" pkName="pk_server_vo">
+            <column name="container_id" type="varchar"/>
+            <column name="name" type="varchar" notnull="true"/>
+            <column name="alias_name" type="varchar" notnull="true"/>
+            <column name="abbr" type="varchar" notnull="true"/>
+            <column name="location" type="varchar" notnull="true"/>
+            <column name="start_command" type="varchar" notnull="true"/>
+            <column name="last_crash_date" type="timestamp"/>
+            <column name="last_start_date" type="timestamp"/>
+            <column name="image_id" type="bigint" notnull="true"/>
+            <column name="container_port" type="integer" notnull="true"/>
+            <column name="host_port" type="integer" notnull="true"/>
+        </createTable>
+    </changeSet>
+</migration>

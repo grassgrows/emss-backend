@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.database.entity
 
+import kotlinx.serialization.Serializable
+import top.warmthdawn.emss.utils.EbeanEntitySerializer
 import javax.management.loading.ClassLoaderRepository
 import javax.persistence.Entity
 

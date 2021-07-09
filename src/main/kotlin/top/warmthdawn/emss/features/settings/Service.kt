@@ -1,12 +1,11 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ebean.Database
+import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Image
-import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
-import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
@@ -20,7 +19,8 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
  */
 
 class SettingService(
-    val db: Database
+    private val db: Database,
+    private val config: AppConfig
 ) {
     suspend fun getBaseSetting(): BaseSetting {
         val result = QSetting(db).findList().associate { it.type to it.value }
@@ -35,11 +35,11 @@ class SettingService(
     suspend fun updateBaseSetting(baseSetting: BaseSetting) {
         if (!baseSetting.name.isNullOrEmpty()) {
             val setting = Setting(SettingType.Name, baseSetting.name)
-            db.save(setting)
+            db.update(setting)
         }
         if (!baseSetting.serverRootDirectory.isNullOrEmpty()) {
             val setting = Setting(SettingType.ServerRootDirectory, baseSetting.serverRootDirectory)
-            setting.save()
+            setting.update()
         }
     }
 
@@ -51,27 +51,37 @@ class SettingService(
         val image = Image(
             name = imageDTO.name,
             repository = imageDTO.repository,
-            tag = imageDTO.tag
+            tag = imageDTO.tag ?: ""
         )
-        image.save()
+        image.insert()
     }
 }
 
 class ImageService(
     private val settingService: SettingService,
     private val downloadScheduler: ImageDownloadScheduler,
+    private val config: AppConfig
 ) {
 
 
     suspend fun downloadImage(id: Long) {
         val image = settingService.getImage(id)
-        downloadScheduler.startDownload(id, image)
+        if (!config.testing) {
+            downloadScheduler.startDownload(id, image)
+        }
     }
 
     suspend fun getImageStatus(id: Long): ImageStatusVO {
+        if (config.testing) {
+            return ImageStatusVO(ImageStatus.Ready)
+        }
         val result = downloadScheduler.getStatus(id)
 
-        if(result == null){
+        if (result == null) {
+            val image = settingService.getImage(id)
+            if (image.imageId == null) {
+                return ImageStatusVO(ImageStatus.Ready)
+            }
             val status = TODO("查询不处于下载状态的Image")
             return ImageStatusVO(status)
         }

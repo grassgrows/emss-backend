@@ -68,7 +68,7 @@ object DockerManager {
         val smoothFactor = 0.05
         val lastSpeedWeight = 0.3
 
-        var execStatus: ImageStatus = ImageStatus.Unknown
+        var execStatus: ImageStatus = ImageStatus.Ready
 
 
         return dockerClient
