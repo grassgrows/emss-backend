@@ -84,16 +84,31 @@ class DockerManager(
             .withCmd(cmd)
             .exec()
 
-
         return container.id
     }
 
 
-    //开启容器
-    fun startContainer()
+    // 开启容器
+    fun startContainer(containerName: String)
     {
-
+        val container = dockerClient
+            .startContainerCmd(containerName)
+            .exec()
     }
 
+    // 关闭容器
+    fun stopContainer(containerName: String)
+    {
+        val container = dockerClient
+            .stopContainerCmd(containerName)
+            .exec()
+    }
 
+    // 重启容器
+    fun restartContainer(containerName: String)
+    {
+        val container = dockerClient
+            .restartContainerCmd(containerName)
+            .exec()
+    }
 }
