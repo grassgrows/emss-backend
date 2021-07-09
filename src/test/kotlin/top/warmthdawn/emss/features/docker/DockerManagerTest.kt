@@ -10,7 +10,7 @@ internal class DockerManagerTest {
         val dockerManager = DockerManager(registryUser = "takanashirikka1412",registryPass = "docg20092010ker",
             registryMail = "1303170174@qq.com",registryUrl = "https://index.docker.io/v1/")
 
-        dockerManager.buildImage("DockerfileDir/Dockerfile", "testImage001")
+        print(dockerManager.buildImage("DockerfileDir/Dockerfile", "testimage001"))
     }
 
 
@@ -22,7 +22,7 @@ internal class DockerManagerTest {
         val containerName = "testContainer001"
         //if()
         print(dockerManager.createContainer(containerName,"ubuntu",
-            "172.28.89.242",8081,8082))
+            "172.28.89.242",8083,8084))
 
     }
 }

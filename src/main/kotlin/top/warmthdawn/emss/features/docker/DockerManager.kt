@@ -6,9 +6,6 @@ import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
-import com.github.dockerjava.transport.DockerHttpClient.Request
-import org.hamcrest.core.IsEqual.equalTo
-import org.junit.Assert.assertThat
 import java.io.File
 import java.time.Duration
 
@@ -22,7 +19,7 @@ class DockerManager(
 
     // 初始化并连接Docker
     init {
-        val dockerHost = if (System.getProperty("os.name") == "Windows")
+        val dockerHost = if (System.getProperty("os.name").contains(Regex("Windows")))
             "npipe:////./pipe/docker_engine"
         else
             "unix:///var/run/docker.sock"
@@ -54,18 +51,20 @@ class DockerManager(
 
 
     // 根据Dockerfile构建镜像
-    fun buildImage(dockerfile: String, imageName: String) {
+    fun buildImage(dockerfile: String, imageName: String):String {
 
-        //val message= BuildResponseItem()
-        val image = dockerClient.buildImageCmd()
+
+        val imageid = dockerClient.buildImageCmd()
             .withDockerfilePath(dockerfile)
             .withTags(setOf(imageName))
-            .exec(null)
+            .start()
+            .awaitImageId()
 
 
+        return imageid
     }
 
-    // 创建容器
+    // 创建容器(需添加启动命令)
     fun createContainer(
         containerName: String, imageName: String,
         hostIp: String, hostPortId: Int, exposedPortId: Int
