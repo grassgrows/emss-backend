@@ -1,13 +1,13 @@
 package top.warmthdawn.emss.database
 
-import org.ktorm.database.Database
+import io.ebean.Database
 
 /**
  *
  * @author WarmthDawn
  * @since 2021-07-08
  */
-interface DatabaseFactory {
+interface DBFactory {
     fun connect(): Database
     fun close()
 }
