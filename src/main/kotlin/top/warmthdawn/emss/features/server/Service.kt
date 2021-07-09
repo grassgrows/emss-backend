@@ -1,10 +1,13 @@
 package top.warmthdawn.emss.features.server
 
+import com.github.dockerjava.api.model.Bind
+import com.github.dockerjava.api.model.Volume
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.dto.ServerVO
@@ -34,7 +37,28 @@ class ServerService(
             containerPort = serverInfoDTO.containerPort,
             hostPort = serverInfoDTO.hostPort,
         )
+
+        val image = QImage(db).id.eq(serverInfoDTO.imageId).findOne()
+
+        if (image == null) {
+            // TODO 返回不存在本地镜像
+            return
+        }
+
+
+
+
+        val hostIp = "主机IP地址"
+        val bind = Bind("/data/$serverInfoDTO.name)", Volume("/data"))
+        val cmd = listOf(serverInfoDTO.startCommand)
+        ContainerService(db).createContainer(serverInfoDTO.name, ((image.repository) +":"+image.tag),
+            hostIp,serverInfoDTO.hostPort,serverInfoDTO.containerPort,bind,cmd)
+
+
+
         server.save()
+
+
     }
 
     suspend fun start(id: Long) {

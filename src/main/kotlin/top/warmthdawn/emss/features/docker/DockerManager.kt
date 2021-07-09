@@ -10,9 +10,14 @@ import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageInfo
+import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.io.Closeable
 import java.time.Duration
 
+/**
+ * @author takanashi
+ * @since 2021-07-07
+ */
 
 data class DownloadingStatus(
     var current: Long,
@@ -151,24 +156,25 @@ object DockerManager {
     // 创建容器
     fun createContainer(
         containerName: String, imageName: String,
-        hostIp: String, hostPortId: Int, exposedPortId: Int,
-        bind: Bind, cmd: List<String>
-    ): String {
+        portBinding: PortBinding,
+        volumeBind: Bind, cmd: List<String>
+    ): String? {
 
-        val exposedPort = ExposedPort(exposedPortId)
-        val binding = Ports.Binding(hostIp, hostPortId.toString())
-        val portBinding = PortBinding(binding, exposedPort)
-        val container = dockerClient.createContainerCmd(imageName)
-            .withName(containerName)
-            .withExposedPorts()
-            .withHostConfig(
-                HostConfig.newHostConfig()
-                    .withBinds(bind).withPortBindings(portBinding)
-            )
-            .withCmd(cmd)
-            .exec()
+        return try {
+            val container = dockerClient.createContainerCmd(imageName)
+                .withName(containerName)
+                .withExposedPorts()
+                .withHostConfig(
+                    HostConfig.newHostConfig()
+                        .withBinds(volumeBind).withPortBindings(portBinding)
+                )
+                .withCmd(cmd)
+                .exec()
 
-        return container.id
+            container.id
+        } catch (e: Exception) {
+            null
+        }
     }
 
 
@@ -230,7 +236,17 @@ object DockerManager {
                 container.name,
                 container.created,
                 container.imageId,
-                container.state.status
+                when(container.state.status)
+                {
+                    "created" -> ContainerStatus.Created
+                    "running" -> ContainerStatus.Running
+                    "paused" -> ContainerStatus.Paused
+                    "restarting" -> ContainerStatus.Restarting
+                    "removing" -> ContainerStatus.Removing
+                    "exited" -> ContainerStatus.Exited
+                    "dead" -> ContainerStatus.Dead
+                    else -> null
+                }
             )
         } catch (e: Exception) {
             null
@@ -253,7 +269,7 @@ object DockerManager {
 
     }
 
-    
+
     // 删除容器
     fun removeContainer(containerId: String) :Boolean {
 

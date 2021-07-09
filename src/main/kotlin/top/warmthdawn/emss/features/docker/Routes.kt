@@ -6,12 +6,10 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.settings.BaseSetting
-import top.warmthdawn.emss.features.settings.SettingService
 
 fun Route.dockerEndpoint() {
 
-    val settingService by inject<SettingService>()
+    val dockerService by inject<ContainerService>()
 
     route("/docker") {
 

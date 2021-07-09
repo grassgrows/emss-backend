@@ -23,11 +23,13 @@ internal class DockerManagerTest {
         val containerName = "testContainer006"
         val bind = Bind("/data/$containerName", Volume("/data"))
         val cmd = listOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
+        val exposedPort = ExposedPort(8084)
+        val binding = Ports.Binding("127.0.0.1", 8083.toString())
+        val portBinding = PortBinding(binding, exposedPort)
         //if()
         print(
             DockerManager.createContainer(
-                containerName, "ubuntu",
-                "127.0.0.1"/*"172.28.89.242"*/, 8083, 8084, bind, cmd
+                containerName, "ubuntu", portBinding, bind, cmd
             )
         )
     }
