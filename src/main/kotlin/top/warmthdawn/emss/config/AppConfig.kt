@@ -4,7 +4,6 @@ import io.ktor.application.*
 import org.koin.ktor.ext.inject
 
 class AppConfig {
-    lateinit var databaseConfig: DatabaseConfig
     lateinit var serverConfig: ServerConfig
     // Place here other configurations
 }
@@ -17,19 +16,7 @@ fun Application.setupConfig() {
     val isProd = serverObject.property("isProd").getString().toBoolean()
     appConfig.serverConfig = ServerConfig(isProd)
 
-    // Database
-    val databaseObject = environment.config.config("ktor.database")
-    val driverClass = databaseObject.property("driverClass").getString()
-    val url = databaseObject.property("url").getString()
-    val maxPoolSize = databaseObject.property("maxPoolSize").getString().toInt()
-    appConfig.databaseConfig = DatabaseConfig(driverClass, url, maxPoolSize)
 }
-
-data class DatabaseConfig(
-    val driverClass: String,
-    val url: String,
-    val maxPoolSize: Int
-)
 
 data class ServerConfig(
     val isProd: Boolean

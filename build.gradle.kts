@@ -3,7 +3,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val koin_version: String by project
 val docker_java_version: String by project
-val ktorm_version: String by project
+//val ktorm_version: String by project
 val ebean_version: String by project
 val h2_version: String by project
 
@@ -41,10 +41,11 @@ dependencies {
     implementation("com.github.docker-java:docker-java-transport-httpclient5:$docker_java_version")
 
     // Ktorm
-    implementation("org.ktorm:ktorm-core:$ktorm_version")
+//    implementation("org.ktorm:ktorm-core:$ktorm_version")
     implementation("io.ebean:ebean:$ebean_version")
     kapt("io.ebean:kotlin-querybean-generator:$ebean_version")
     implementation("com.h2database:h2:$h2_version")
+    implementation("io.ebean:ebean-migration:12.4.0")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:1.6.1")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
