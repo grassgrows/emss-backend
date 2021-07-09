@@ -6,13 +6,15 @@ import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.time.Duration
+import kotlin.coroutines.resume
 
 class DockerManager(
-    registryUser: String,
-    registryPass: String,
-    registryMail: String,
+    //registryUser: String,
+    //registryPass: String,
+    //registryMail: String,
     registryUrl: String
 ) {
     private val dockerClient: DockerClient
@@ -27,9 +29,9 @@ class DockerManager(
             .withDockerHost(dockerHost)
 //            .withDockerTlsVerify(docker_tls_verity)
 //            .withDockerCertPath(docker_cert_path)
-            .withRegistryUsername(registryUser)
-            .withRegistryPassword(registryPass)
-            .withRegistryEmail(registryMail)
+            //.withRegistryUsername(registryUser)
+            //.withRegistryPassword(registryPass)
+            //.withRegistryEmail(registryMail)
             .withRegistryUrl(registryUrl)
             .build()
 
@@ -44,31 +46,24 @@ class DockerManager(
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
     }
 
-    fun createDockerfile(path: String, text: String) {
-        val file = File(path)
-        file.writeText(text)
-    }
+    // 拉取镜像
+    suspend fun pullImage(imageName: String)
+    {
+        suspendCancellableCoroutine<Boolean> {
+            val callback = dockerClient
+                .pullImageCmd(imageName)
+                .start()
 
-
-    // 根据Dockerfile构建镜像
-    fun buildImage(dockerfile: String, imageName: String):String {
-
-
-        val imageid = dockerClient.buildImageCmd()
-            .withDockerfilePath(dockerfile)
-            .withTags(setOf(imageName))
-            .start()
-            .awaitImageId()
-
-
-        return imageid
+            callback.awaitCompletion()
+            it.resume(true)
+        }
     }
 
     // 创建容器(需添加启动命令)
     fun createContainer(
         containerName: String, imageName: String,
         hostIp: String, hostPortId: Int, exposedPortId: Int,
-        bind :Bind, cmd:List<String>
+        bind: Bind, cmd: List<String>
     ): String {
 
         val exposedPort = ExposedPort(exposedPortId)
@@ -89,26 +84,48 @@ class DockerManager(
 
 
     // 开启容器
-    fun startContainer(containerName: String)
-    {
-        val container = dockerClient
+    fun startContainer(containerName: String) {
+        dockerClient
             .startContainerCmd(containerName)
             .exec()
     }
 
     // 关闭容器
-    fun stopContainer(containerName: String)
-    {
-        val container = dockerClient
+    fun stopContainer(containerName: String) {
+        dockerClient
             .stopContainerCmd(containerName)
             .exec()
     }
 
     // 重启容器
-    fun restartContainer(containerName: String)
-    {
-        val container = dockerClient
+    fun restartContainer(containerName: String) {
+        dockerClient
             .restartContainerCmd(containerName)
             .exec()
     }
+
+
+    //region 废弃功能
+    /*
+    fun createDockerfile(path: String, text: String) {
+        val file = File(path)
+        file.writeText(text)
+    }
+
+    // 根据Dockerfile构建镜像
+    fun buildImage(dockerfile: String, imageName: String): String {
+
+
+        val imageid = dockerClient.buildImageCmd()
+            .withDockerfilePath(dockerfile)
+            .withTags(setOf(imageName))
+            .start()
+            .awaitImageId()
+
+
+        return imageid
+    }
+
+     */
+    //endregion
 }
