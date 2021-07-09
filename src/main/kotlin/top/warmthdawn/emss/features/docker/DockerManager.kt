@@ -67,7 +67,8 @@ class DockerManager(
     // 创建容器(需添加启动命令)
     fun createContainer(
         containerName: String, imageName: String,
-        hostIp: String, hostPortId: Int, exposedPortId: Int
+        hostIp: String, hostPortId: Int, exposedPortId: Int,
+        bind :Bind, cmd:List<String>
     ): String {
 
         val exposedPort = ExposedPort(exposedPortId)
@@ -78,12 +79,21 @@ class DockerManager(
             .withExposedPorts()
             .withHostConfig(
                 HostConfig.newHostConfig()
-                    .withBinds().withPortBindings(portBinding)
+                    .withBinds(bind).withPortBindings(portBinding)
             )
+            .withCmd(cmd)
             .exec()
 
 
         return container.id
     }
+
+
+    //开启容器
+    fun startContainer()
+    {
+
+    }
+
 
 }
