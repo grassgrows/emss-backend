@@ -10,6 +10,7 @@ import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
+import top.warmthdawn.emss.features.server.vo.ServerVO
 
 /**
  *
@@ -21,8 +22,29 @@ class ServerService(
     private val db: Database,
     private val config: AppConfig,
 ) {
-    suspend fun getServerInfo(): List<Server> {
-        return QServer(db).findList()
+    suspend fun getServerInfo(): List<ServerVO> {
+        val list: MutableList<ServerVO> = mutableListOf()
+
+        for(row in QServer(db).findList()){
+            val serverVO = ServerVO(
+                row.name,
+                row.aliasName,
+                row.abbr,
+                row.location,
+                row.startCommand,
+                row.lastCrashDate,
+                row.lastStartDate,
+                row.imageId,
+                row.containerPort,
+                row.hostPort,
+                row.containerId!!,
+                ContainerService(db).getContainerName(row.containerId!!),
+                ContainerService(db).getContainerCreateTime(row.containerId!!),
+                ContainerService(db).getContainerStatusText(row.containerId!!),
+            )
+            list.add(serverVO)
+        }
+        return list
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -89,5 +111,6 @@ class ServerService(
         DockerManager.stopContainer(imageId)
 
     }
+
 
 }
