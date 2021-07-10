@@ -26,5 +26,5 @@ data class ServerVO(
     var containerId: String?, //Docker容器ID
     var containerName: String, //Docker容器名
     var containerCreateTime: LocalDateTime?, //Docker容器创建时间
-    var containerStatus: ContainerStatus?, //Docker容器状态
+    var containerStatus: ContainerStatus, //Docker容器状态
 )

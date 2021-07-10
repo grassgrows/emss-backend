@@ -54,10 +54,10 @@ class ContainerService(private val db: Database) {
 
     }
 
-    suspend fun getContainerStatusEnum(containerId: String?): ContainerStatus? {
+    suspend fun getContainerStatusEnum(containerId: String?): ContainerStatus {
         //val containerInfo = DockerManager.inspectContainer(containerId)
         //return containerInfo?.status
-        return if (containerId != null) DockerManager.inspectContainer(containerId)?.status else null
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.status ?: ContainerStatus.Unknown else ContainerStatus.Unknown
 
     }
 

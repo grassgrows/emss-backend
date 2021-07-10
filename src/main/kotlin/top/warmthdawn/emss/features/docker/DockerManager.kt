@@ -240,14 +240,14 @@ object DockerManager {
                 container.imageId,
                 when(container.state.status)
                 {
-                    "created" -> ContainerStatus.Created
                     "running" -> ContainerStatus.Running
-                    "paused" -> ContainerStatus.Paused
-                    "restarting" -> ContainerStatus.Restarting
-                    "removing" -> ContainerStatus.Removing
-                    "exited" -> ContainerStatus.Exited
-                    "dead" -> ContainerStatus.Dead
-                    else -> null
+                    "created",
+                    "exited" -> ContainerStatus.Stopped
+                    "paused",
+                    "restarting",
+                    "removing",
+                    "dead" -> ContainerStatus.Unknown
+                    else -> ContainerStatus.Unknown
                 }
             )
         } catch (e: Exception) {
