@@ -1,13 +1,11 @@
 package top.warmthdawn.emss.features.settings
 
 import kotlinx.serialization.Serializable
-import top.warmthdawn.emss.database.entity.Image
-import top.warmthdawn.emss.database.entity.User
 
 /**
  *
- * @author WarmthDawn
- * @since 2021-07-08
+ * @author sunday7994
+ * @date 2021/7/8
  */
 
 @Serializable

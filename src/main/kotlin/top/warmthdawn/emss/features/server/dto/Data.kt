@@ -1,9 +1,6 @@
 package top.warmthdawn.emss.features.server.dto
 
 import kotlinx.serialization.Serializable
-import top.warmthdawn.emss.database.entity.BaseEntity
-import top.warmthdawn.emss.database.entity.Image
-import top.warmthdawn.emss.database.entity.Server
 import java.time.LocalDateTime
 import javax.persistence.Entity
 

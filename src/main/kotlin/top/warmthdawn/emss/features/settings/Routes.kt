@@ -10,8 +10,8 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
  *
- * @author WarmthDawn
- * @since 2021-07-08
+ * @author sunday7994
+ * @date 2021/7/8
  */
 
 fun Route.settingEndpoint() {
@@ -36,7 +36,7 @@ fun Route.settingEndpoint() {
 
             post("/{id}/download") {
                 val id = call.parameters["id"]!!.toLong()
-                imageService.downloadImage(id);
+                imageService.downloadImage(id)
                 call.response.status(HttpStatusCode.OK)
             }
 

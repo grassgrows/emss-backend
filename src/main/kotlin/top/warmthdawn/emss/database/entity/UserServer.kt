@@ -1,26 +1,14 @@
 package top.warmthdawn.emss.database.entity
 
-import kotlinx.serialization.Serializable
-import top.warmthdawn.emss.utils.JsonDateSerializer
 import javax.persistence.Entity
 
-
+/**
+ *
+ * @author sunday7994
+ * @date 2021/7/9
+ */
 @Entity
 class UserServer(
     var userId: Long,
     var serverId: Long
 ) : BaseEntity()
-
-//interface UserServer : Entity<UserServer> {
-//    companion object : Entity.Factory<UserServer>() //一个伴随对象，继承 Entity.Factory，可用val server = Server()直接创建实体对象
-//
-//    val userId: Long
-//    val serverId: Long
-//    val user: User
-//    val server: Server
-//}
-//
-//object UserServers : Table<UserServer>("t_user_server") {
-//    val userId = long("userId").bindTo { it.userId }.references(Users) { it.user }
-//    val serverId = long("serverId").bindTo { it.serverId }.references(Servers) { it.server }
-//}

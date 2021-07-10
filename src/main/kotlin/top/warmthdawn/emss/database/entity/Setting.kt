@@ -1,13 +1,10 @@
 package top.warmthdawn.emss.database.entity
 
-import io.ebean.Database
 import io.ebean.Model
 import io.ebean.annotation.Identity
 import io.ebean.annotation.WhenCreated
 import io.ebean.annotation.WhenModified
 import kotlinx.serialization.Serializable
-import top.warmthdawn.emss.utils.JsonDateSerializer
-import java.time.Instant
 import java.time.LocalDateTime
 import javax.persistence.Entity
 import javax.persistence.Id
