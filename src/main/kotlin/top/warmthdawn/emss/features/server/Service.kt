@@ -76,15 +76,14 @@ class ServerService(
         server.containerId = id
         server.insert()
 
-
     }
 
     suspend fun start(id: Long) {
         if(config.testing){
             return
         }
-        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
-        DockerManager.startContainer(imageId)
+        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        DockerManager.startContainer(containerId)
     }
 
     suspend fun stop(id: Long) {
@@ -92,8 +91,8 @@ class ServerService(
             return
         }
 
-        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
-        DockerManager.stopContainer(imageId)
+        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        DockerManager.stopContainer(containerId)
     }
 
     suspend fun restart(id: Long) {
@@ -105,10 +104,9 @@ class ServerService(
         if(config.testing){
             return
         }
-        val imageId = QImage().id.eq(db.find(Server::class.java, id)!!.imageId).findOne()!!.imageId!!
-        DockerManager.stopContainer(imageId)
+        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        DockerManager.stopContainer(containerId)
 
     }
-
 
 }
