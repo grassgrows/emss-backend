@@ -2,15 +2,18 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.PullImageResultCallback
-import com.github.dockerjava.api.model.*
+import com.github.dockerjava.api.model.Bind
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import org.slf4j.LoggerFactory
-import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageInfo
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
+import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import java.io.Closeable
 import java.time.Duration
 
@@ -55,7 +58,7 @@ object DockerManager {
     // 拉取镜像
     fun pullImage(
         repository: String, tag: String? = null,
-        onStateUpdate: (ImageStatus, Map<String, DownloadingStatus>, speed: Double) -> Unit
+        onStateUpdate: (ImageStatus, Map<String, DownloadingStatus>, speed: Double) -> Unit,
     ): PullImageResultCallback {
 
         val imageName = repository + if (!tag.isNullOrEmpty()) ":$tag" else ":latest"
@@ -89,7 +92,6 @@ object DockerManager {
 
                 override fun onNext(item: PullResponseItem) {
                     super.onNext(item)
-
                     when (item.status) {
                         "Pulling fs layer" -> status[item.id!!] = DownloadingStatus(0, 1, 0.0)
                         "Verifying Checksum", "Download complete" -> status.remove(item.status)
@@ -132,7 +134,9 @@ object DockerManager {
                             onStateUpdate(execStatus, status, averageSpeed)
 
                         }
+
                     }
+
                 }
 
                 override fun onError(throwable: Throwable) {
@@ -145,7 +149,7 @@ object DockerManager {
                 override fun onComplete() {
                     super.onComplete()
                     log.info("镜像下载完成：$imageName")
-                    if(execStatus != ImageStatus.Failed){
+                    if (execStatus != ImageStatus.Failed) {
                         execStatus = ImageStatus.Downloaded
                     }
                     onStateUpdate(execStatus, status, averageSpeed)
@@ -161,27 +165,23 @@ object DockerManager {
         volumeBind: Bind, cmd: List<String>
     ): String? {
 
-        return try {
-            val container = dockerClient.createContainerCmd(imageName)
-                .withName(containerName)
-                .withName(containerName)
-                .withExposedPorts()
-                .withHostConfig(
-                    HostConfig.newHostConfig()
-                        .withBinds(volumeBind).withPortBindings(portBinding)
-                )
-                .withCmd(cmd)
-                .exec()
+        val container = dockerClient.createContainerCmd(imageName)
+            .withName(containerName)
+            .withName(containerName)
+            .withExposedPorts()
+            .withHostConfig(
+                HostConfig.newHostConfig()
+                    .withBinds(volumeBind).withPortBindings(portBinding)
+            )
+            .withCmd(cmd)
+            .exec()
 
-            container.id
-        } catch (e: Exception) {
-            null
-        }
+        return container.id
     }
 
 
     // 开启容器
-    fun startContainer(containerId: String):Boolean {
+    fun startContainer(containerId: String): Boolean {
         return try {
             dockerClient
                 .startContainerCmd(containerId)
@@ -258,7 +258,7 @@ object DockerManager {
 
 
     // 删除镜像
-    fun removeImage(imageId: String) :Boolean {
+    fun removeImage(imageId: String): Boolean {
 
         return try {
             dockerClient
@@ -273,7 +273,7 @@ object DockerManager {
 
 
     // 删除容器
-    fun removeContainer(containerId: String) :Boolean {
+    fun removeContainer(containerId: String): Boolean {
 
         return try {
             dockerClient

@@ -9,6 +9,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.single
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
+import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
@@ -43,9 +44,10 @@ val appTestModule = module {
 
     //setting
     single { SettingService(get(), get()) }
-    single { ImageDownloadScheduler() }
+    single { ImageDownloadScheduler(get()) }
     single { ImageService(get(), get(), get()) }
 
     //server
-    single { ServerService(get(), get()) }
+    single { ContainerService(get()) }
+    single { ServerService(get(), get(), get()) }
 }

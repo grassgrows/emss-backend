@@ -11,8 +11,8 @@ import javax.persistence.Entity
  * @date 2021/7/10
  */
 
-@Entity
 data class ServerVO(
+    var id: Long,
     var name: String, //服务器名
     var aliasName: String = "", //服务器别名
     var abbr: String, //服务器缩写

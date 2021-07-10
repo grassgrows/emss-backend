@@ -46,6 +46,9 @@ class ImageDownloadScheduler(
                     pull.close()
                 }
                 pull.awaitCompletion()
+
+                image.imageId = "${image.repository}:${image.tag}"
+                image.update()
             } finally {
                 downloadingMap.remove(id)
             }
