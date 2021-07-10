@@ -1,8 +1,12 @@
 package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
+import io.ebean.config.JsonConfig
 import org.junit.Ignore
 import org.junit.Test
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
@@ -64,12 +68,18 @@ internal class DockerManagerTest {
 
     @Test
     fun inspectContainerTest() {
-        val containerId = "great_khayyam" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
+        val containerId = "testContainer006" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
         val container = DockerManager.inspectContainer(containerId)
 
         if (container != null) {
+            // 自定义格式化:
+            val myDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'")
+            // 用自定义格式解析:
+            val dt2 = LocalDateTime.parse(container.createTime,myDateTimeFormatter)
+            print("******** ${dt2.year}年${dt2.monthValue}月${dt2.dayOfMonth}日${dt2.hour}时${dt2.minute}分${dt2.second}秒 ********\n")
             print("******** "+container.id+" ********\n")
             print("******** "+container.name+" ********\n")
+            print("******** "+container.createTime+" ********\n")
             print("******** "+container.imageId+" ********\n")
             print("******** "+container.status+" ********\n")
         }

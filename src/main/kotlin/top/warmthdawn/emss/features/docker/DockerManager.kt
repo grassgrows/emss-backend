@@ -52,6 +52,7 @@ object DockerManager {
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
     }
 
+    // 拉取镜像
     fun pullImage(
         repository: String, tag: String? = null,
         onStateUpdate: (ImageStatus, Map<String, DownloadingStatus>, speed: Double) -> Unit

@@ -5,10 +5,9 @@ import com.github.dockerjava.api.model.ExposedPort
 import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
 import io.ebean.Database
-import top.warmthdawn.emss.database.entity.query.QImage
-import top.warmthdawn.emss.database.entity.query.QServer
-import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  *
@@ -32,17 +31,17 @@ class ContainerService(private val db: Database) {
 
     suspend fun getContainerName(containerId: String): String {
         val containerInfo = DockerManager.inspectContainer(containerId)
-        return containerInfo?.name ?: ""
+        return containerInfo?.name ?: "Error"
     }
 
-    suspend fun getContainerCreateTime(containerId: String): String {
+    suspend fun getContainerCreateTime(containerId: String): LocalDateTime? {
         val containerInfo = DockerManager.inspectContainer(containerId)
         if (containerInfo != null) {
-            val time: String = containerInfo.createTime
-            // TODO 处理字符串
-            return time
+            // 时间格式处理
+            val myDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'")
+            return LocalDateTime.parse(containerInfo.createTime, myDateTimeFormatter)
         } else {
-            return ""
+            return null
         }
     }
 
@@ -51,11 +50,12 @@ class ContainerService(private val db: Database) {
         return containerInfo?.imageId ?: ""
     }
 
-    fun getContainerStatusEnum(containerId: String): ContainerStatus? {
+    suspend fun getContainerStatusEnum(containerId: String): ContainerStatus? {
         val containerInfo = DockerManager.inspectContainer(containerId)
         return containerInfo?.status
     }
 
+    /*
     suspend fun getContainerStatusText(containerId: String): String {
         val containerInfo = DockerManager.inspectContainer(containerId)
         return when (containerInfo?.status) {
@@ -69,5 +69,5 @@ class ContainerService(private val db: Database) {
             else -> "状态未知"
         }
     }
-
+    */
 }

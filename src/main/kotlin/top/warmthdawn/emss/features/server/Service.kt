@@ -39,8 +39,8 @@ class ServerService(
                 row.hostPort,
                 row.containerId!!,
                 ContainerService(db).getContainerName(row.containerId!!),
-                ContainerService(db).getContainerCreateTime(row.containerId!!),
-                ContainerService(db).getContainerStatusText(row.containerId!!),
+                ContainerService(db).getContainerCreateTime(row.containerId!!)!!,
+                ContainerService(db).getContainerStatusEnum(row.containerId!!)!!,
             )
             list.add(serverVO)
         }
@@ -64,8 +64,6 @@ class ServerService(
         if (image == null) {
             return
         }
-
-
 
         val containerName = "emss_container_"+serverInfoDTO.abbr
 

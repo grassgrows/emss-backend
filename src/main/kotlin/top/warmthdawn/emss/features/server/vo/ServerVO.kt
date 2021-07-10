@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.server.vo
 
 import kotlinx.serialization.Serializable
+import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.time.LocalDateTime
 import javax.persistence.Entity
 
@@ -24,6 +25,6 @@ data class ServerVO(
     var hostPort: Int, //主机端口
     var containerId: String, //Docker容器ID
     var containerName: String, //Docker容器名
-    var containerCreateTime: String, //Docker容器创建时间
-    var containerStatus: String, //Docker容器状态
+    var containerCreateTime: LocalDateTime, //Docker容器创建时间
+    var containerStatus: ContainerStatus, //Docker容器状态
 )
