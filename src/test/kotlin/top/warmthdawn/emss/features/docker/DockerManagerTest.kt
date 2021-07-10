@@ -11,7 +11,7 @@ import java.util.*
 /**
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
  */
-@Ignore
+//@Ignore
 internal class DockerManagerTest {
     @Test
     fun pullImageTest() {
@@ -23,9 +23,9 @@ internal class DockerManagerTest {
 
     @Test
     fun createContainerTest() {
-        val containerName = "testContainer007"
+        val containerName = "testContainer008"
         val bind = Bind("/data/$containerName", Volume("/data"))
-        val cmd = listOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
+        val cmd = listOf("/bin/sh","-c","while true; do echo hello world; sleep 1; done")
         val exposedPort = ExposedPort(8084)
         val binding = Ports.Binding(null, 8083.toString())
         val portBinding = PortBinding(binding, exposedPort)

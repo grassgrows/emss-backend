@@ -84,7 +84,7 @@ class ServerService(
             val containerName = "emss_container_" + server.abbr
 
             val bind = Bind("/data/$containerName)", Volume("/data"))
-            val cmd = listOf(server.startCommand)
+            val cmd = listOf("/bin/sh","-c",server.startCommand)
             val image = QImage().id.eq(server.imageId).findOne()!!
             val id = ContainerService(db).createContainer(
                 containerName, image.imageId!!,
