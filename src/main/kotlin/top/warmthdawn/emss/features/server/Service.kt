@@ -9,6 +9,7 @@ import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.DockerManager
+import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import java.time.LocalDateTime
@@ -94,6 +95,11 @@ class ServerService(
         }
 
         val containerId = server.containerId!!
+        if(ContainerService(db).getContainerStatusEnum(containerId) != ContainerStatus.Stopped)
+        {
+            // TODO 不可重复启动
+            return
+        }
         DockerManager.startContainer(containerId)
 
         server.lastStartDate = LocalDateTime.now()

@@ -39,13 +39,13 @@ internal class DockerManagerTest {
 
     @Test
     fun startContainerTest() {
-        val containerName = "testContainer005"
+        val containerName = "testContainer007"
         DockerManager.startContainer(containerName)
     }
 
     @Test
     fun stopContainerTest() {
-        val containerName = "testContainer005"
+        val containerName = "testContainer007"
         DockerManager.stopContainer(containerName)
     }
 
