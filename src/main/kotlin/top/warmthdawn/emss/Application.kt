@@ -15,6 +15,7 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
     configureKoin(koinModules)
     setupConfig(testing)
     configureDatabase()
+    configureCors()
     configureLogging()
     configureSecurity()
     configureSerialization()
