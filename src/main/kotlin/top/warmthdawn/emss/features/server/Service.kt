@@ -7,10 +7,12 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.vo.ServerVO
+import java.time.LocalDateTime
 
 /**
  *
@@ -37,10 +39,10 @@ class ServerService(
                 row.imageId,
                 row.containerPort,
                 row.hostPort,
-                row.containerId!!,
-                ContainerService(db).getContainerName(row.containerId!!),
-                ContainerService(db).getContainerCreateTime(row.containerId!!)!!,
-                ContainerService(db).getContainerStatusEnum(row.containerId!!)!!,
+                row.containerId,
+                ContainerService(db).getContainerName(row.containerId),
+                ContainerService(db).getContainerCreateTime(row.containerId),
+                ContainerService(db).getContainerStatusEnum(row.containerId),
             )
             list.add(serverVO)
         }
@@ -82,17 +84,24 @@ class ServerService(
         if(config.testing){
             return
         }
-        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        val server = QServer(db).id.eq(id).findOne()!!
+        val containerId = server.containerId!!
         DockerManager.startContainer(containerId)
+        server.lastStartDate = LocalDateTime.now()
+        server.update()
+
+
     }
 
     suspend fun stop(id: Long) {
         if(config.testing){
             return
         }
-
-        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        val server = QServer(db).id.eq(id).findOne()!!
+        val containerId = server.containerId!!
         DockerManager.stopContainer(containerId)
+        server.lastStartDate = LocalDateTime.now()
+        server.update()
     }
 
     suspend fun restart(id: Long) {

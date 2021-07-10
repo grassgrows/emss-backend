@@ -29,12 +29,14 @@ class ContainerService(private val db: Database) {
         return DockerManager.createContainer(containerName, imageName, portBinding, volumeBind, cmd)
     }
 
-    suspend fun getContainerName(containerId: String): String {
-        val containerInfo = DockerManager.inspectContainer(containerId)
-        return containerInfo?.name ?: "Error"
+    suspend fun getContainerName(containerId: String?): String {
+        //val containerInfo = DockerManager.inspectContainer(containerId)
+        //return containerInfo?.name ?: "Error"
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.name ?: "NotFindContainer" else "NotFindId"
     }
 
-    suspend fun getContainerCreateTime(containerId: String): LocalDateTime? {
+    suspend fun getContainerCreateTime(containerId: String?): LocalDateTime? {
+        if (containerId == null) return null
         val containerInfo = DockerManager.inspectContainer(containerId)
         if (containerInfo != null) {
             // 时间格式处理
@@ -45,14 +47,18 @@ class ContainerService(private val db: Database) {
         }
     }
 
-    suspend fun getContainerImageId(containerId: String): String {
-        val containerInfo = DockerManager.inspectContainer(containerId)
-        return containerInfo?.imageId ?: ""
+    suspend fun getContainerImageId(containerId: String?): String {
+        //val containerInfo = DockerManager.inspectContainer(containerId)
+        //return containerInfo?.imageId ?: ""
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.imageId ?: "NotFindContainer" else "NotFindId"
+
     }
 
-    suspend fun getContainerStatusEnum(containerId: String): ContainerStatus? {
-        val containerInfo = DockerManager.inspectContainer(containerId)
-        return containerInfo?.status
+    suspend fun getContainerStatusEnum(containerId: String?): ContainerStatus? {
+        //val containerInfo = DockerManager.inspectContainer(containerId)
+        //return containerInfo?.status
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.status else null
+
     }
 
     /*

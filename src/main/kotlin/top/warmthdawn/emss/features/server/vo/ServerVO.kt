@@ -23,8 +23,8 @@ data class ServerVO(
     var imageId: Long,
     var containerPort: Int, //Docker容器端口
     var hostPort: Int, //主机端口
-    var containerId: String, //Docker容器ID
+    var containerId: String?, //Docker容器ID
     var containerName: String, //Docker容器名
-    var containerCreateTime: LocalDateTime, //Docker容器创建时间
-    var containerStatus: ContainerStatus, //Docker容器状态
+    var containerCreateTime: LocalDateTime?, //Docker容器创建时间
+    var containerStatus: ContainerStatus?, //Docker容器状态
 )
