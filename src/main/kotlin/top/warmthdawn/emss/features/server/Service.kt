@@ -40,22 +40,21 @@ class ServerService(
         val image = QImage(db).id.eq(serverInfoDTO.imageId).findOne()
 
         if (image == null) {
-            // TODO 返回不存在本地镜像
             return
         }
 
 
 
+        val containerName = "emss_container_"+serverInfoDTO.abbr
 
-        val hostIp = "主机IP地址"
-        val bind = Bind("/data/$serverInfoDTO.name)", Volume("/data"))
+        val bind = Bind("/data/$containerName)", Volume("/data"))
         val cmd = listOf(serverInfoDTO.startCommand)
-        ContainerService(db).createContainer(serverInfoDTO.name, ((image.repository) +":"+image.tag),
-            hostIp,serverInfoDTO.hostPort,serverInfoDTO.containerPort,bind,cmd)
+        val id = ContainerService(db).createContainer(containerName, ((image.repository) +":"+image.tag),
+            serverInfoDTO.hostPort,serverInfoDTO.containerPort,bind,cmd)
 
 
-
-        server.save()
+        server.containerId = id
+        server.insert()
 
 
     }

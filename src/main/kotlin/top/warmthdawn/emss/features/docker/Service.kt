@@ -20,11 +20,11 @@ class ContainerService(private val db: Database) {
 
     fun createContainer(
         containerName: String, imageName: String,
-        hostIp: String, hostPortId: Int, exposedPortId: Int,
+        hostPortId: Int, exposedPortId: Int,
         volumeBind: Bind, cmd: List<String>
     ): String? {
         val exposedPort = ExposedPort(exposedPortId)
-        val binding = Ports.Binding(hostIp, hostPortId.toString())
+        val binding = Ports.Binding(null, hostPortId.toString())
         val portBinding = PortBinding(binding, exposedPort)
 
         return DockerManager.createContainer(containerName, imageName, portBinding, volumeBind, cmd)

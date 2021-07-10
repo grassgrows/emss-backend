@@ -26,7 +26,6 @@ internal class ServerTest {
 
 
     @Test
-    @Transactional
     fun serverListTest() {
         withTestServer {
 

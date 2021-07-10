@@ -163,6 +163,7 @@ object DockerManager {
         return try {
             val container = dockerClient.createContainerCmd(imageName)
                 .withName(containerName)
+                .withName(containerName)
                 .withExposedPorts()
                 .withHostConfig(
                     HostConfig.newHostConfig()

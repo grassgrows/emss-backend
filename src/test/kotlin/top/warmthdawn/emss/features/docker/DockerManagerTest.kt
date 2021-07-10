@@ -1,7 +1,6 @@
 package top.warmthdawn.emss.features.docker
 
-import com.github.dockerjava.api.model.Bind
-import com.github.dockerjava.api.model.Volume
+import com.github.dockerjava.api.model.*
 import org.junit.Ignore
 import org.junit.Test
 
@@ -20,11 +19,11 @@ internal class DockerManagerTest {
 
     @Test
     fun createContainerTest() {
-        val containerName = "testContainer006"
+        val containerName = "testContainer007"
         val bind = Bind("/data/$containerName", Volume("/data"))
         val cmd = listOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
         val exposedPort = ExposedPort(8084)
-        val binding = Ports.Binding("127.0.0.1", 8083.toString())
+        val binding = Ports.Binding(null, 8083.toString())
         val portBinding = PortBinding(binding, exposedPort)
         //if()
         print(
