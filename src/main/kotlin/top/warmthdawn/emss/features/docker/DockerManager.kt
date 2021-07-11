@@ -8,7 +8,7 @@ import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageInfo
@@ -44,7 +44,8 @@ object DockerManager {
             .withRegistryUrl(registryUrl)
             .build()
 
-        val httpClient = ApacheDockerHttpClient.Builder()
+
+        val httpClient = ZerodepDockerHttpClient.Builder()
             .dockerHost(clientConfig.dockerHost)
             .sslConfig(clientConfig.sslConfig)
             .maxConnections(1)

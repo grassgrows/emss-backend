@@ -43,8 +43,8 @@ dependencies {
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
     // Docker-Java
     implementation("com.github.docker-java:docker-java-core:$docker_java_version")
-    implementation("com.github.docker-java:docker-java-transport-httpclient5:$docker_java_version")
-
+//    implementation("com.github.docker-java:docker-java-transport-httpclient5:$docker_java_version")
+    implementation("com.github.docker-java:docker-java-transport-zerodep:$docker_java_version")
     // Ktorm
 //    implementation("org.ktorm:ktorm-core:$ktorm_version")
     implementation("io.ebean:ebean:$ebean_version")
@@ -52,9 +52,10 @@ dependencies {
     implementation("com.h2database:h2:$h2_version")
     implementation("io.ebean:ebean-migration:12.4.0")
     // Testing
-    testImplementation("io.ktor:ktor-server-test-host:1.6.1")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
     testImplementation("io.insert-koin:koin-test:$koin_version")
     testImplementation("junit:junit:4.12")
     testImplementation("io.ebean:ebean-test:$ebean_version")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
 }

@@ -1,5 +1,8 @@
 package top.warmthdawn.emss.utils
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.ebean.Database
+import io.ebean.annotation.TxIsolation
 import io.ktor.config.*
 import io.ktor.server.testing.*
 import org.koin.dsl.module
@@ -7,6 +10,7 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.module
 import org.koin.core.module.Module
 import org.koin.dsl.single
+import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
 import top.warmthdawn.emss.features.docker.ContainerService
@@ -33,9 +37,20 @@ fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: Tes
                 createConfigForTesting()
             }
             module(testing = true, koinModules = koinModules)
-        }, block
+        }, {
+            val db by application.inject<Database>()
+            db.beginTransaction(TxIsolation.SERIALIZABLE)
+            try {
+                block()
+            }finally {
+                db.rollbackTransaction()
+            }
+        }
     )
 }
+private val _json = ObjectMapper()
+val TestApplicationEngine.json: ObjectMapper
+    get() = _json
 
 val appTestModule = module {
     // Backend Config
