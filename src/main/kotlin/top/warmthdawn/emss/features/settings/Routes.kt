@@ -1,12 +1,11 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ktor.application.*
-import io.ktor.http.*
 import io.ktor.request.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
+import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
 
 /**
@@ -37,7 +36,16 @@ fun Route.settingEndpoint() {
 
             post("/{id}/download") {
                 val id = call.parameters["id"]!!.toLong()
-                imageService.downloadImage(id)
+                if (imageService.downloadImage(id)) {
+                    R.ok()
+                } else {
+                    R.error(Code.ImageDownloadFailed, "下载Image失败")
+                }
+            }
+
+            post("/{id}/cancelDownload") {
+                val id = call.parameters["id"]!!.toLong()
+                imageService.cancelDownloadImage(id)
                 R.ok()
             }
 

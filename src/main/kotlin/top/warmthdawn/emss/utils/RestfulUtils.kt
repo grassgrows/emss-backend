@@ -60,6 +60,13 @@ enum class Code(
      * 请求404
      */
     NotFound("A120"),
+
+    //已知错误
+    //Docker相关
+    /**
+     * Image下载失败
+     */
+    ImageDownloadFailed("B112"),
     //系统错误
     /**
      * 未知系统错误
