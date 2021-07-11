@@ -7,6 +7,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
+import top.warmthdawn.emss.utils.R
 
 /**
  *
@@ -19,32 +20,32 @@ fun Route.serverEndpoint() {
     val serverService by inject<ServerService>()
     route("/server"){
         get("/list") {
-            call.respond(serverService.getServerInfo())
+            R.ok(serverService.getServerInfo())
         }
         post("/create") {
             val dtoServerInfo = call.receive<ServerInfoDTO>()
             serverService.createServerInfo(dtoServerInfo)
-            call.response.status(HttpStatusCode.OK)
+            R.ok()
         }
         post("/{id}/start") {
             val id = call.parameters["id"]!!.toLong()
             serverService.start(id)
-            call.respond(true)
+            R.ok()
         }
         post("/{id}/stop") {
             val id = call.parameters["id"]!!.toLong()
             serverService.stop(id)
-            call.respond(true)
+            R.ok()
         }
         post("/{id}/restart") {
             val id = call.parameters["id"]!!.toLong()
             serverService.restart(id)
-            call.respond(true)
+            R.ok()
         }
         post("/{id}/terminate") {
             val id = call.parameters["id"]!!.toLong()
             serverService.terminate(id)
-            call.respond(true)
+            R.ok()
         }
     }
 

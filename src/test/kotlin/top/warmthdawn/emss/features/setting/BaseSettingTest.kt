@@ -31,7 +31,7 @@ internal class BaseSettingTest {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val setting = response.content
                 assertNotNull(setting)
-                val json = Json.parseToJsonElement(setting)
+                val json = Json.parseToJsonElement(setting).jsonObject["data"]!!
                 assertEquals(2, json.jsonArray.size)
             }
         }
@@ -44,7 +44,7 @@ internal class BaseSettingTest {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val setting = response.content
                 assertNotNull(setting)
-                val json = Json.parseToJsonElement(setting)
+                val json = Json.parseToJsonElement(setting).jsonObject["data"]!!
                 assertEquals("EMSS", json.jsonObject["name"]!!.jsonPrimitive.content)
                 assertEquals("~/emss/", json.jsonObject["serverRootDirectory"]!!.jsonPrimitive.content)
             }

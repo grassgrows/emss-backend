@@ -5,6 +5,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import org.junit.Test
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.Server
@@ -56,7 +57,7 @@ internal class ServerTest {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val setting = response.content
                 assertNotNull(setting)
-                val json = Json.parseToJsonElement(setting)
+                val json = Json.parseToJsonElement(setting).jsonObject["data"]!!
                 assertEquals(2, json.jsonArray.size)
             }
 

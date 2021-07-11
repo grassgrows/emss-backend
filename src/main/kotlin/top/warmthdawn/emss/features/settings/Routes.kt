@@ -7,6 +7,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
+import top.warmthdawn.emss.utils.R
 
 /**
  *
@@ -21,15 +22,15 @@ fun Route.settingEndpoint() {
 
     route("/settings") {
         get("/base") {
-            call.respond(settingService.getBaseSetting())
+            R.ok(settingService.getBaseSetting())
         }
         get("/images") {
-            call.respond(settingService.getImages())
+            R.ok(settingService.getImages())
         }
         post("/base") {
             val baseSetting = call.receive<BaseSetting>()
             settingService.updateBaseSetting(baseSetting)
-            call.response.status(HttpStatusCode.OK)
+            R.ok()
         }
 
         route("/image") {
@@ -37,25 +38,25 @@ fun Route.settingEndpoint() {
             post("/{id}/download") {
                 val id = call.parameters["id"]!!.toLong()
                 imageService.downloadImage(id)
-                call.response.status(HttpStatusCode.OK)
+                R.ok()
             }
 
             get("/{id}/status") {
                 //DockerApi
                 val id = call.parameters["id"]!!.toLong()
                 val result = imageService.getImageStatus(id)
-                call.respond(result)
+                R.ok(result)
             }
 
             get("/{id}") {
                 val id = call.parameters["id"]!!.toLong()
-                call.respond(settingService.getImage(id))
+                R.ok(settingService.getImage(id))
             }
 
             post {
                 val imageDTO = call.receive<ImageDTO>()
                 settingService.createImage(imageDTO)
-                call.response.status(HttpStatusCode.OK)
+                R.ok()
             }
 
 

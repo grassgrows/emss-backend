@@ -48,7 +48,7 @@ internal class ImageTest {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val image = response.content
                 assertNotNull(image)
-                val json = Json.parseToJsonElement(image)
+                val json = Json.parseToJsonElement(image).jsonObject["data"]!!
                 assertEquals("OpenJDK 8", json.jsonObject["name"]!!.jsonPrimitive.content)
                 assertEquals("openjdk", json.jsonObject["repository"]!!.jsonPrimitive.content)
             }

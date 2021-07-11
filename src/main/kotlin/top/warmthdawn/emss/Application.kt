@@ -20,6 +20,7 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
     configureLogging()
     configureSecurity()
     configureSerialization()
+    configureStatusPages()
     install(Locations)
     install(ForwardedHeaderSupport)
     configureSockets()
