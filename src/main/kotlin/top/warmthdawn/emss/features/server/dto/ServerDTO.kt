@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.server.dto
 
-import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 import javax.persistence.Entity
 
@@ -10,7 +9,6 @@ import javax.persistence.Entity
  * @date 2021/7/9
  */
 
-@Serializable
 data class ServerInfoDTO(
     var name: String, //服务器名
     var aliasName: String? = null, //服务器别名

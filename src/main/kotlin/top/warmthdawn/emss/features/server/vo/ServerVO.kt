@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.server.vo
 
-import kotlinx.serialization.Serializable
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.time.LocalDateTime
 import javax.persistence.Entity

@@ -23,9 +23,9 @@ internal class DockerManagerTest {
 
     @Test
     fun createContainerTest() {
-        val containerName = "testContainer007"
+        val containerName = "testContainer008"
         val bind = Bind("/data/$containerName", Volume("/data"))
-        val cmd = listOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
+        val cmd = listOf("/bin/sh","-c","while true; do echo hello world; sleep 1; done")
         val exposedPort = ExposedPort(8084)
         val binding = Ports.Binding(null, 8083.toString())
         val portBinding = PortBinding(binding, exposedPort)
@@ -39,13 +39,13 @@ internal class DockerManagerTest {
 
     @Test
     fun startContainerTest() {
-        val containerName = "testContainer005"
+        val containerName = "testContainer007"
         DockerManager.startContainer(containerName)
     }
 
     @Test
     fun stopContainerTest() {
-        val containerName = "testContainer005"
+        val containerName = "testContainer007"
         DockerManager.stopContainer(containerName)
     }
 
