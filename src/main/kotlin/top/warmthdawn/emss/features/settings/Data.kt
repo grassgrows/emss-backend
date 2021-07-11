@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.settings
 
-import kotlinx.serialization.Serializable
 
 /**
  *
@@ -8,7 +7,6 @@ import kotlinx.serialization.Serializable
  * @date 2021/7/8
  */
 
-@Serializable
 data class BaseSetting(
     val name: String? = null,
     val serverRootDirectory: String? = null,

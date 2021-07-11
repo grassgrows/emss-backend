@@ -12,7 +12,7 @@ plugins {
     kotlin("jvm") version "1.5.20"
     id("io.ebean") version "12.9.1"
     kotlin("kapt") version "1.5.20-RC"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.20"
+//    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.20"
 }
 
 group = "top.warmthdawn.emss"
@@ -29,11 +29,13 @@ dependencies {
     implementation("io.ktor:ktor-server-core:$ktor_version")
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
-    implementation("io.ktor:ktor-serialization:$ktor_version")
+//    implementation("io.ktor:ktor-serialization:$ktor_version")
     implementation("io.ktor:ktor-jackson:$ktor_version")
     implementation("io.ktor:ktor-websockets:$ktor_version")
-    implementation("io.ktor:ktor-server-tomcat:$ktor_version")
+//    implementation("io.ktor:ktor-server-tomcat:$ktor_version")
+    implementation("io.ktor:ktor-server-netty:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation("io.ktor:ktor-locations:$ktor_version")
 //    implementation("com.fasterxml.jackson.module:jackson-modules-java8:2.12.4")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.4")
     // Koin
