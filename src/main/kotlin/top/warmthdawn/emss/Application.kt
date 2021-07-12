@@ -3,7 +3,7 @@ package top.warmthdawn.emss
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.locations.*
-import io.ktor.server.netty.*
+import io.ktor.server.cio.*
 import top.warmthdawn.emss.plugins.*
 import top.warmthdawn.emss.config.setupConfig
 import top.warmthdawn.emss.di.appModule
@@ -20,6 +20,7 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
     configureLogging()
     configureSecurity()
     configureSerialization()
+    configureStatusPages()
     install(Locations)
     install(ForwardedHeaderSupport)
     configureSockets()

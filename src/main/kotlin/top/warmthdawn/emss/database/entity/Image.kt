@@ -10,9 +10,10 @@ import javax.persistence.Entity
 
 @Entity
 class Image(
-    var imageId: String? = null,
     var name: String,
     var repository: String,
     var tag: String = "latest",
     var canRemove: Boolean = true,
-) : BaseEntity()
+) : BaseEntity() {
+    val imageId: String get() = "$repository:${tag.ifBlank { "latest" }}"
+}

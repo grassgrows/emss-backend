@@ -8,7 +8,7 @@ import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
-import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageInfo
@@ -44,10 +44,11 @@ object DockerManager {
             .withRegistryUrl(registryUrl)
             .build()
 
-        val httpClient = ApacheDockerHttpClient.Builder()
+
+        val httpClient = ZerodepDockerHttpClient.Builder()
             .dockerHost(clientConfig.dockerHost)
             .sslConfig(clientConfig.sslConfig)
-            .maxConnections(1)
+            .maxConnections(4)
             .connectionTimeout(Duration.ofSeconds(30))
             .responseTimeout(Duration.ofSeconds(45))
             .build()
@@ -72,7 +73,7 @@ object DockerManager {
         //上次计算时的下载总进度
         var lastDownloaded = 0L
         //下载速度
-        var averageSpeed = -1.0
+        var averageSpeed = 0.0
         var lastSpeed = -1.0
         val smoothFactor = 0.05
         val lastSpeedWeight = 0.3
@@ -122,9 +123,6 @@ object DockerManager {
                                 val weightedSpeed = lastSpeed * lastSpeedWeight + speed * (1 - lastSpeedWeight)
                                 averageSpeed = averageSpeed * smoothFactor + weightedSpeed * (1 - smoothFactor)
                                 lastSpeed = speed
-
-                                val process = downloaded * 1.0 / total
-                                log.debug("下载进度：${process * 100}%, 下载速度：${speed / (1024 * 1024)}MB/S")
 
                                 lastDownloaded = downloaded
                                 lastTime = System.currentTimeMillis()

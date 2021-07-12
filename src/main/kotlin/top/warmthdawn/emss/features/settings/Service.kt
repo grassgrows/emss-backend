@@ -65,11 +65,19 @@ class ImageService(
 ) {
 
 
-    suspend fun downloadImage(id: Long) {
+    suspend fun downloadImage(id: Long): Boolean {
         val image = settingService.getImage(id)
         if (!config.testing) {
-            downloadScheduler.startDownload(id, image)
+            return downloadScheduler.startDownload(id, image)
         }
+        return true
+    }
+
+    suspend fun cancelDownloadImage(id: Long): Boolean {
+        if (!config.testing) {
+            return downloadScheduler.cancelDownload(id)
+        }
+        return true
     }
 
     suspend fun getImageStatus(id: Long): ImageStatusVO {
@@ -80,10 +88,7 @@ class ImageService(
 
         if (result == null) {
             val image = settingService.getImage(id)
-            if (image.imageId == null) {
-                return ImageStatusVO(ImageStatus.Ready)
-            }
-            val status = DockerManager.inspectImage(image.imageId!!)
+            val status = DockerManager.inspectImage(image.imageId)
             return ImageStatusVO(
                 if (status == null) ImageStatus.Ready else ImageStatus.Downloaded
             )
