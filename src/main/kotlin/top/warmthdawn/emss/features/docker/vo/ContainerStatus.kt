@@ -8,7 +8,7 @@ package top.warmthdawn.emss.features.docker.vo
 enum class ContainerStatus {
     Running,
     Stopped,
-    Unknown
+    Unknown,
     /*
     Created,
     Running,
