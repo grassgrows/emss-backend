@@ -14,7 +14,7 @@ import java.util.*
 /**
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
  */
-//@Ignore
+@Ignore
 internal class DockerManagerTest {
     @Test
     fun pullImageTest() {
@@ -41,7 +41,7 @@ internal class DockerManagerTest {
     }
 
     @Test
-    fun test()
+    fun getTimeTest()
     {
         withTestServer {
             val service by application.inject<ContainerService>()

@@ -5,8 +5,10 @@ import com.github.dockerjava.api.model.Volume
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
+import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
@@ -84,11 +86,11 @@ class ServerService(
 
             val containerName = "emss_container_" + server.abbr
 
-            val bind = Bind("/data/$containerName)", Volume("/data"))
+            val bind = Bind(QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!.value+server.location,Volume("/data"))
             val cmd = listOf("/bin/sh","-c",server.startCommand)
             val image = QImage().id.eq(server.imageId).findOne()!!
             val id = ContainerService(db).createContainer(
-                containerName, image.imageId!!,
+                containerName, image.imageId,
                 server.hostPort, server.containerPort, bind, cmd
             )
             server.containerId = id
