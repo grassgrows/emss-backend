@@ -40,10 +40,7 @@ class ContainerService(private val db: Database) {
         val containerInfo = DockerManager.inspectContainer(containerId)
         if (containerInfo != null) {
             // 时间格式处理
-            print("**********"+containerInfo.createTime)
             val myDateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
-            print("**********"+myDateTimeFormatter.toString()+"****************/n")
-            print("**********"+LocalDateTime.parse(containerInfo.createTime, myDateTimeFormatter)+"****************/n")
             return LocalDateTime.parse(containerInfo.createTime, myDateTimeFormatter)
         } else {
             return null

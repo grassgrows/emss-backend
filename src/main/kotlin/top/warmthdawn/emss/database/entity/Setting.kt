@@ -16,7 +16,9 @@ import javax.persistence.Id
  */
 enum class SettingType {
     Name,
-    ServerRootDirectory
+    ServerRootDirectory,
+    MAX_FILE_SIZE,
+    TEMPORARY_FOLDER
 }
 
 @Entity
