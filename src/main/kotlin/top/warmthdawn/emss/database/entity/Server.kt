@@ -1,5 +1,8 @@
 package top.warmthdawn.emss.database.entity
 
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.VolumeBind
+import io.ebean.annotation.DbJsonB
 import java.time.LocalDateTime
 import javax.persistence.Entity
 
@@ -19,6 +22,10 @@ class Server(
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
     var lastStartDate: LocalDateTime? = null, //最后启动时间
     var imageId: Long,
-    var containerPort: Int, //Docker容器端口
-    var hostPort: Int, //主机端口
+//    var containerPort: Int, //Docker容器端口
+//    var hostPort: Int, //主机端口
+    @DbJsonB
+    var portBindings: Map<Int, Int>,  //端口映射
+    @DbJsonB
+    var volumeBind: Map<String,String> //目录映射
 ): BaseEntity()

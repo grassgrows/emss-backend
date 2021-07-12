@@ -1,9 +1,6 @@
 package top.warmthdawn.emss.features.docker
 
-import com.github.dockerjava.api.model.Bind
-import com.github.dockerjava.api.model.ExposedPort
-import com.github.dockerjava.api.model.PortBinding
-import com.github.dockerjava.api.model.Ports
+import com.github.dockerjava.api.model.*
 import io.ebean.Database
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.time.LocalDateTime
@@ -11,7 +8,7 @@ import java.time.format.DateTimeFormatter
 
 /**
  *
- * @author WarmthDawn
+ * @author WarmthDawn,takanashi
  * @since 2021-07-09
  */
 
@@ -19,14 +16,32 @@ class ContainerService(private val db: Database) {
 
     fun createContainer(
         containerName: String, imageName: String,
-        hostPortId: Int, exposedPortId: Int,
-        volumeBind: Bind, cmd: List<String>
+        portBindings: Map<Int,Int>,
+        volumeBind: Map<String,String>, command: String
     ): String? {
-        val exposedPort = ExposedPort(exposedPortId)
-        val binding = Ports.Binding(null, hostPortId.toString())
-        val portBinding = PortBinding(binding, exposedPort)
 
-        return DockerManager.createContainer(containerName, imageName, portBinding, volumeBind, cmd)
+        val portBindingList: MutableList<PortBinding> = mutableListOf()
+        for(hostPortId in portBindings.keys)
+        {
+            if(portBindings[hostPortId]!=null) {
+                portBindingList.add(
+                    PortBinding(
+                        Ports.Binding(
+                            null, hostPortId.toString()
+                        ),
+                        ExposedPort(portBindings[hostPortId]!!)
+                    )
+                )
+            }
+        }
+
+        val volumeBindList: MutableList<Bind> = mutableListOf()
+        for(hostVolume in volumeBind.keys)
+        {
+            volumeBindList.add(Bind(hostVolume,Volume(volumeBind[hostVolume])))
+        }
+        val cmd = mutableListOf("/bin/sh", "-c",command)
+        return DockerManager.createContainer(containerName, imageName, portBindingList, volumeBindList, cmd)
     }
 
     suspend fun getContainerName(containerId: String?): String {

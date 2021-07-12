@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.server.vo
 
+import io.ebean.annotation.DbJsonB
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.time.LocalDateTime
 import javax.persistence.Entity
@@ -20,8 +21,12 @@ data class ServerVO(
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
     var lastStartDate: LocalDateTime? = null, //最后启动时间
     var imageId: Long,
-    var containerPort: Int, //Docker容器端口
-    var hostPort: Int, //主机端口
+//    var containerPort: Int, //Docker容器端口
+//    var hostPort: Int, //主机端口
+    @DbJsonB
+    var portBindings: Map<Int,Int>,  //端口映射
+    @DbJsonB
+    var volumeBind: Map<String,String>, //目录映射
     var containerId: String?, //Docker容器ID
     var containerName: String, //Docker容器名
     var containerCreateTime: LocalDateTime?, //Docker容器创建时间

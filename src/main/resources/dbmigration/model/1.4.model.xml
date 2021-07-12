@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
+    <changeSet type="apply">
+        <alterColumn columnName="port_bindings" tableName="server" currentType="jsonb" notnull="false" currentNotnull="true"/>
+        <alterColumn columnName="volume_bind" tableName="server" currentType="jsonb" notnull="false" currentNotnull="true"/>
+    </changeSet>
+    <changeSet type="pendingDrops">
+        <dropTable name="server_port_bindings" sequenceCol="id"/>
+        <dropTable name="server_volume_bind" sequenceCol="id"/>
+    </changeSet>
+</migration>

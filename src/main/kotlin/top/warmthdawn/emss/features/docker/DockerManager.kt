@@ -1,11 +1,9 @@
 package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.PullImageResultCallback
-import com.github.dockerjava.api.model.Bind
-import com.github.dockerjava.api.model.HostConfig
-import com.github.dockerjava.api.model.PortBinding
-import com.github.dockerjava.api.model.PullResponseItem
+import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
@@ -15,7 +13,13 @@ import top.warmthdawn.emss.features.docker.dto.ImageInfo
 import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import java.io.Closeable
+import java.io.InputStream
+import java.io.OutputStream
+import java.sql.Timestamp
 import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 
 /**
  * @author takanashi
@@ -159,14 +163,12 @@ object DockerManager {
     // 创建容器
     fun createContainer(
         containerName: String, imageName: String,
-        portBinding: PortBinding,
-        volumeBind: Bind, cmd: List<String>
+        portBinding: MutableList<PortBinding>,
+        volumeBind: MutableList<Bind>, cmd: MutableList<String>,
     ): String? {
 
         val container = dockerClient.createContainerCmd(imageName)
             .withName(containerName)
-            .withName(containerName)
-            .withExposedPorts()
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withBinds(volumeBind).withPortBindings(portBinding)
@@ -236,15 +238,16 @@ object DockerManager {
                 container.name,
                 container.created,
                 container.imageId,
-                when(container.state.status)
-                {
+                when (container.state.status) {
                     "running" -> ContainerStatus.Running
                     "created",
-                    "exited" -> ContainerStatus.Stopped
+                    "exited",
+                    -> ContainerStatus.Stopped
                     "paused",
                     "restarting",
                     "removing",
-                    "dead" -> ContainerStatus.Unknown
+                    "dead",
+                    -> ContainerStatus.Unknown
                     else -> ContainerStatus.Unknown
                 }
             )
@@ -281,8 +284,28 @@ object DockerManager {
         } catch (e: Exception) {
             false
         }
-
     }
+
+
+    // 获取容器输入输出流
+    fun attachContainer(containerId: String, inputStream: InputStream, outputStream: OutputStream): ResultCallback.Adapter<Frame>? {
+
+        return dockerClient
+            .attachContainerCmd(containerId)
+            .withStdOut(true)
+            .withStdErr(true)
+            .withFollowStream(true)
+            .withStdIn(inputStream)
+            .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
+                override fun onNext(frame: Frame?) {
+                    super.onNext(frame)
+                    if (frame != null && (frame.streamType == StreamType.STDOUT || frame.streamType == StreamType.STDERR))
+                        outputStream.write(frame.payload)
+                }
+            }).awaitCompletion()
+    }
+
+
 }
 
 
