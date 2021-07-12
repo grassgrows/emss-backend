@@ -27,9 +27,9 @@ class ServerService(
     private val config: AppConfig,
     private val containerService: ContainerService,
 ) {
+
     suspend fun getServerInfo(): List<ServerVO> {
         val list: MutableList<ServerVO> = mutableListOf()
-
         for (row in QServer(db).findList()) {
             val serverVO = ServerVO(
                 row.id!!,
@@ -44,12 +44,13 @@ class ServerService(
                 row.containerPort,
                 row.hostPort,
                 row.containerId,
-                ContainerService(db).getContainerName(row.containerId),
-                ContainerService(db).getContainerCreateTime(row.containerId),
-                ContainerService(db).getContainerStatusEnum(row.containerId),
+                containerService.getContainerName(row.containerId),
+                containerService.getContainerCreateTime(row.containerId),
+                containerService.getContainerStatusEnum(row.containerId),
             )
             list.add(serverVO)
         }
+
         return list
     }
 

@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
@@ -9,16 +10,27 @@ val h2_version: String by project
 
 plugins {
     application
+    id("com.github.johnrengelman.shadow") version "7.0.0"
     kotlin("jvm") version "1.5.20"
     id("io.ebean") version "12.9.1"
     kotlin("kapt") version "1.5.20-RC"
+
 //    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.20"
 }
 
 group = "top.warmthdawn.emss"
-version = "0.1.2"
+version = "0.2.1"
 application {
     mainClass.set("top.warmthdawn.emss.ApplicationKt")
+}
+
+tasks.named<ShadowJar>("shadowJar") {
+    archiveBaseName.set("emss-backend-all")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+    manifest {
+        attributes(mapOf("Main-Class" to "top.warmthdawn.emss.ApplicationKt"))
+    }
 }
 
 repositories {
@@ -62,5 +74,6 @@ dependencies {
 }
 
 val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
-
+val compileTestKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
 compileKotlin.kotlinOptions.jvmTarget = "1.8"
+compileTestKotlin.kotlinOptions.jvmTarget = "1.8"

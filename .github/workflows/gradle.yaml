@@ -11,7 +11,7 @@ on:
     branches: [ release ]
 
 jobs:
-  build:
+  build-and-deploy:
 
     runs-on: ubuntu-latest
 
@@ -31,12 +31,12 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.KEY }}
           ARGS: "-rltgoDzvO"
-          SOURCE: "build/install/emss-backend/"
+          SOURCE: "build/libs/emss-backend-all.jar"
           REMOTE_HOST: ${{ secrets.HOST }}
           REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: "~/emss/emss-backend/"
+          TARGET: "~/emss/"
 
-      - name: Start Server
+      - name: Restart Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -44,5 +44,7 @@ jobs:
           key: ${{ secrets.KEY }}
           script: |
             source /etc/profile
-            cd ~/emss
-            ./install.sh
+            cd ~/emss/run
+            ./apprun.sh stop emss-backend-all.jar
+            mv ../emss-backend-all.jar ./
+            ./apprun.sh start emss-backend-all.jar
