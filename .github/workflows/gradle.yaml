@@ -24,7 +24,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - run: chmod +x gradlew
-      - run: ./gradlew installDist
+      - run: ./gradlew shadowJar
 
       - name: Upload Files
         uses: easingthemes/ssh-deploy@main
