@@ -4,6 +4,9 @@ import com.github.dockerjava.api.model.*
 import io.ebean.config.JsonConfig
 import org.junit.Ignore
 import org.junit.Test
+import org.koin.java.KoinJavaComponent.inject
+import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.utils.withTestServer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -11,7 +14,7 @@ import java.util.*
 /**
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
  */
-@Ignore
+//@Ignore
 internal class DockerManagerTest {
     @Test
     fun pullImageTest() {
@@ -35,6 +38,15 @@ internal class DockerManagerTest {
                 containerName, "ubuntu", portBinding, bind, cmd
             )
         )
+    }
+
+    @Test
+    fun test()
+    {
+        withTestServer {
+            val service by application.inject<ContainerService>()
+            service.getContainerCreateTime("testContainer007")
+        }
     }
 
     @Test

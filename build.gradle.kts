@@ -60,3 +60,7 @@ dependencies {
     testImplementation("io.ebean:ebean-test:$ebean_version")
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
 }
+
+val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
+
+compileKotlin.kotlinOptions.jvmTarget = "1.8"

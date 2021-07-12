@@ -5,6 +5,8 @@ import io.ebean.Database
 import io.ebean.annotation.TxIsolation
 import io.ktor.config.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.module
@@ -30,7 +32,7 @@ fun MapApplicationConfig.createConfigForTesting() {
 }
 
 
-fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: TestApplicationEngine.() -> Unit) {
+fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: suspend TestApplicationEngine.() -> Unit) {
     withTestApplication(
         {
             (environment.config as MapApplicationConfig).apply {
@@ -41,7 +43,9 @@ fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: Tes
             val db by application.inject<Database>()
             db.beginTransaction(TxIsolation.SERIALIZABLE)
             try {
-                block()
+                runBlocking {
+                    block()
+                }
             }finally {
                 db.rollbackTransaction()
             }
