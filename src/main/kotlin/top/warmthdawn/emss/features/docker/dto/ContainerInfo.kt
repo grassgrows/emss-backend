@@ -7,7 +7,7 @@ import top.warmthdawn.emss.features.docker.ContainerStatus
  * @since 2021-07-09
  */
 
-data class ContainerDTO(
+data class ContainerInfo(
     val id: String,         // 容器64位id
     val name: String,       // 容器名称
     val createTime: String, // 创建时间
