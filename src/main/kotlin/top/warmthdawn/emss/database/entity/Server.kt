@@ -2,6 +2,7 @@ package top.warmthdawn.emss.database.entity
 
 import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.VolumeBind
+import io.ebean.annotation.DbDefault
 import io.ebean.annotation.DbJsonB
 import java.time.LocalDateTime
 import javax.persistence.Entity
@@ -26,7 +27,7 @@ class Server(
 //    var hostPort: Int, //主机端口
     var workingDir: String,  //工作目录
     @DbJsonB
-    var portBindings: Map<Int, Int>,  //额外端口映射
+    var portBindings: Map<Int, Int> = emptyMap(),  //额外端口映射
     @DbJsonB
-    var volumeBind: Map<String,String> //目录映射
+    var volumeBind: Map<String,String> = emptyMap() //目录映射
 ): BaseEntity()

@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.file
 
 import io.ktor.util.*
+import org.h2.store.fs.FilePath
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
@@ -20,7 +21,7 @@ import kotlin.math.floor
  * @author sunday7994
  * @date 2021/7/12
  */
-object FileManager{
+object FileManager {
     val temporaryFolder: String = ""
     val maxFileSize: Int = -1
 
@@ -173,39 +174,8 @@ object FileManager{
         }
     }
 
-    fun processPath(input: String): Path{
 
-        var uri = URI(input).normalize().path
-
-        if (uri == "/") {
-            uri = "/root"
-        }
-
-        uri = if (uri.startsWith("/")) uri.substring(1) else uri
-
-        when (val type = uri.substringBefore('/')) {
-            "root" -> {
-                val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
-                val relativePath = type.substringAfter("root/")
-                //用户权限
-                val serverLocations = arrayOf("sky/et2", "timw4")
-                if (serverLocations.any { relativePath.startsWith(it) }) {
-                    return root.combineSafe(Path(relativePath)).toPath()
-                } else {
-                    throw IllegalAccessException("Insufficient permission level")
-                }
-            }
-//            "backup" -> {
-//
-//            }
-            else -> {
-                throw IllegalAccessException("Path format error")
-            }
-        }
-    }
-
-    fun getFiles(input: String): Sequence<File> {
-        val filePath = processPath(input)
+    fun getFiles(filePath: Path): Sequence<File> {
         val fileTree: FileTreeWalk = File(filePath.toString()).walk()
         return fileTree.maxDepth(1)
     }
@@ -218,5 +188,19 @@ object FileManager{
 //            .asIterable().toList()
 //    } 不确定是否需要这个方法
 
+    fun createDirs(dirsPath: Path) {
+        var file = File(dirsPath.toString())
+        if (!file.isFile && !file.isDirectory) {
+            file.mkdirs()
+        } else {
+            val i = 1
+            while (file.isFile) {
+                val newPath = "$dirsPath($i++)"
+                file = File(newPath)
+            }
+            file.mkdirs()
+        }
+
+    }
 
 }

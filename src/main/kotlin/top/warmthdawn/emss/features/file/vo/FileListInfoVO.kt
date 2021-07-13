@@ -9,7 +9,7 @@ import java.time.LocalDateTime
  * @date 2021/7/13
  */
 
-data class FilesInfoVO(
+data class FileListInfoVO(
     val fileName: String,
     val filePath: String,
     val size: Long,

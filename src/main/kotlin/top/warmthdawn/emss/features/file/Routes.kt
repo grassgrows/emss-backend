@@ -22,7 +22,7 @@ fun Route.fileEndpoint() {
         route("/upload"){
             post{
                 val file = call.receiveMultipart()
-                val uri = call.receive<String>()
+//                val uri = call.receive<String>()
                 //val info = call.receive<FileChunkInfoDTO>()
                 fileService.uploadFile(file)
                 R.ok()
@@ -38,6 +38,14 @@ fun Route.fileEndpoint() {
                 R.ok(fileService.getFileList(filePath))
             }
         }
+        route("/create"){
+            post("/create/{dirsPath}"){
+                val dirsPath = call.parameters["dirsPath"]!!
+                fileService.createDirs(dirsPath)
+            }
+
+        }
+
 
 
     }

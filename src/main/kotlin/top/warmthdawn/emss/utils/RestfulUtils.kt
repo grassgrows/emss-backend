@@ -57,6 +57,16 @@ enum class Code(
     BadRequest("A110"),
 
     /**
+     * 当前请求用户权限等级不足
+     */
+    InsufficientPermissionLevel("A111"),
+
+    /**
+     * 请求文件路径格式不对
+     */
+    WrongPathFormat("A112"),
+
+    /**
      * 请求404
      */
     NotFound("A120"),
