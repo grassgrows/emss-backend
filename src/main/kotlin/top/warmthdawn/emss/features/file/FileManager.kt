@@ -1,12 +1,15 @@
 package top.warmthdawn.emss.features.file
 
-import io.ktor.http.content.*
+import io.ktor.util.*
+import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.file.vo.FileChunkInfoVO
 import top.warmthdawn.emss.features.file.vo.FileChunkStatus
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
+import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.math.floor
@@ -169,4 +172,51 @@ object FileManager{
             }
         }
     }
+
+    fun processPath(input: String): Path{
+
+        var uri = URI(input).normalize().path
+
+        if (uri == "/") {
+            uri = "/root"
+        }
+
+        uri = if (uri.startsWith("/")) uri.substring(1) else uri
+
+        when (val type = uri.substringBefore('/')) {
+            "root" -> {
+                val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+                val relativePath = type.substringAfter("root/")
+                //用户权限
+                val serverLocations = arrayOf("sky/et2", "timw4")
+                if (serverLocations.any { relativePath.startsWith(it) }) {
+                    return root.combineSafe(Path(relativePath)).toPath()
+                } else {
+                    throw IllegalAccessException("Insufficient permission level")
+                }
+            }
+//            "backup" -> {
+//
+//            }
+            else -> {
+                throw IllegalAccessException("Path format error")
+            }
+        }
+    }
+
+    fun getFiles(input: String): Sequence<File> {
+        val filePath = processPath(input)
+        val fileTree: FileTreeWalk = File(filePath.toString()).walk()
+        return fileTree.maxDepth(1)
+    }
+
+
+//    fun getALLFiles(input: String): List<File> {
+//        val filePath = FileManager.processPath(input)
+//        val fileTree: FileTreeWalk = File(filePath.toString()).walk()
+//        return fileTree.maxDepth(Int.MAX_VALUE)
+//            .asIterable().toList()
+//    } 不确定是否需要这个方法
+
+
 }
