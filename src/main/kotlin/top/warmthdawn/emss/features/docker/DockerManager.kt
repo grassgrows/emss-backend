@@ -9,17 +9,12 @@ import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
-import top.warmthdawn.emss.features.docker.dto.ImageInfo
-import top.warmthdawn.emss.features.docker.vo.ContainerStatus
+import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
-import java.sql.Timestamp
 import java.time.Duration
-import java.time.Instant
-import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
 
 /**
  * @author takanashi
@@ -209,17 +204,17 @@ object DockerManager {
 
 
     // 获取镜像信息
-    fun inspectImage(imageId: String): ImageInfo? {
+    fun inspectImage(imageId: String): ImageMoreInfo? {
 
         return try {
             val image = dockerClient
                 .inspectImageCmd(imageId)
                 .exec()
 
-            ImageInfo(
+            ImageMoreInfo(
                 image.id,
                 image.created,
-                image.size
+                image.size,
             )
         } catch (e: Exception) {
             null

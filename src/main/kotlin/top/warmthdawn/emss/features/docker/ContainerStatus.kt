@@ -1,4 +1,4 @@
-package top.warmthdawn.emss.features.docker.vo
+package top.warmthdawn.emss.features.docker
 
 /**
  * @author takanashi

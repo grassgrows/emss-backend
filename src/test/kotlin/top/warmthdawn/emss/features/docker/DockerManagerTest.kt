@@ -21,7 +21,7 @@ import java.util.*
 /**
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
  */
-/*
+
 @Ignore
 internal class DockerManagerTest {
     @Test
@@ -43,7 +43,7 @@ internal class DockerManagerTest {
         //if()
         print(
             DockerManager.createContainer(
-                containerName, "ubuntu", portBinding, bind, cmd
+                containerName, "ubuntu", portBinding, bind,"/data/", cmd
             )
         )
     }
@@ -131,4 +131,4 @@ internal class DockerManagerTest {
         DockerManager.attachContainer("testContainer007", System.`in`, System.out)
     }
 
-}*/
+}

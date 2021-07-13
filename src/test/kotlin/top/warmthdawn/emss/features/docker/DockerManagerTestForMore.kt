@@ -3,16 +3,17 @@ package top.warmthdawn.emss.features.docker;
 import com.github.dockerjava.api.model.*
 import org.junit.Ignore
 import org.junit.Test;
-import top.warmthdawn.emss.features.docker.vo.ContainerStatus
-import java.io.ByteArrayInputStream
 
+/**
+ * @author takanashi
+ * @since 2021-07-12
+ */
 
-
-
-
-
+/**
+ * Docker需要客户端参与不方便进行单元测试。Ignore掉
+ */
 @Ignore
-internal class MCTest {
+internal class DockerManagerTestForMore {
     @Test
     fun windowsCreateContainerTest() {
         val containerName = "testContainer010"
@@ -35,11 +36,5 @@ internal class MCTest {
         DockerManager.createContainer(containerName, "openjdk:8", portBinding, bind, "/data", cmd)
     }
 
-    @Test
-    fun inputTest()
-    {
-        val c = readLine()
-        print(c)
-    }
 
 }

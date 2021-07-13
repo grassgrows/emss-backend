@@ -1,7 +1,23 @@
-import com.github.dockerjava.api.model.*
-import top.warmthdawn.emss.features.docker.DockerManager
+package top.warmthdawn.emss.features.docker
 
-fun main() {
+import com.github.dockerjava.api.model.*
+import io.ktor.util.*
+import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QSetting
+import top.warmthdawn.emss.features.file.FileService
+import java.io.File
+import kotlin.io.path.Path
+
+/**
+ * @author takanashi
+ * @since 2021-07-13
+ */
+
+/**
+ * 由于单元测试无法测试流输入，故另新建文件，用main函数测试
+ */
+
+fun mmain() {
     val containerName = "testContainerMC"
     val bind = mutableListOf(Bind("E:\\EMSS\\$containerName\\minecraft_server.1.12.2", Volume("/data/")))
     val cmd = mutableListOf("/bin/sh", "-c", "java -jar /data/forge-1.12.2-14.23.5.2855.jar")
@@ -16,10 +32,16 @@ fun main() {
     }
 
     DockerManager.startContainer(dockerId)
-
-//        val buffer = ByteArray(1024 * 1024)
-//        val input = ByteArrayInputStream(buffer)
-
     DockerManager.attachContainer(dockerId, System.`in`, System.out)
 
+}
+
+fun main()
+{
+    val path = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+    print(path.toString()+"\n")
+    val path2 = Path("/asdad")
+    print(path2.toString()+"\n")
+    val rootPath = path.combineSafe(path2)
+    print(rootPath.toString()+"\n")
 }

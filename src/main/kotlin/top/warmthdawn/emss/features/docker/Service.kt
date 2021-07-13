@@ -2,7 +2,6 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
 import io.ebean.Database
-import top.warmthdawn.emss.features.docker.vo.ContainerStatus
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -67,10 +66,9 @@ class ContainerService(private val db: Database) {
         //return containerInfo?.imageId ?: ""
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.imageId
             ?: "NotFindContainer" else "NotFindId"
-
     }
 
-    suspend fun getContainerStatusEnum(containerId: String?): ContainerStatus {
+    suspend fun getContainerStatus(containerId: String?): ContainerStatus {
         //val containerInfo = DockerManager.inspectContainer(containerId)
         //return containerInfo?.status
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.status
@@ -78,19 +76,4 @@ class ContainerService(private val db: Database) {
 
     }
 
-    /*
-    suspend fun getContainerStatusText(containerId: String): String {
-        val containerInfo = DockerManager.inspectContainer(containerId)
-        return when (containerInfo?.status) {
-            ContainerStatus.Created -> "已创建"
-            ContainerStatus.Running -> "运行中"
-            ContainerStatus.Paused -> "已暂停"
-            ContainerStatus.Restarting -> "重启中"
-            ContainerStatus.Removing -> "删除中"
-            ContainerStatus.Exited -> "已关闭"
-            ContainerStatus.Dead -> "已崩溃"
-            else -> "状态未知"
-        }
-    }
-    */
 }
