@@ -17,6 +17,7 @@ data class ServerInfoDTO(
     var startCommand: String, //服务器启动命令
 //    var containerPort: Int, //Docker容器端口
 //    var hostPort: Int, //主机端口
+    var workingDir: String,  //工作目录
     var portBindings: Map<Int,Int>,  //端口映射
     var volumeBind: Map<String,String>, //目录映射
     var imageId: Long, //DockerImageId

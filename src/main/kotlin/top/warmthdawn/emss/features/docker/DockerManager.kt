@@ -164,7 +164,7 @@ object DockerManager {
     fun createContainer(
         containerName: String, imageName: String,
         portBinding: MutableList<PortBinding>,
-        volumeBind: MutableList<Bind>, cmd: MutableList<String>,
+        volumeBind: MutableList<Bind>,workingDir: String, cmd: MutableList<String>,
     ): String? {
 
         val container = dockerClient.createContainerCmd(imageName)
@@ -174,6 +174,9 @@ object DockerManager {
                     .withBinds(volumeBind).withPortBindings(portBinding)
             )
             .withCmd(cmd)
+            .withWorkingDir(workingDir)
+            .withAttachStdin(true)
+            .withStdinOpen(true)
             .exec()
 
         return container.id
@@ -294,13 +297,16 @@ object DockerManager {
             .attachContainerCmd(containerId)
             .withStdOut(true)
             .withStdErr(true)
-            .withFollowStream(true)
             .withStdIn(inputStream)
+            .withFollowStream(true)
             .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
                 override fun onNext(frame: Frame?) {
                     super.onNext(frame)
                     if (frame != null && (frame.streamType == StreamType.STDOUT || frame.streamType == StreamType.STDERR))
                         outputStream.write(frame.payload)
+                    else{
+                        print(frame?.payload)
+                    }
                 }
             }).awaitCompletion()
     }

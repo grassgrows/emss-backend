@@ -16,14 +16,14 @@ class ContainerService(private val db: Database) {
 
     fun createContainer(
         containerName: String, imageName: String,
-        portBindings: Map<Int,Int>,
-        volumeBind: Map<String,String>, command: String
+        portBindings: Map<Int, Int>,
+        volumeBind: Map<String, String>,
+        workingDir: String, command: String,
     ): String? {
 
         val portBindingList: MutableList<PortBinding> = mutableListOf()
-        for(hostPortId in portBindings.keys)
-        {
-            if(portBindings[hostPortId]!=null) {
+        for (hostPortId in portBindings.keys) {
+            if (portBindings[hostPortId] != null) {
                 portBindingList.add(
                     PortBinding(
                         Ports.Binding(
@@ -36,18 +36,18 @@ class ContainerService(private val db: Database) {
         }
 
         val volumeBindList: MutableList<Bind> = mutableListOf()
-        for(hostVolume in volumeBind.keys)
-        {
-            volumeBindList.add(Bind(hostVolume,Volume(volumeBind[hostVolume])))
+        for (hostVolume in volumeBind.keys) {
+            volumeBindList.add(Bind(hostVolume, Volume(volumeBind[hostVolume])))
         }
-        val cmd = mutableListOf("/bin/sh", "-c",command)
-        return DockerManager.createContainer(containerName, imageName, portBindingList, volumeBindList, cmd)
+        val cmd = mutableListOf("/bin/sh", "-c", command)
+        return DockerManager.createContainer(containerName, imageName, portBindingList, volumeBindList, workingDir, cmd)
     }
 
     suspend fun getContainerName(containerId: String?): String {
         //val containerInfo = DockerManager.inspectContainer(containerId)
         //return containerInfo?.name ?: "Error"
-        return if (containerId != null) DockerManager.inspectContainer(containerId)?.name ?: "NotFindContainer" else "NotFindId"
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.name
+            ?: "NotFindContainer" else "NotFindId"
     }
 
     suspend fun getContainerCreateTime(containerId: String?): LocalDateTime? {
@@ -65,14 +65,16 @@ class ContainerService(private val db: Database) {
     suspend fun getContainerImageId(containerId: String?): String {
         //val containerInfo = DockerManager.inspectContainer(containerId)
         //return containerInfo?.imageId ?: ""
-        return if (containerId != null) DockerManager.inspectContainer(containerId)?.imageId ?: "NotFindContainer" else "NotFindId"
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.imageId
+            ?: "NotFindContainer" else "NotFindId"
 
     }
 
     suspend fun getContainerStatusEnum(containerId: String?): ContainerStatus {
         //val containerInfo = DockerManager.inspectContainer(containerId)
         //return containerInfo?.status
-        return if (containerId != null) DockerManager.inspectContainer(containerId)?.status ?: ContainerStatus.Unknown else ContainerStatus.Unknown
+        return if (containerId != null) DockerManager.inspectContainer(containerId)?.status
+            ?: ContainerStatus.Unknown else ContainerStatus.Unknown
 
     }
 

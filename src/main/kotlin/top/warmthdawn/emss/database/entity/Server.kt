@@ -24,8 +24,9 @@ class Server(
     var imageId: Long,
 //    var containerPort: Int, //Docker容器端口
 //    var hostPort: Int, //主机端口
+    var workingDir: String,  //工作目录
     @DbJsonB
-    var portBindings: Map<Int, Int>,  //端口映射
+    var portBindings: Map<Int, Int>,  //额外端口映射
     @DbJsonB
     var volumeBind: Map<String,String> //目录映射
 ): BaseEntity()

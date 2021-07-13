@@ -36,8 +36,9 @@ internal class ServerTest {
                     abbr = "gl",
                     location = "guilong",
                     imageId = 1,
+                    workingDir = "/data/",
                     portBindings = mapOf(522 to 522),
-                    volumeBind = mapOf("~/emss/server001" to "/data"),
+                    volumeBind = mapOf(),
                     startCommand = "java -jar forge-2847-universal.jar"
                 )
             )
@@ -48,8 +49,9 @@ internal class ServerTest {
                     abbr = "szy",
                     location = "sun",
                     imageId = 2,
+                    workingDir = "/data/",
                     portBindings = mapOf(544 to 544),
-                    volumeBind = mapOf("~/emss/server002/" to "/","~/emss/server002xx/" to "data"),
+                    volumeBind = mapOf(),
                     startCommand = "bash start.sh"
                 )
             )
@@ -97,8 +99,9 @@ internal class ServerUpdateTest {
                     abbr = "qwq",
                     location = "qwq",
                     startCommand = "echo hello world",
+                    workingDir = "/data/",
                     portBindings = mapOf(666 to 666),
-                    volumeBind = mapOf("~/emss/server003/" to "/data/"),
+                    volumeBind = mapOf(),
                     imageId = 1
                 )
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
