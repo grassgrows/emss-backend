@@ -16,3 +16,13 @@ enum class PathExceptionMsg{
     INSUFFICIENT_PERMISSION_LEVEL,
     WRONG_PATH_FORMAT
 }
+
+class FileException(
+    val fileExceptionMsg: FileExceptionMsg
+):Exception(fileExceptionMsg.toString()){
+}
+
+enum class FileExceptionMsg{
+    FILE_NOT_FOUND,
+    INVALID_FILE_NAME
+}

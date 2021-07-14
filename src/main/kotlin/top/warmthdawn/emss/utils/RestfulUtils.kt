@@ -67,6 +67,16 @@ enum class Code(
     WrongPathFormat("A112"),
 
     /**
+     * 请求文件未找到
+     */
+    FileNotFound("A113"),
+
+    /**
+     * 请求文件更名为空
+     */
+    InvalidFileName("A114"),
+
+    /**
      * 请求404
      */
     NotFound("A120"),
@@ -77,6 +87,7 @@ enum class Code(
      * Image下载失败
      */
     ImageDownloadFailed("B112"),
+
     //系统错误
     /**
      * 未知系统错误

@@ -1,12 +1,15 @@
 package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
+import io.ktor.http.*
+import io.ktor.http.ContentDisposition.Companion.File
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
+import java.io.File
 
 
 /**
@@ -33,18 +36,68 @@ fun Route.fileEndpoint() {
             }
         }
         route("/list"){
-            get("/list/{filePath}") {
+            get("/{filePath}") {
                 val filePath = call.parameters["filePath"]!!
                 R.ok(fileService.getFileList(filePath))
             }
         }
         route("/create"){
-            post("/create/{dirsPath}"){
+            post("/{dirsPath}"){
                 val dirsPath = call.parameters["dirsPath"]!!
                 fileService.createDirs(dirsPath)
             }
-
         }
+        route("/download"){
+            get("/{filePath}"){
+                val filePath = call.parameters["filePath"]!!
+                val file = File(fileService.processPath(filePath).toString())
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)
+                        .toString()
+                )
+                call.respondFile(file)
+            }
+        }
+        route("/rename"){
+            post("/{filePath}"){
+                val filePath = call.parameters["filePath"]!!
+                val newFileName = call.receiveText()
+                fileService.renameFile(filePath, newFileName)
+                R.ok()
+            }
+        }
+        route("/delete"){
+            post(){
+                val filePaths = call.receive<Array<String>>()
+                filePaths.forEach {
+                    fileService.deleteFile(it)
+                }
+                R.ok()
+            }
+        }
+        route("/cut"){
+            post("/{target}"){
+                val target = call.parameters["target"]!!
+                val filePaths = call.receive<Array<String>>()
+                filePaths.forEach {
+                    fileService.cutFile(it, target)
+                }
+                R.ok()
+            }
+        }
+        route("/copy"){
+            post("/{target}"){
+                val target = call.parameters["target"]!!
+                val filePaths = call.receive<Array<String>>()
+                filePaths.forEach {
+                    fileService.copyFile(it, target)
+                }
+                R.ok()
+            }
+        }
+        route("/search"){}
+
 
 
 

@@ -42,7 +42,7 @@ class FileService {
                 val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
                 val relativePath = uri.substringAfter("root/")
                 //用户权限
-                val serverLocations = arrayOf("sky/et2", "timw4")
+//               val serverLocations = arrayOf("sky/et2", "timw4")
 //                if (serverLocations.any { relativePath.startsWith(it) }) {
 //                    return root.combineSafe(Path(relativePath)).toPath()
 //                } else {
@@ -87,8 +87,8 @@ class FileService {
         return FileManager.postFile(info, totalSize)
     }
 
-    suspend fun getFileList(input: String): List<FileListInfoVO> {
-        val filePath: Path = processPath(input)
+    suspend fun getFileList(path: String): List<FileListInfoVO> {
+        val filePath: Path = processPath(path)
         val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
         val result: MutableList<FileListInfoVO> = mutableListOf()
         FileManager.getFiles(filePath).forEach {
@@ -96,7 +96,8 @@ class FileService {
                 it.name,
                 root.relativize(it.toPath()).toString(),
                 it.length(), //in bytes
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault())
+                LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
+                it.isDirectory
             )
             result.add(info)
             yield()
@@ -104,13 +105,37 @@ class FileService {
         return result
     }
 
-    suspend fun createDirs(input: String){
-        val dirsPath = processPath(input)
+    suspend fun createDirs(path: String) {
+        val dirsPath = processPath(path)
         FileManager.createDirs(dirsPath)
     }
 
-    suspend fun renameFile(input: String){
-        val file = File(processPath(input).toString())
+    suspend fun renameFile(path: String, name: String) {
+        val filePath = processPath(path)
+        val file = filePath.toFile()
+        if (!file.isFile)
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        name.trim()
+        if ("" == name)
+            throw FileException(FileExceptionMsg.INVALID_FILE_NAME)
+        file.renameTo(filePath.parent.combineSafe(Path("/$name")))
+    }
+
+    suspend fun copyFile(path: String, newPath: String) {
+        val file = processPath(path).toFile()
+        val newFile = processPath(newPath).toFile()
+        file.copyRecursively(newFile)
+    }
+
+    suspend fun deleteFile(path: String) {
+        val file = processPath(path).toFile()
+        file.deleteRecursively()
+    }
+
+    suspend fun cutFile(path: String, newPath: String){
+        copyFile(path, newPath)
+        yield()
+        deleteFile(path)
     }
 
 }

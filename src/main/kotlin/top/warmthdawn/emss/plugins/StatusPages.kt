@@ -3,6 +3,8 @@ package top.warmthdawn.emss.plugins
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import top.warmthdawn.emss.features.file.FileException
+import top.warmthdawn.emss.features.file.FileExceptionMsg
 import top.warmthdawn.emss.features.file.PathException
 import top.warmthdawn.emss.features.file.PathExceptionMsg
 import top.warmthdawn.emss.utils.Code
@@ -35,6 +37,20 @@ fun Application.configureStatusPages() {
 
             }
         }
+
+        exception<FileException> {
+            when(it.fileExceptionMsg) {
+                FileExceptionMsg.FILE_NOT_FOUND->{
+                    R.error(Code.FileNotFound, "您访问的文件未找到")
+                    call.response.status(HttpStatusCode.NotFound)
+                }
+                FileExceptionMsg.INVALID_FILE_NAME->{
+                    R.error(Code.InvalidFileName, "您输入的文件名为空")
+                    call.response.status(HttpStatusCode.NotFound)
+                }
+            }
+        }
+
 
         status(HttpStatusCode.NotFound) {
             R.error(Code.NotFound, "您请求的页面不存在")
