@@ -6,6 +6,7 @@ import com.github.dockerjava.api.command.PullImageResultCallback
 import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
+import com.github.dockerjava.core.InvocationBuilder.AsyncResultCallback
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
@@ -15,6 +16,7 @@ import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.Duration
+
 
 /**
  * @author takanashi
@@ -255,6 +257,47 @@ object DockerManager {
 
     }
 
+    // 监控状态
+    fun stats(containerId: String)
+    {
+        val callback = AsyncResultCallback<Statistics>()
+        dockerClient
+            .statsCmd(containerId)
+            .exec<AsyncResultCallback<Statistics>>(object: AsyncResultCallback<Statistics>(){
+                override fun onNext(statistics: Statistics?) {
+                    if(statistics!=null){
+                        print("pidsStats current: "+statistics.pidsStats.current+"\n")
+                        for(net in statistics.networks!!.keys)
+                        {
+                            print("rxBytes: "+statistics.networks!![net]!!.rxBytes+"\n")      // √
+                            print("rxDropped: "+statistics.networks!![net]!!.rxDropped+"\n")
+                            print("rxErrors: "+statistics.networks!![net]!!.rxErrors+"\n")
+                            print("rxPackets: "+statistics.networks!![net]!!.rxPackets+"\n")
+                            print("txBytes: "+statistics.networks!![net]!!.txBytes+"\n")      // √
+                            print("txDropped: "+statistics.networks!![net]!!.txDropped+"\n")
+                            print("txErrors: "+statistics.networks!![net]!!.txErrors+"\n")
+                            print("txPackets: "+statistics.networks!![net]!!.txPackets+"\n")
+                        }
+
+                        print("used memory: "+ (statistics.memoryStats.usage!! - statistics.memoryStats.stats!!.cache!!)+"\n")  // √
+                        print("available memory : "+ statistics.memoryStats.limit+"\n")     // √
+
+                        print("Cpu total usage: "+ statistics.cpuStats.cpuUsage!!.totalUsage+"\n")
+                        print("pre Cpu total usage: "+ statistics.preCpuStats.cpuUsage!!.totalUsage+"\n")
+                        print("system Cpu usage: "+ statistics.cpuStats.systemCpuUsage+"\n")
+                        print("pre system Cpu usage: "+ statistics.preCpuStats.systemCpuUsage+"\n")
+                        print("online cpus: "+ statistics.cpuStats.onlineCpus+"\n")
+                        print("cpu usage %: "+
+                                (statistics.cpuStats.cpuUsage!!.totalUsage!! - statistics.preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                / (statistics.cpuStats.systemCpuUsage!! - (if(statistics.preCpuStats.systemCpuUsage == null) 0 else statistics.preCpuStats.systemCpuUsage)!!)
+                                * statistics.cpuStats.onlineCpus!! * 100 +"\n")
+                        print("cpu total usage: "+statistics.cpuStats.cpuUsage!!.totalUsage+"\n")
+                        print("read: "+statistics.rawValues+"\n")
+                        print("-----------------------------------------------\n")
+                    }
+                }
+            }).awaitCompletion()
+    }
 
     // 删除镜像
     fun removeImage(imageId: String): Boolean {

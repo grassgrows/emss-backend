@@ -103,9 +103,7 @@ class ServerService(
 
             val volumeBind = mutableMapOf<String,String>()
             volumeBind.putAll(server.volumeBind)
-            //TODO Path
-            //fileService.processPath()
-            val rootPath = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!.value+ File.separator+server.location
+            val rootPath = fileService.processPath(server.location).toString()
             volumeBind[rootPath] = server.workingDir
             val id = ContainerService(db).createContainer(
                 containerName,

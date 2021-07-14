@@ -48,6 +48,9 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
+
+
+
         post("/{id}/attach") {
             val id = call.parameters["id"]!!.toLong()
             val serverAttach = call.receive<ServerAttachDTO>()
