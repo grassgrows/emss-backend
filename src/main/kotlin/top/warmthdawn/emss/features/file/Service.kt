@@ -37,7 +37,7 @@ class FileService {
 
         uri = if (uri.startsWith("/")) uri.substring(1) else uri
 
-        when (val type = uri.substringBefore('/')) {
+        when (uri.substringBefore('/')) {
             "root" -> {
                 val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
                 val relativePath = uri.substringAfter("root/")
@@ -90,24 +90,36 @@ class FileService {
     suspend fun getFileList(path: String): List<FileListInfoVO> {
         val filePath: Path = processPath(path)
         val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
-        val result: MutableList<FileListInfoVO> = mutableListOf()
-        FileManager.getFiles(filePath).forEach {
-            val info = FileListInfoVO(
-                it.name,
-                root.relativize(it.toPath()).toString(),
-                it.length(), //in bytes
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
-                it.isDirectory
-            )
-            result.add(info)
-            yield()
-        }
+        val result = mutableListOf<FileListInfoVO>()
+        val fileTree = filePath.toFile().walk()
+        fileTree.maxDepth(1)
+            .forEach {
+                val info = FileListInfoVO(
+                    it.name,
+                    it.toRelativeString(root.toFile()),
+                    it.length(), //in bytes
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
+                    it.isDirectory
+                )
+                result.add(info)
+                yield()
+            }
         return result
     }
 
     suspend fun createDirs(path: String) {
         val dirsPath = processPath(path)
-        FileManager.createDirs(dirsPath)
+        var file = dirsPath.toFile()
+        if (!file.isFile && !file.isDirectory) {
+            file.mkdirs()
+        } else {
+            val i = 1
+            while (file.isFile) {
+                val newPath = "$dirsPath($i++)"
+                file = File(newPath)
+            }
+            file.mkdirs()
+        }
     }
 
     suspend fun renameFile(path: String, name: String) {
@@ -132,10 +144,31 @@ class FileService {
         file.deleteRecursively()
     }
 
-    suspend fun cutFile(path: String, newPath: String){
+    suspend fun cutFile(path: String, newPath: String) {
         copyFile(path, newPath)
         yield()
         deleteFile(path)
+    }
+
+    suspend fun searchFile(path: String, keyword: String): List<FileListInfoVO> {
+        val filePath = processPath(path)
+        val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+        val result = mutableListOf<FileListInfoVO>()
+        val fileTree = filePath.toFile().walk()
+        fileTree.maxDepth(Int.MAX_VALUE)
+            .filter { it.name.contains(keyword) }
+            .forEach {
+                val info = FileListInfoVO(
+                    it.name,
+                    it.toRelativeString(root.toFile()),
+                    it.length(), //in bytes
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
+                    it.isDirectory
+                )
+                result.add(info)
+                yield()
+            }
+        return result
     }
 
 }

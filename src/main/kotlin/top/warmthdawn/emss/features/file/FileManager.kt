@@ -1,16 +1,11 @@
 package top.warmthdawn.emss.features.file
 
-import io.ktor.util.*
-import org.h2.store.fs.FilePath
-import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.file.vo.FileChunkInfoVO
 import top.warmthdawn.emss.features.file.vo.FileChunkStatus
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
-import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.math.floor
@@ -173,34 +168,4 @@ object FileManager {
             }
         }
     }
-
-
-    fun getFiles(filePath: Path): Sequence<File> {
-        val fileTree: FileTreeWalk = File(filePath.toString()).walk()
-        return fileTree.maxDepth(1)
-    }
-
-
-//    fun getALLFiles(input: String): List<File> {
-//        val filePath = FileManager.processPath(input)
-//        val fileTree: FileTreeWalk = File(filePath.toString()).walk()
-//        return fileTree.maxDepth(Int.MAX_VALUE)
-//            .asIterable().toList()
-//    } 不确定是否需要这个方法
-
-    fun createDirs(dirsPath: Path) {
-        var file = File(dirsPath.toString())
-        if (!file.isFile && !file.isDirectory) {
-            file.mkdirs()
-        } else {
-            val i = 1
-            while (file.isFile) {
-                val newPath = "$dirsPath($i++)"
-                file = File(newPath)
-            }
-            file.mkdirs()
-        }
-
-    }
-
 }
