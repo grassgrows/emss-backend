@@ -35,8 +35,8 @@ fun Route.fileEndpoint() {
             }
         }
         route("/list") {
-            get("/{filePath}") {
-                val filePath = call.parameters["filePath"]!!
+            get() {
+                val filePath = call.request.queryParameters["path"]!!
                 R.ok(fileService.getFileList(filePath))
             }
         }

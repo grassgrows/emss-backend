@@ -31,8 +31,8 @@ class FileService {
 
         var uri = URI(input).normalize().path
 
-        if (uri == "/") {
-            uri = "/root"
+        if (uri == "/" || uri == "") {
+            uri = "/root/"
         }
 
         uri = if (uri.startsWith("/")) uri.substring(1) else uri
@@ -40,7 +40,7 @@ class FileService {
         when (uri.substringBefore('/')) {
             "root" -> {
                 val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
-                val relativePath = uri.substringAfter("root/")
+                val relativePath = uri.substringAfter("root")
                 //用户权限
 //               val serverLocations = arrayOf("sky/et2", "timw4")
 //                if (serverLocations.any { relativePath.startsWith(it) }) {
@@ -50,7 +50,6 @@ class FileService {
 //                }
 //              TODO("用户权限搞一下")
                 return root.combineSafe(Path(relativePath)).toPath()
-
             }
 //            "backup" -> {
 //
@@ -93,10 +92,11 @@ class FileService {
         val result = mutableListOf<FileListInfoVO>()
         val fileTree = filePath.toFile().walk()
         fileTree.maxDepth(1)
+            .filterNot { it.path == filePath.toFile().path }
             .forEach {
                 val info = FileListInfoVO(
                     it.name,
-                    it.toRelativeString(root.toFile()),
+                    "/root/${it.relativeTo(root.toFile()).invariantSeparatorsPath}",
                     it.length(), //in bytes
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
                     it.isDirectory
@@ -160,7 +160,7 @@ class FileService {
             .forEach {
                 val info = FileListInfoVO(
                     it.name,
-                    it.toRelativeString(root.toFile()),
+                    "/root/${it.toRelativeString(root.toFile())}",
                     it.length(), //in bytes
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
                     it.isDirectory
