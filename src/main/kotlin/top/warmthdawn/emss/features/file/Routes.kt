@@ -6,6 +6,7 @@ import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import io.ktor.util.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
@@ -14,6 +15,7 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import kotlin.io.path.exists
 import io.ktor.locations.post as postL
 import io.ktor.locations.get as getL
+import kotlin.io.path.Path
 
 
 /**
@@ -52,15 +54,16 @@ fun Route.fileEndpoint() {
             }
         }
         route("/create") {
-            post("/{dirsPath}") {
-                val dirsPath = call.parameters["dirsPath"]!!
+            post() {
+                val dirsPath = call.request.queryParameters["path"]!!
                 fileService.createDirs(dirsPath)
+                R.ok()
             }
         }
         route("/download") {
-            get("/{filePath}") {
-                val filePath = call.parameters["filePath"]!!
-                val file = File(fileService.processPath(filePath).toString())
+            get() {
+                val filePath = call.request.queryParameters["path"]!!
+                val file = fileService.processPath(filePath).toFile()
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)
@@ -70,8 +73,8 @@ fun Route.fileEndpoint() {
             }
         }
         route("/rename") {
-            post("/{filePath}") {
-                val filePath = call.parameters["filePath"]!!
+            post() {
+                val filePath = call.request.queryParameters["path"]!!
                 val newFileName = call.receiveText()
                 fileService.renameFile(filePath, newFileName)
                 R.ok()
@@ -87,28 +90,28 @@ fun Route.fileEndpoint() {
             }
         }
         route("/cut") {
-            post("/{target}") {
-                val target = call.parameters["target"]!!
+            post() {
+                val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
-                    fileService.cutFile(it, target)
+                    fileService.cutFile(it, target + "/" + Path(it).fileName)
                 }
                 R.ok()
             }
         }
         route("/copy") {
-            post("/{target}") {
-                val target = call.parameters["target"]!!
+            post() {
+                val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
-                    fileService.copyFile(it, target)
+                    fileService.copyFile(it, target + "/" + Path(it).fileName)
                 }
                 R.ok()
             }
         }
         route("/search") {
-            post("/{filePath}") {
-                val filePath = call.parameters["filePath"]!!
+            post() {
+                val filePath = call.request.queryParameters["path"]!!
                 val keyword = call.receiveText()
                 fileService.searchFile(filePath, keyword)
                 R.ok()

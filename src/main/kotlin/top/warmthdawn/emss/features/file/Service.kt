@@ -178,10 +178,11 @@ class FileService {
         val fileTree = filePath.toFile().walk()
         fileTree.maxDepth(Int.MAX_VALUE)
             .filter { it.name.contains(keyword) }
+            .filterNot { it.path == filePath.toFile().path }
             .forEach {
                 val info = FileListInfoVO(
                     it.name,
-                    "/root/${it.toRelativeString(root.toFile())}",
+                    "/root/${it.relativeTo(root.toFile()).invariantSeparatorsPath}",
                     it.length(), //in bytes
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
                     it.isDirectory
