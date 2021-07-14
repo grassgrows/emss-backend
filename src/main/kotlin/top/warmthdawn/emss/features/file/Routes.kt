@@ -2,6 +2,7 @@ package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
@@ -9,6 +10,10 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
 import java.io.File
+import io.ktor.locations.KtorExperimentalLocationsAPI
+import kotlin.io.path.exists
+import io.ktor.locations.post as postL
+import io.ktor.locations.get as getL
 
 
 /**
@@ -18,22 +23,28 @@ import java.io.File
  */
 
 
+@OptIn(KtorExperimentalLocationsAPI::class)
 fun Route.fileEndpoint() {
     val fileService by inject<FileService>()
-    route("/file") {
-        route("/upload") {
-            post {
-                val file = call.receiveMultipart()
-//                val uri = call.receive<String>()
-                //val info = call.receive<FileChunkInfoDTO>()
-                fileService.uploadFile(file)
-                R.ok()
-            }
-            get {
-                val info = call.receive<FileChunkInfoDTO>()
-                call.respond(fileService.getFileInfo(info))
-            }
+
+    postL<FileChunkInfoDTO> { info->
+        val stream = call.receiveStream()
+        stream.use {
+            fileService.uploadFile(stream, info)
         }
+        R.ok()
+    }
+    getL<FileChunkInfoDTO> { info->
+//                call.respond(fileService.getFileInfo(info))
+        val finalPath = "${info.destinationPath}/${info.flowRelativePath}-${info.flowChunkNumber}"
+        val filePath = fileService.processPath(finalPath)
+        if(filePath.exists()) {
+            R.ok()
+        }else{
+            call.response.status(HttpStatusCode.NoContent)
+        }
+    }
+    route("/file") {
         route("/list") {
             get() {
                 val filePath = call.request.queryParameters["path"]!!

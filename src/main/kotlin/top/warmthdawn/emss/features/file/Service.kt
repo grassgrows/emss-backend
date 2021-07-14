@@ -1,16 +1,19 @@
 package top.warmthdawn.emss.features.file
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import io.ktor.http.content.*
 import io.ktor.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.file.vo.FileChunkInfoVO
 import top.warmthdawn.emss.features.file.vo.FileListInfoVO
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.File
+import java.io.InputStream
 import java.net.URI
 import java.nio.file.Path
 import java.time.Instant
@@ -61,29 +64,47 @@ class FileService {
     }
 
     suspend fun getFileInfo(info: FileChunkInfoDTO): FileChunkInfoVO {
-        return FileManager.getFile(info)
+        TODO("xxxx")
+//        return FileManager.getFile(info)
     }
 
     private val objectMapper = ObjectMapper()
 
-    suspend fun uploadFile(file: MultiPartData): FileChunkInfoVO {
-        lateinit var info: FileChunkInfoDTO
-        val filePath = processPath(info.finalPath)
+    val DEFAULT_BUFFER_SIZE = 1024 * 8
+    suspend fun uploadFile(input: InputStream, info: FileChunkInfoDTO) {
+        val finalPath = "${info.destinationPath}/${info.flowRelativePath}-${info.flowChunkNumber}"
+        val filePath = processPath(finalPath)
 
-        var totalSize = 0
-        file.forEachPart { part ->
-            when (part) {
-                is PartData.FormItem -> {
-                    info = objectMapper.readValue(part.value) //需验证
-                }
-                is PartData.FileItem -> {
-                    val fileBytes = part.streamProvider().readBytes()
-                    totalSize += fileBytes.size
-                    File(filePath.toString()).writeBytes(fileBytes)
+
+        withContext(Dispatchers.IO) {
+            File(filePath.toString()).outputStream().use { out ->
+                var transferred = input.copyTo(out)
+            }
+            if (info.flowChunkNumber == info.flowTotalChunks) {
+                BufferedOutputStream(processPath("${info.destinationPath}/${info.flowRelativePath}").toFile().outputStream()).use { output ->
+                    for (chunk in 1..info.flowTotalChunks) {
+                        val chunkFile =
+                            processPath("${info.destinationPath}/${info.flowRelativePath}-${chunk}").toFile()
+                        BufferedInputStream(chunkFile.inputStream()).use {
+                            it.copyTo(output)
+                        }
+                        chunkFile.delete()
+                    }
                 }
             }
         }
-        return FileManager.postFile(info, totalSize)
+//        file.forEachPart { part ->
+//            if(read){
+//                throw UnsupportedOperationException("多个part")
+//            }
+//            if (part is PartData.FileItem) {
+//                val fileBytes = part.streamProvider().readBytes()
+//                totalSize += fileBytes.size
+//                read = true
+//            }
+//        }
+//        return FileManager.postFile(info, totalSize)
+
     }
 
     suspend fun getFileList(path: String): List<FileListInfoVO> {
