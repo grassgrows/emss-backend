@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.server
 
+import com.github.dockerjava.api.command.AttachContainerCmd
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
@@ -11,10 +12,14 @@ import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.server.dto.ServerAttachDTO
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
 import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDateTime
 
 /**
@@ -27,7 +32,8 @@ class ServerService(
     private val db: Database,
     private val config: AppConfig,
     private val containerService: ContainerService,
-    private val imageService: ImageService
+    private val imageService: ImageService,
+    private val fileService: FileService
 ) {
 
     suspend fun getServerInfo(): List<ServerVO> {
@@ -98,6 +104,7 @@ class ServerService(
             val volumeBind = mutableMapOf<String,String>()
             volumeBind.putAll(server.volumeBind)
             //TODO Path
+            //fileService.processPath()
             val rootPath = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!.value+ File.separator+server.location
             volumeBind[rootPath] = server.workingDir
             val id = ContainerService(db).createContainer(
@@ -151,5 +158,18 @@ class ServerService(
         DockerManager.stopContainer(containerId)
 
     }
+
+    suspend fun attachContainer(id: Long, serverAttachDTO: ServerAttachDTO)
+    {
+        if (config.testing) {
+            return
+        }
+
+        //TODO 状态判断
+
+        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
+        DockerManager.attachContainer(containerId,serverAttachDTO.inputStream, serverAttachDTO.outputStream)
+    }
+
 
 }

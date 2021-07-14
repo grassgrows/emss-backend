@@ -40,7 +40,7 @@ class FileService {
         when (val type = uri.substringBefore('/')) {
             "root" -> {
                 val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
-                val relativePath = type.substringAfter("root/")
+                val relativePath = uri.substringAfter("root/")
                 //用户权限
                 val serverLocations = arrayOf("sky/et2", "timw4")
 //                if (serverLocations.any { relativePath.startsWith(it) }) {

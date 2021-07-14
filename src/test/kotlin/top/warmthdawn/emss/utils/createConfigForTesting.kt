@@ -17,6 +17,7 @@ import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
@@ -68,5 +69,8 @@ val appTestModule = module {
 
     //server
     single { ContainerService(get()) }
-    single { ServerService(get(), get(), get(), get()) }
+    single { ServerService(get(), get(), get(), get(),get()) }
+
+    //file
+    single { FileService() }
 }

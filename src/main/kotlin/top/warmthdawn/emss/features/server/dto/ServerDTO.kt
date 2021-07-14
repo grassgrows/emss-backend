@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.features.server.dto
 
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDateTime
 import javax.persistence.Entity
 
@@ -22,4 +24,9 @@ data class ServerInfoDTO(
 
 //    var containerPort: Int,
 //    var hostPort: Int,
+)
+
+data class ServerAttachDTO(
+    var inputStream: InputStream, //输入流
+    var outputStream: OutputStream //输出流
 )

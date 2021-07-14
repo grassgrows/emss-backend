@@ -6,6 +6,7 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.server.dto.ServerAttachDTO
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.utils.R
 
@@ -45,6 +46,12 @@ fun Route.serverEndpoint() {
         post("/{id}/terminate") {
             val id = call.parameters["id"]!!.toLong()
             serverService.terminate(id)
+            R.ok()
+        }
+        post("/{id}/attach") {
+            val id = call.parameters["id"]!!.toLong()
+            val serverAttach = call.receive<ServerAttachDTO>()
+            serverService.attachContainer(id,serverAttach)
             R.ok()
         }
     }
