@@ -43,11 +43,14 @@ class FileService {
                 val relativePath = type.substringAfter("root/")
                 //用户权限
                 val serverLocations = arrayOf("sky/et2", "timw4")
-                if (serverLocations.any { relativePath.startsWith(it) }) {
-                    return root.combineSafe(Path(relativePath)).toPath()
-                } else {
-                    throw PathException(PathExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
-                }
+//                if (serverLocations.any { relativePath.startsWith(it) }) {
+//                    return root.combineSafe(Path(relativePath)).toPath()
+//                } else {
+//                    throw PathException(PathExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+//                }
+//              TODO("用户权限搞一下")
+                return root.combineSafe(Path(relativePath)).toPath()
+
             }
 //            "backup" -> {
 //
@@ -106,5 +109,8 @@ class FileService {
         FileManager.createDirs(dirsPath)
     }
 
+    suspend fun renameFile(input: String){
+        val file = File(processPath(input).toString())
+    }
 
 }
