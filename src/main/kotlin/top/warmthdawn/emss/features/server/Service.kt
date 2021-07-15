@@ -13,8 +13,8 @@ import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.file.FileService
-import top.warmthdawn.emss.features.server.dto.ServerAttachDTO
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
+import top.warmthdawn.emss.features.server.vo.ServerStatsVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
 import java.io.File
@@ -68,7 +68,7 @@ class ServerService(
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
         if(QImage(db).id.eq(serverInfoDTO.imageId).findOne() == null)
-            throw ImageNotFoundException("查无对应镜像！")  //TODO 异常
+            throw ImageNotFoundException("查无对应镜像！")
         if(imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
             throw ImageNotDownloadedException("镜像未下载！")
 
@@ -157,13 +157,35 @@ class ServerService(
 
     }
 
+//    suspend fun stats(id: Long):ServerStatsVO{
+//
+//
+//
+//
+//        containerId: String,
+//        cpuUsageVO:CpuUsageVO,
+//        memoryUsageVO: MemoryUsageVO,
+//        diskVO: DiskVO, //TODO 磁盘监控
+//        networkVO: NetworkVO,
+//        period: Long,
+//        timestampMax: Int
+//    }
+
+
+
+
+
+
+
+
+
 //    suspend fun attachContainer(id: Long, serverAttachDTO: ServerAttachDTO)
 //    {
 //        if (config.testing) {
 //            return
 //        }
 //
-//        //TODO 状态判断
+//
 //
 //        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
 //        DockerManager.attachContainer(containerId,serverAttachDTO.inputStream, serverAttachDTO.outputStream)

@@ -6,7 +6,6 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.server.dto.ServerAttachDTO
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.utils.R
 

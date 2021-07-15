@@ -67,6 +67,14 @@ fun Route.settingEndpoint() {
                 R.ok()
             }
 
+            delete("/{id}") {
+                val id = call.parameters["id"]!!.toLong()
+                if (imageService.removeImage(id)) {
+                    R.ok()
+                } else {
+                    R.error(Code.NotFound, "删除Image失败")
+                }
+            }
 
         }
 

@@ -3,6 +3,10 @@ package top.warmthdawn.emss.features.docker.timerTask
 import top.warmthdawn.emss.features.server.vo.*
 import java.util.*
 
+/**
+ * @author takanashi
+ * @since 2021-07-15
+ */
 
 data class TimerTaskInfo(
     val cpuUsageVO: CpuUsageVO,

@@ -17,7 +17,6 @@ import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.server.vo.*
 import java.io.Closeable
 import java.io.InputStream
-import java.io.OutputStream
 import java.time.Duration
 import java.util.*
 
@@ -210,11 +209,11 @@ object DockerManager {
 
 
     // 获取镜像信息
-    fun inspectImage(imageId: String): ImageMoreInfo? {
+    fun inspectImage(imageName: String): ImageMoreInfo? {
 
         return try {
             val image = dockerClient
-                .inspectImageCmd(imageId)
+                .inspectImageCmd(imageName)
                 .exec()
 
             ImageMoreInfo(
@@ -309,7 +308,7 @@ object DockerManager {
                                 timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
                                 timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
                             }
-                            
+
                         }
                     }
                 }
@@ -317,17 +316,16 @@ object DockerManager {
     }
 
     // 删除镜像
-    fun removeImage(imageId: String): Boolean {
+    fun removeImage(imageName: String): Boolean {
 
         return try {
             dockerClient
-                .removeImageCmd(imageId)
+                .removeImageCmd(imageName)
                 .exec()
             true
         } catch (e: Exception) {
             false
         }
-
     }
 
 

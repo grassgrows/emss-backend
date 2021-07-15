@@ -26,7 +26,7 @@ data class ServerInfoDTO(
 //    var hostPort: Int,
 )
 
-data class ServerAttachDTO(
-    var inputStream: InputStream, //输入流
-    var outputStream: OutputStream //输出流
-)
+//data class ServerAttachDTO(
+//    var inputStream: InputStream, //输入流
+//    var outputStream: OutputStream //输出流
+//)

@@ -6,6 +6,15 @@ import java.lang.management.MemoryUsage
 import java.time.LocalDateTime
 
 
+data class ServerStatsVO(
+    var cpuUsageVO: CpuUsageVO,
+    var memoryUsageVO: MemoryUsageVO,
+    var diskVO: DiskVO,
+    var networkVO: NetworkVO
+)
+
+
+
 data class CpuUsageVO(
     var timestamps: MutableList<Long>,  //时间戳表（单位秒）
     var values: MutableList<Double>,    //cpu利用率队列，一段时间刷新一次（单位%）

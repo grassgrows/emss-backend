@@ -14,7 +14,7 @@ import javax.persistence.Entity
  */
 @Entity
 class Server(
-    var containerId: String? = null, //服务器Docker容器ID
+    var containerId: String? = null, //服务器Docker容器64位ID
     var name: String, //服务器名
     var aliasName: String = "", //服务器别名
     var abbr: String, //服务器缩写

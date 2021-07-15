@@ -104,6 +104,15 @@ class ImageService(
         return result
     }
 
+    suspend fun removeImage(id: Long):Boolean
+    {
+        if(getImageStatus(id).status!=ImageStatus.Downloaded)
+            return false
+
+        val image = settingService.getImage(id)
+        return DockerManager.removeImage(image.imageId)
+    }
+
 }
 
 
