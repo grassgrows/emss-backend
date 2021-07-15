@@ -8,6 +8,10 @@ import org.junit.Ignore
 import org.junit.Test
 import org.koin.java.KoinJavaComponent.inject
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.server.vo.CpuUsageVO
+import top.warmthdawn.emss.features.server.vo.DiskVO
+import top.warmthdawn.emss.features.server.vo.MemoryUsageVO
+import top.warmthdawn.emss.features.server.vo.NetworkVO
 import top.warmthdawn.emss.utils.withTestServer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -22,7 +26,7 @@ import java.util.*
  * Docker需要客户端参与不方便进行单元测试。Ignore掉
  */
 
-//@Ignore
+@Ignore
 internal class DockerManagerTest {
     @Test
     fun pullImageTest() {
@@ -35,7 +39,7 @@ internal class DockerManagerTest {
     @Test
     fun createContainerTest() {
         val containerName = "testContainer008"
-        val bind = mutableListOf(Bind("/data/$containerName", Volume("/data")))
+        val bind = mutableListOf(Bind("E:\\EMSS\\$containerName", Volume("/data")))
         val cmd = mutableListOf("/bin/sh", "-c", "while true; do echo hello world; sleep 1; done")
         val exposedPort = ExposedPort(8084)
         val binding = Ports.Binding(null, 8083.toString())
@@ -109,7 +113,11 @@ internal class DockerManagerTest {
     fun statsTest()
     {
         val containerId = "testContainerMC"
-        DockerManager.stats(containerId)
+        val cpuUsageVO = CpuUsageVO(mutableListOf(), mutableListOf(),0.0)
+        val memoryUsageVO = MemoryUsageVO(mutableListOf(), mutableListOf(),0,0)
+        val diskVO = DiskVO(0,0)
+        val networkVO = NetworkVO(mutableListOf(), mutableMapOf())
+        DockerManager.stats(containerId, cpuUsageVO, memoryUsageVO, diskVO, networkVO,60000,60)
     }
 
     @Test
@@ -135,7 +143,7 @@ internal class DockerManagerTest {
 
     @Test
     fun attachContainerTest() {
-        DockerManager.attachContainer("testContainer007", System.`in`, System.out)
+        //DockerManager.attachContainer("testContainer007", System.`in`, System.out)
     }
 
 }

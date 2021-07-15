@@ -11,11 +11,15 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
+import top.warmthdawn.emss.features.docker.timerTask.StatsTimerTask
+import top.warmthdawn.emss.features.docker.timerTask.TimerTaskInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.server.vo.*
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.Duration
+import java.util.*
 
 
 /**
@@ -258,42 +262,79 @@ object DockerManager {
     }
 
     // 监控状态
-    fun stats(containerId: String)
-    {
-        val callback = AsyncResultCallback<Statistics>()
+    fun stats(containerId: String,
+              cpuUsageVO:CpuUsageVO,
+              memoryUsageVO: MemoryUsageVO,
+              diskVO: DiskVO, //TODO 磁盘监控
+              networkVO: NetworkVO,
+              period: Long,
+              timestampMax: Int
+    ) {
+
+        // TODO 上层判断服务器是否启动
+        val timerTaskInfo = TimerTaskInfo(
+            cpuUsageVO, memoryUsageVO, diskVO, networkVO,
+            mutableListOf(), mutableListOf(),
+            0, mutableMapOf()
+        )
+
+        Timer().schedule(StatsTimerTask(timerTaskInfo,timestampMax), Date(), period)
+
         dockerClient
             .statsCmd(containerId)
-            .exec<AsyncResultCallback<Statistics>>(object: AsyncResultCallback<Statistics>(){
+            .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
+
                 override fun onNext(statistics: Statistics?) {
-                    if(statistics!=null){
-                        print("pidsStats current: "+statistics.pidsStats.current+"\n")
-                        for(net in statistics.networks!!.keys)
-                        {
-                            print("rxBytes: "+statistics.networks!![net]!!.rxBytes+"\n")      // √
-                            print("rxDropped: "+statistics.networks!![net]!!.rxDropped+"\n")
-                            print("rxErrors: "+statistics.networks!![net]!!.rxErrors+"\n")
-                            print("rxPackets: "+statistics.networks!![net]!!.rxPackets+"\n")
-                            print("txBytes: "+statistics.networks!![net]!!.txBytes+"\n")      // √
-                            print("txDropped: "+statistics.networks!![net]!!.txDropped+"\n")
-                            print("txErrors: "+statistics.networks!![net]!!.txErrors+"\n")
-                            print("txPackets: "+statistics.networks!![net]!!.txPackets+"\n")
+
+                    if (statistics != null) {
+
+                        with(statistics) {
+
+                            timerTaskInfo.cpuUsageList.add(
+                                (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                        / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
+                                        * cpuStats.onlineCpus!! * 100)
+
+                            timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
+
+                            timerTaskInfo.availableMemory = memoryStats.limit!!
+
+
+                            for (key in networks!!.keys) {
+                                if (!(timerTaskInfo.networkNew.keys.contains(key))) {
+                                    timerTaskInfo.networkNew[key] = EachNetworkForSecond(
+                                        mutableListOf(), mutableListOf()
+                                    )
+                                }
+                                timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
+                                timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
+                            }
+
+                            /* //Test
+                            print("pidsStats current: " + pidsStats.current + "\n")
+                            for (net in networks!!.keys) {
+                                print("rxBytes: " + networks!![net]!!.rxBytes + "\n")      // √
+                                print("txBytes: " + networks!![net]!!.txBytes + "\n")      // √
+                            }
+                            print(networks!!.keys.toString())
+
+                            print("used memory: " + (memoryStats.usage!! - memoryStats.stats!!.cache!!) + "\n")  // √
+                            print("available memory : " + memoryStats.limit + "\n")     // √
+
+                            print("Cpu total usage: " + cpuStats.cpuUsage!!.totalUsage + "\n")
+                            print("pre Cpu total usage: " + preCpuStats.cpuUsage!!.totalUsage + "\n")
+                            print("system Cpu usage: " + cpuStats.systemCpuUsage + "\n")
+                            print("pre system Cpu usage: " + preCpuStats.systemCpuUsage + "\n")
+                            print("online cpus: " + cpuStats.onlineCpus + "\n")
+                            print("cpu usage %: " +
+                                    (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                    / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
+                                    * cpuStats.onlineCpus!! * 100 + "\n")
+                            print("cpu total usage: " + cpuStats.cpuUsage!!.totalUsage + "\n")
+                            print("block io: " + blkioStats + "\n")
+                            print("-----------------------------------------------\n")
+                            */
                         }
-
-                        print("used memory: "+ (statistics.memoryStats.usage!! - statistics.memoryStats.stats!!.cache!!)+"\n")  // √
-                        print("available memory : "+ statistics.memoryStats.limit+"\n")     // √
-
-                        print("Cpu total usage: "+ statistics.cpuStats.cpuUsage!!.totalUsage+"\n")
-                        print("pre Cpu total usage: "+ statistics.preCpuStats.cpuUsage!!.totalUsage+"\n")
-                        print("system Cpu usage: "+ statistics.cpuStats.systemCpuUsage+"\n")
-                        print("pre system Cpu usage: "+ statistics.preCpuStats.systemCpuUsage+"\n")
-                        print("online cpus: "+ statistics.cpuStats.onlineCpus+"\n")
-                        print("cpu usage %: "+
-                                (statistics.cpuStats.cpuUsage!!.totalUsage!! - statistics.preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
-                                / (statistics.cpuStats.systemCpuUsage!! - (if(statistics.preCpuStats.systemCpuUsage == null) 0 else statistics.preCpuStats.systemCpuUsage)!!)
-                                * statistics.cpuStats.onlineCpus!! * 100 +"\n")
-                        print("cpu total usage: "+statistics.cpuStats.cpuUsage!!.totalUsage+"\n")
-                        print("read: "+statistics.rawValues+"\n")
-                        print("-----------------------------------------------\n")
                     }
                 }
             }).awaitCompletion()
