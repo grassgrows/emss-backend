@@ -31,7 +31,7 @@ fun main() {
     }
 
     DockerManager.startContainer(dockerId)
-    DockerManager.attachContainer(dockerId, System.`in`, System.out)
+    //DockerManager.attachContainer(dockerId, System.`in`, System.out)
 
 }
 
