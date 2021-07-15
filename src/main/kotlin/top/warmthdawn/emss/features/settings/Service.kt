@@ -7,10 +7,10 @@ import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QSetting
-import top.warmthdawn.emss.features.docker.DockerManager
-import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
+import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -68,6 +68,7 @@ class SettingService(
 
 class ImageService(
     private val settingService: SettingService,
+    private val serverService: ServerService,
     private val downloadScheduler: ImageDownloadScheduler,
     private val config: AppConfig
 ) {
@@ -104,13 +105,21 @@ class ImageService(
         return result
     }
 
-    suspend fun removeImage(id: Long):Boolean
-    {
-        if(getImageStatus(id).status!=ImageStatus.Downloaded)
-            return false
+    suspend fun removeImage(id: Long) {
+        if (getImageStatus(id).status != ImageStatus.Downloaded)
+            throw ImageNotDownloadedException("镜像未下载！")
+        for(server in serverService.getServerInfo())
+        {
+            if(server.imageId == id)
+                throw ImageRemoveWhenUsedException("镜像正在被使用中！请删除使用该镜像的服务器！")
+        }
 
         val image = settingService.getImage(id)
-        return DockerManager.removeImage(image.imageId)
+        try {
+            DockerManager.removeImage(image.imageId)
+        } catch (e: Exception) {
+            throw ImageRemoveFailedException("镜像删除失败！")
+        }
     }
 
 }

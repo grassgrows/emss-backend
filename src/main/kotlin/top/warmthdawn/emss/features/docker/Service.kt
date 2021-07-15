@@ -43,8 +43,6 @@ class ContainerService(private val db: Database) {
     }
 
     suspend fun getContainerName(containerId: String?): String {
-        //val containerInfo = DockerManager.inspectContainer(containerId)
-        //return containerInfo?.name ?: "Error"
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.name
             ?: "NotFindContainer" else "NotFindId"
     }
@@ -62,15 +60,11 @@ class ContainerService(private val db: Database) {
     }
 
     suspend fun getContainerImageId(containerId: String?): String {
-        //val containerInfo = DockerManager.inspectContainer(containerId)
-        //return containerInfo?.imageId ?: ""
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.imageId
             ?: "NotFindContainer" else "NotFindId"
     }
 
     suspend fun getContainerStatus(containerId: String?): ContainerStatus {
-        //val containerInfo = DockerManager.inspectContainer(containerId)
-        //return containerInfo?.status
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.status
             ?: ContainerStatus.Unknown else ContainerStatus.Unknown
 

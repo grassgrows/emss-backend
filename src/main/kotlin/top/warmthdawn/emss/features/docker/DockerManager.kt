@@ -316,16 +316,10 @@ object DockerManager {
     }
 
     // 删除镜像
-    fun removeImage(imageName: String): Boolean {
-
-        return try {
-            dockerClient
-                .removeImageCmd(imageName)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
+    fun removeImage(imageName: String) {
+        dockerClient
+            .removeImageCmd(imageName)
+            .exec()
     }
 
 

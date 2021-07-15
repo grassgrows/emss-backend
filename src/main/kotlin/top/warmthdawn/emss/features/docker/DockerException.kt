@@ -17,3 +17,11 @@ class ImageNotDownloadedException(
     private val msg: String
 ):DockerException(msg)
 
+class ImageRemoveFailedException(
+    private val msg: String
+):DockerException(msg)
+
+class ImageRemoveWhenUsedException(
+    private val msg: String
+):DockerException(msg)
+
