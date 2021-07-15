@@ -309,31 +309,7 @@ object DockerManager {
                                 timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
                                 timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
                             }
-
-                            /* //Test
-                            print("pidsStats current: " + pidsStats.current + "\n")
-                            for (net in networks!!.keys) {
-                                print("rxBytes: " + networks!![net]!!.rxBytes + "\n")      // √
-                                print("txBytes: " + networks!![net]!!.txBytes + "\n")      // √
-                            }
-                            print(networks!!.keys.toString())
-
-                            print("used memory: " + (memoryStats.usage!! - memoryStats.stats!!.cache!!) + "\n")  // √
-                            print("available memory : " + memoryStats.limit + "\n")     // √
-
-                            print("Cpu total usage: " + cpuStats.cpuUsage!!.totalUsage + "\n")
-                            print("pre Cpu total usage: " + preCpuStats.cpuUsage!!.totalUsage + "\n")
-                            print("system Cpu usage: " + cpuStats.systemCpuUsage + "\n")
-                            print("pre system Cpu usage: " + preCpuStats.systemCpuUsage + "\n")
-                            print("online cpus: " + cpuStats.onlineCpus + "\n")
-                            print("cpu usage %: " +
-                                    (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
-                                    / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
-                                    * cpuStats.onlineCpus!! * 100 + "\n")
-                            print("cpu total usage: " + cpuStats.cpuUsage!!.totalUsage + "\n")
-                            print("block io: " + blkioStats + "\n")
-                            print("-----------------------------------------------\n")
-                            */
+                            
                         }
                     }
                 }
