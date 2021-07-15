@@ -51,12 +51,12 @@ fun Route.serverEndpoint() {
 
 
 
-        post("/{id}/attach") {
-            val id = call.parameters["id"]!!.toLong()
-            val serverAttach = call.receive<ServerAttachDTO>()
-            serverService.attachContainer(id,serverAttach)
-            R.ok()
-        }
+//        post("/{id}/attach") {
+//            val id = call.parameters["id"]!!.toLong()
+//            val serverAttach = call.receive<ServerAttachDTO>()
+//            serverService.attachContainer(id,serverAttach)
+//            R.ok()
+//        }
     }
 
 }
