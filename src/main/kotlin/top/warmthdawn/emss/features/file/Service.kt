@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.file
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,7 +7,6 @@ import kotlinx.coroutines.yield
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
-import top.warmthdawn.emss.features.file.vo.FileChunkInfoVO
 import top.warmthdawn.emss.features.file.vo.FileListInfoVO
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -20,6 +18,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 
 /**
@@ -42,7 +41,7 @@ class FileService {
 
         when (uri.substringBefore('/')) {
             "root" -> {
-                val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+                val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
                 val relativePath = uri.substringAfter("root")
                 //用户权限
 //               val serverLocations = arrayOf("sky/et2", "timw4")
@@ -63,36 +62,60 @@ class FileService {
         }
     }
 
-    suspend fun getFileInfo(info: FileChunkInfoDTO): FileChunkInfoVO {
-        TODO("xxxx")
-//        return FileManager.getFile(info)
+    private fun processTempPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): Path {
+        val filePathRaw =
+            FileChunkManager.getTmpPath(identifier, chunkNumber, isTemp)
+        createDirs(processPath(filePathRaw).toString())
+        return processPath(filePathRaw)
     }
 
-    private val objectMapper = ObjectMapper()
+    private fun processFinalPath(destinationPath: String, flowRelativePath: String, flowFilename: String): Path {
+        val filePathRaw = FileChunkManager.getFinalPath(destinationPath, flowRelativePath, flowFilename)
+        createDirs(processPath(filePathRaw).toString())
+        return processPath(filePathRaw)
+    }
 
-    val DEFAULT_BUFFER_SIZE = 1024 * 8
+    suspend fun testFile(info: FileChunkInfoDTO): Boolean {
+        FileChunkManager.validateRequest(info)
+        val filePathChunk = processTempPath(info.flowIdentifier, info.flowChunkNumber)
+        return filePathChunk.exists()
+    }
+
     suspend fun uploadFile(input: InputStream, info: FileChunkInfoDTO) {
-        val finalPath = "${info.destinationPath}/${info.flowRelativePath}-${info.flowChunkNumber}"
-        val filePath = processPath(finalPath)
-
-
+        FileChunkManager.validateRequest(info)
         withContext(Dispatchers.IO) {
-            File(filePath.toString()).outputStream().use { out ->
-                var transferred = input.copyTo(out)
+            val filePathDownloading = processTempPath(info.flowIdentifier, info.flowChunkNumber, true)
+            filePathDownloading.toFile().outputStream().use { out ->
+                val transferred = input.copyTo(out)
+                FileChunkManager.fileChunkCheck(info, transferred.toInt())
             }
+
+            val filePathChunk = processTempPath(info.flowIdentifier, info.flowChunkNumber)
+            //下载完成 改名
+            filePathDownloading.toFile().renameTo(filePathChunk.toFile())
+
+
             if (info.flowChunkNumber == info.flowTotalChunks) {
-                BufferedOutputStream(processPath("${info.destinationPath}/${info.flowRelativePath}").toFile().outputStream()).use { output ->
+                BufferedOutputStream(
+                    processFinalPath(
+                        info.destinationPath,
+                        info.flowRelativePath,
+                        info.flowFilename
+                    ).toFile()
+                        .outputStream()
+                ).use { output ->
                     for (chunk in 1..info.flowTotalChunks) {
-                        val chunkFile =
-                            processPath("${info.destinationPath}/${info.flowRelativePath}-${chunk}").toFile()
+                        val chunkFile = processTempPath(info.flowIdentifier, chunk).toFile()
                         BufferedInputStream(chunkFile.inputStream()).use {
                             it.copyTo(output)
                         }
                         chunkFile.delete()
                     }
                 }
+
             }
         }
+
 //        file.forEachPart { part ->
 //            if(read){
 //                throw UnsupportedOperationException("多个part")
@@ -109,7 +132,7 @@ class FileService {
 
     suspend fun getFileList(path: String): List<FileListInfoVO> {
         val filePath: Path = processPath(path)
-        val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
         val result = mutableListOf<FileListInfoVO>()
         val fileTree = filePath.toFile().walk()
         fileTree.maxDepth(1)
@@ -128,7 +151,7 @@ class FileService {
         return result
     }
 
-    suspend fun createDirs(path: String) {
+    fun createDirs(path: String) {
         val dirsPath = processPath(path)
         var file = dirsPath.toFile()
         if (!file.isFile && !file.isDirectory) {
@@ -173,7 +196,7 @@ class FileService {
 
     suspend fun searchFile(path: String, keyword: String): List<FileListInfoVO> {
         val filePath = processPath(path)
-        val root = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
         val result = mutableListOf<FileListInfoVO>()
         val fileTree = filePath.toFile().walk()
         fileTree.maxDepth(Int.MAX_VALUE)

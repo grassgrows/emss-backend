@@ -2,15 +2,12 @@ package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.util.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
-import java.io.File
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import kotlin.io.path.exists
 import io.ktor.locations.post as postL
@@ -29,39 +26,36 @@ import kotlin.io.path.Path
 fun Route.fileEndpoint() {
     val fileService by inject<FileService>()
 
-    postL<FileChunkInfoDTO> { info->
+    postL<FileChunkInfoDTO> { info ->
         val stream = call.receiveStream()
         stream.use {
             fileService.uploadFile(stream, info)
         }
         R.ok()
     }
-    getL<FileChunkInfoDTO> { info->
-//                call.respond(fileService.getFileInfo(info))
-        val finalPath = "${info.destinationPath}/${info.flowRelativePath}-${info.flowChunkNumber}"
-        val filePath = fileService.processPath(finalPath)
-        if(filePath.exists()) {
+    getL<FileChunkInfoDTO> { info ->
+        if (fileService.testFile(info)) {
             R.ok()
-        }else{
+        } else {
             call.response.status(HttpStatusCode.NoContent)
         }
     }
     route("/file") {
         route("/list") {
-            get() {
+            get {
                 val filePath = call.request.queryParameters["path"]!!
                 R.ok(fileService.getFileList(filePath))
             }
         }
         route("/create") {
-            post() {
+            post {
                 val dirsPath = call.request.queryParameters["path"]!!
                 fileService.createDirs(dirsPath)
                 R.ok()
             }
         }
         route("/download") {
-            get() {
+            get {
                 val filePath = call.request.queryParameters["path"]!!
                 val file = fileService.processPath(filePath).toFile()
                 call.response.header(
@@ -73,10 +67,10 @@ fun Route.fileEndpoint() {
             }
         }
         route("/rename") {
-            post() {
+            post {
                 val filePath = call.request.queryParameters["path"]!!
-                val newFileName = call.receiveText()
-                fileService.renameFile(filePath, newFileName)
+                val newName = call.request.queryParameters["newName"]!!
+                fileService.renameFile(filePath, newName)
                 R.ok()
             }
         }
@@ -90,7 +84,7 @@ fun Route.fileEndpoint() {
             }
         }
         route("/cut") {
-            post() {
+            post {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
@@ -100,7 +94,7 @@ fun Route.fileEndpoint() {
             }
         }
         route("/copy") {
-            post() {
+            post {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
@@ -110,11 +104,10 @@ fun Route.fileEndpoint() {
             }
         }
         route("/search") {
-            post() {
+            get {
                 val filePath = call.request.queryParameters["path"]!!
-                val keyword = call.receiveText()
-                fileService.searchFile(filePath, keyword)
-                R.ok()
+                val keyword = call.request.queryParameters["keyword"]!!
+                R.ok(fileService.searchFile(filePath, keyword))
             }
         }
 

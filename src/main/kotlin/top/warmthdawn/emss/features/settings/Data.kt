@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.features.settings
 
+import org.junit.rules.TemporaryFolder
+
 
 /**
  *
@@ -10,4 +12,5 @@ package top.warmthdawn.emss.features.settings
 data class BaseSetting(
     val name: String? = null,
     val serverRootDirectory: String? = null,
+    val temporaryFolder: String? = null,
 )

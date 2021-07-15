@@ -6,7 +6,6 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.Image
 import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.features.settings.SettingService
 
 /**
  *
@@ -35,7 +34,8 @@ fun Application.tryInitDefault() {
     }
 
     if(!db.find(Setting::class.java).exists()) {
-        Setting(SettingType.Name, "EMSS").save()
-        Setting(SettingType.ServerRootDirectory, "~/emss/").save()
+        Setting(SettingType.NAME, "EMSS").save()
+        Setting(SettingType.SERVER_ROOT_DIRECTORY, "~/emss/").save()
+        Setting(SettingType.TEMPORARY_FOLDER, "~/emss/tmp").save()
     }
 }

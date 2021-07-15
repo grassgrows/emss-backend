@@ -57,26 +57,6 @@ enum class Code(
     BadRequest("A110"),
 
     /**
-     * 当前请求用户权限等级不足
-     */
-    InsufficientPermissionLevel("A111"),
-
-    /**
-     * 请求文件路径格式不对
-     */
-    WrongPathFormat("A112"),
-
-    /**
-     * 请求文件未找到
-     */
-    FileNotFound("A113"),
-
-    /**
-     * 请求文件更名为空
-     */
-    InvalidFileName("A114"),
-
-    /**
      * 请求404
      */
     NotFound("A120"),
@@ -98,6 +78,52 @@ enum class Code(
      * 明明不可能发生的错误它却发生了
      */
     UnexpectedError("C920"),
+
+    //文件相关
+    /**
+     * 当前请求用户权限等级不足
+     */
+    InsufficientPermissionLevel("D111"),
+
+    /**
+     * 请求文件路径格式不对
+     */
+    WrongPathFormat("D112"),
+
+    /**
+     * 请求文件未找到
+     */
+    FileNotFound("D113"),
+
+    /**
+     * 请求文件更名为空
+     */
+    InvalidFileName("D114"),
+
+    /**
+     * 上传请求出错
+     */
+    NonUploaderRequest("D120"),
+    /**
+     * 上传文件出错：文件块数量出错
+     */
+    InvalidUploaderRequest1("D121"),
+    /**
+     * 上传文件出错：文件块大小超出限制
+     */
+    InvalidUploaderRequest2("D122"),
+    /**
+     * 上传文件出错：文件块大小出错
+     */
+    InvalidUploaderRequest3("D123"),
+    /**
+     * 上传文件出错：最后一个文件块出错
+     */
+    InvalidUploaderRequest4("D124"),
+    /**
+     * 上传文件出错：单文件块文件大小出错
+     */
+    InvalidUploaderRequest5("D125"),
 
 }
 

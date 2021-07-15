@@ -65,7 +65,7 @@ internal class BaseSettingUpdateTest {
                 setBody(json.writeValueAsString(data))
             }.apply {
                 assertEquals(HttpStatusCode.OK, response.status())
-                val name = QSetting(db).type.eq(SettingType.Name).findOne()
+                val name = QSetting(db).type.eq(SettingType.NAME).findOne()
                 assertNotNull(name)
                 assertEquals("EMSS2", name.value)
             }

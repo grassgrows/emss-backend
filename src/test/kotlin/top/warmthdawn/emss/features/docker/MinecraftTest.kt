@@ -5,7 +5,6 @@ import io.ktor.util.*
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.FileService
-import java.io.File
 import kotlin.io.path.Path
 
 /**
@@ -38,7 +37,7 @@ fun mmain() {
 
 fun main()
 {
-    val path = Path(QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value)
+    val path = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
     print(path.toString()+"\n")
     val path2 = Path("/asdad")
     print(path2.toString()+"\n")

@@ -2,7 +2,6 @@ package top.warmthdawn.emss.features.file
 
 import io.ebean.Database
 import io.ktor.http.*
-import io.ktor.response.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.*
 import org.junit.Test
@@ -26,7 +25,7 @@ internal class FileTest {
     fun processPathTest() {
         withTestServer {
             val fileService by application.inject<FileService>()
-            val root = QSetting().type.eq(SettingType.ServerRootDirectory).findOne()!!.value
+            val root = QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value
             val path = fileService.processPath("/root/1").toFile().invariantSeparatorsPath
             assertEquals(root + "1", path)
         }
@@ -36,7 +35,7 @@ internal class FileTest {
     fun getfileListTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
@@ -58,7 +57,7 @@ internal class FileTest {
     fun createDirsTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
@@ -86,7 +85,7 @@ internal class FileTest {
     fun downloadTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
@@ -116,36 +115,37 @@ internal class FileTest {
     fun renameFileTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
-            val fileService by application.inject<FileService>()
-            fileService.renameFile("/root/新建文件夹/6.txt", "7.txt")
+            val url1 = "/file/rename?${
+                parametersOf(
+                    "path" to listOf("/root/新建文件夹/1.txt"),
+                    "newName" to listOf("2.txt")
+                ).formUrlEncode()
+            }"
 
-            val list = fileService.searchFile("/root/新建文件夹", "7.txt")
-            assertEquals(1, list.size)
+            handleRequest(HttpMethod.Post, url1) {}.apply {
+                assertEquals(HttpStatusCode.OK, response.status())
+            }
 
-//            val url1 = "/file/rename?${parametersOf("path", "/root/新建文件夹/1.txt").formUrlEncode()}"
+            val url2 = "/file/search?${
+                parametersOf(
+                    "path" to listOf("/root/新建文件夹"),
+                    "keyword" to listOf("2.txt")
+                ).formUrlEncode()
+            }"
 
-//            handleRequest(HttpMethod.Post, url1) {
-//                val data = "2.txt"
-//                addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-//                setBody(json.writeValueAsString(data))
-//            }.apply {
-//                assertEquals(HttpStatusCode.OK, response.status())
-//            }
-//
-//            val url2 = "/file/list?${parametersOf("path", "/root/新建文件夹").formUrlEncode()}"
-//
-//            handleRequest(HttpMethod.Get, url2).apply {
-//                assertEquals(HttpStatusCode.OK, response.status())
-//                val apiResult = response.content
-//                assertNotNull(apiResult)
-//                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
-//                val path = json.jsonArray[3].jsonObject["filePath"]!!.jsonPrimitive.content
-//                assertEquals("/root/新建文件夹/2.txt", path)
-//            }
+            handleRequest(HttpMethod.Get, url2).apply {
+                assertEquals(HttpStatusCode.OK, response.status())
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
+                assertEquals(1, json.jsonArray.size)
+                val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
+                assertEquals("/root/新建文件夹/2.txt", path)
+            }
         }
     }
 
@@ -153,14 +153,26 @@ internal class FileTest {
     fun searchFileTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
-            val fileService by application.inject<FileService>()
-            val list = fileService.searchFile("/root/新建文件夹", "新")
-            assertEquals(3, list.size)
-            assertEquals("新建文件夹 (2)", list[1].fileName)
+            val url = "/file/search?${
+                parametersOf(
+                    "path" to listOf("/root/新建文件夹"),
+                    "keyword" to listOf("新")
+                ).formUrlEncode()
+            }"
+
+            handleRequest(HttpMethod.Get, url).apply {
+                assertEquals(HttpStatusCode.OK, response.status())
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
+                assertEquals(3, json.jsonArray.size)
+                val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
+                assertEquals("/root/新建文件夹/新建文件夹", path)
+            }
         }
     }
 
@@ -168,7 +180,7 @@ internal class FileTest {
     fun copyFileTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
@@ -193,7 +205,7 @@ internal class FileTest {
     fun deleteFileTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 
@@ -211,7 +223,7 @@ internal class FileTest {
     fun cutFileTest() {
         withTestServer {
             val db by application.inject<Database>()
-            val root = QSetting(db).type.eq(SettingType.ServerRootDirectory).findOne()!!
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
             root.value = "D:\\Test"
             root.update()
 

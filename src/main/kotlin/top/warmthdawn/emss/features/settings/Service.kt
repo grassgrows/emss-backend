@@ -25,7 +25,11 @@ class SettingService(
 ) {
     suspend fun getBaseSetting(): BaseSetting {
         val result = QSetting(db).findList().associate { it.type to it.value }
-        return BaseSetting(result[SettingType.Name]!!, result[SettingType.ServerRootDirectory]!!)
+        return BaseSetting(
+            result[SettingType.NAME]!!,
+            result[SettingType.SERVER_ROOT_DIRECTORY]!!,
+            result[SettingType.TEMPORARY_FOLDER]!!
+        )
 
     }
 
@@ -35,11 +39,15 @@ class SettingService(
 
     suspend fun updateBaseSetting(baseSetting: BaseSetting) {
         if (!baseSetting.name.isNullOrEmpty()) {
-            val setting = Setting(SettingType.Name, baseSetting.name)
+            val setting = Setting(SettingType.NAME, baseSetting.name)
             db.update(setting)
         }
         if (!baseSetting.serverRootDirectory.isNullOrEmpty()) {
-            val setting = Setting(SettingType.ServerRootDirectory, baseSetting.serverRootDirectory)
+            val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverRootDirectory)
+            setting.update()
+        }
+        if (!baseSetting.temporaryFolder.isNullOrEmpty()) {
+            val setting = Setting(SettingType.TEMPORARY_FOLDER, baseSetting.temporaryFolder)
             setting.update()
         }
     }
