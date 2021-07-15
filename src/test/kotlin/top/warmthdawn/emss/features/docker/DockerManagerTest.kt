@@ -124,10 +124,10 @@ internal class DockerManagerTest {
     fun removeImageTest() {
         val imageId = "2"//"c49355e8fcc5c030257a9ae819c6179dd242eac7f98792f88368dc49fe23c47e"
 
-        if (DockerManager.removeImage(imageId))
-            print("******** succeed ********\n")
-        else
-            print("******** fail ********\n")
+//        if (DockerManager.removeImage(imageId))
+//            print("******** succeed ********\n")
+//        else
+//            print("******** fail ********\n")
     }
 
     @Test

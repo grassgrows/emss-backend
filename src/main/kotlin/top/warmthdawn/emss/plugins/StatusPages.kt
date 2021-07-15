@@ -3,6 +3,8 @@ package top.warmthdawn.emss.plugins
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import top.warmthdawn.emss.features.docker.ImageException
+import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.file.*
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
@@ -82,6 +84,22 @@ fun Application.configureStatusPages() {
             }
         }
 
+        exception<ImageException> {
+            when (it.imageExceptionMsg) {
+                ImageExceptionMsg.IMAGE_NOT_FOUND -> {
+                    R.error(Code.ImageNotFound, "查无对应镜像！", HttpStatusCode.NotFound)
+                }
+                ImageExceptionMsg.IMAGE_NOT_DOWNLOADED -> {
+                    R.error(Code.ImageNotDownloaded, "镜像未下载！", HttpStatusCode.NotFound)
+                }
+                ImageExceptionMsg.IMAGE_REMOVE_FAILED -> {
+                    R.error(Code.ImageRemoveFailed, "镜像删除失败！", HttpStatusCode.InternalServerError)
+                }
+                ImageExceptionMsg.IMAGE_REMOVE_WHEN_USED -> {
+                    R.error(Code.ImageRemoveWhenUsed, "镜像正在被使用中！请删除使用该镜像的服务器！", HttpStatusCode.Forbidden)
+                }
+            }
+        }
 
         status(HttpStatusCode.NotFound) {
             R.error(Code.NotFound, "您请求的页面不存在", HttpStatusCode.NotFound)

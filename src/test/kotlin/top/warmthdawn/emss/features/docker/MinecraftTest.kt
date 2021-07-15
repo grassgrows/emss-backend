@@ -16,7 +16,7 @@ import kotlin.io.path.Path
  * 由于单元测试无法测试流输入，故另新建文件，用main函数测试
  */
 
-fun main() {
+fun mmain() {
     val containerName = "testContainerMC002"
     val bind = mutableListOf(Bind("E:\\EMSS\\$containerName\\minecraft_server.1.12.2", Volume("/data/")))
     val cmd = mutableListOf("/bin/sh", "-c", "java -jar /data/forge-1.12.2-14.23.5.2855.jar")
@@ -35,7 +35,7 @@ fun main() {
 
 }
 
-fun mmain()
+fun main()
 {
     val path = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
     print(path.toString()+"\n")

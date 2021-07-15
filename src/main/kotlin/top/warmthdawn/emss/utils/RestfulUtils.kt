@@ -69,6 +69,10 @@ enum class Code(
      * Image下载失败
      */
     ImageDownloadFailed("B112"),
+    ImageNotFound("B120"),
+    ImageNotDownloaded("B122"),
+    ImageRemoveFailed("B130"),
+    ImageRemoveWhenUsed("B132"),
 
     //系统错误
     /**

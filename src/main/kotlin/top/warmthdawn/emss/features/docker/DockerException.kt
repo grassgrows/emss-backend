@@ -5,23 +5,15 @@ package top.warmthdawn.emss.features.docker
  * @since 2021-07-13
  */
 
-open class DockerException(
-    private val msg: String
-):Exception(msg)
+class ImageException(
+    val imageExceptionMsg: ImageExceptionMsg
+) : Exception(imageExceptionMsg.toString())
 
-class ImageNotFoundException(
-    private val msg: String
-):DockerException(msg)
+enum class ImageExceptionMsg {
+    IMAGE_NOT_FOUND,
+    IMAGE_NOT_DOWNLOADED,
+    IMAGE_REMOVE_FAILED,
+    IMAGE_REMOVE_WHEN_USED
+}
 
-class ImageNotDownloadedException(
-    private val msg: String
-):DockerException(msg)
-
-class ImageRemoveFailedException(
-    private val msg: String
-):DockerException(msg)
-
-class ImageRemoveWhenUsedException(
-    private val msg: String
-):DockerException(msg)
 

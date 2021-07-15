@@ -107,17 +107,15 @@ class ImageService(
 
     suspend fun removeImage(id: Long) {
         if (getImageStatus(id).status != ImageStatus.Downloaded)
-            throw ImageNotDownloadedException("镜像未下载！")
+            throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
         if(QServer().imageId.eq(id).exists())
-        {
-            throw ImageRemoveWhenUsedException("镜像正在被使用中！请删除使用该镜像的服务器！")
-        }
+            throw ImageException(ImageExceptionMsg.IMAGE_REMOVE_WHEN_USED)
 
         val image = settingService.getImage(id)
         try {
             DockerManager.removeImage(image.imageId)
         } catch (e: Exception) {
-            throw ImageRemoveFailedException("镜像删除失败！")
+            throw ImageException(ImageExceptionMsg.IMAGE_REMOVE_FAILED)
         }
     }
 

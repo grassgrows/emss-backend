@@ -68,9 +68,9 @@ class ServerService(
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
         if(QImage(db).id.eq(serverInfoDTO.imageId).findOne() == null)
-            throw ImageNotFoundException("查无对应镜像！")
+            throw ImageException(ImageExceptionMsg.IMAGE_NOT_FOUND)
         if(imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
-            throw ImageNotDownloadedException("镜像未下载！")
+            throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
 
         val server = Server(
             name = serverInfoDTO.name,
