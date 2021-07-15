@@ -329,7 +329,7 @@ object DockerManager {
 
 
     // 获取容器输入输出流
-    fun attachContainer(containerId: String, inputStream: InputStream, outputStream: OutputStream): ResultCallback.Adapter<Frame>? {
+    fun attachContainer(containerId: String, inputStream: InputStream, callback: (Frame)->Unit): ResultCallback.Adapter<Frame>? {
 
         return dockerClient
             .attachContainerCmd(containerId)
@@ -340,11 +340,7 @@ object DockerManager {
             .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
                 override fun onNext(frame: Frame?) {
                     super.onNext(frame)
-                    if (frame != null && (frame.streamType == StreamType.STDOUT || frame.streamType == StreamType.STDERR))
-                        outputStream.write(frame.payload)
-                    else{
-                        print(frame?.payload)
-                    }
+                    frame?.let(callback)
                 }
             }).awaitCompletion()
     }
