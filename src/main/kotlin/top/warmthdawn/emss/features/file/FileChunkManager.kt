@@ -12,11 +12,7 @@ import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
  */
 object FileChunkManager {
     private val temporaryFolder = QSetting().type.eq(SettingType.TEMPORARY_FOLDER).findOne()!!.value
-    private const val maxFileSize: Int = 1024 * 8
-
-    init {
-        TODO("新建文件夹")
-    }
+    private const val maxFileSize: Int = -1
 
     private fun cleanIdentifier(flowIdentifier: String): String {
         val re = Regex("[^0-9A-Za-z_-]/g")

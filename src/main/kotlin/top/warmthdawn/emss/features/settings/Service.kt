@@ -6,6 +6,7 @@ import top.warmthdawn.emss.database.entity.Image
 import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
+import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
@@ -68,7 +69,6 @@ class SettingService(
 
 class ImageService(
     private val settingService: SettingService,
-    private val serverService: ServerService,
     private val downloadScheduler: ImageDownloadScheduler,
     private val config: AppConfig
 ) {
@@ -108,10 +108,9 @@ class ImageService(
     suspend fun removeImage(id: Long) {
         if (getImageStatus(id).status != ImageStatus.Downloaded)
             throw ImageNotDownloadedException("镜像未下载！")
-        for(server in serverService.getServerInfo())
+        if(QServer().imageId.eq(id).exists())
         {
-            if(server.imageId == id)
-                throw ImageRemoveWhenUsedException("镜像正在被使用中！请删除使用该镜像的服务器！")
+            throw ImageRemoveWhenUsedException("镜像正在被使用中！请删除使用该镜像的服务器！")
         }
 
         val image = settingService.getImage(id)

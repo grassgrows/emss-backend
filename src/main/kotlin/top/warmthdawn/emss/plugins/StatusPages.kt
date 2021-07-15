@@ -23,12 +23,10 @@ fun Application.configureStatusPages() {
         exception<PathException> {
             when(it.pathExceptionMsg) {
                 PathExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL->{
-                    R.error(Code.InsufficientPermissionLevel, "您没有权限访问该目录")
-                    call.response.status(HttpStatusCode.NonAuthoritativeInformation)
+                    R.error(Code.InsufficientPermissionLevel, "您没有权限访问该目录", HttpStatusCode.Forbidden)
                 }
                 PathExceptionMsg.WRONG_PATH_FORMAT->{
-                    R.error(Code.WrongPathFormat, "您输入的目录格式出错")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.WrongPathFormat, "您输入的目录格式出错", HttpStatusCode.NotFound)
                 }
 
 
@@ -38,24 +36,20 @@ fun Application.configureStatusPages() {
         exception<FileException> {
             when(it.fileExceptionMsg) {
                 FileExceptionMsg.FILE_NOT_FOUND->{
-                    R.error(Code.FileNotFound, "您请求的文件未找到")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.FileNotFound, "您请求的文件未找到", HttpStatusCode.NotFound)
                 }
                 FileExceptionMsg.INVALID_FILE_NAME->{
-                    R.error(Code.InvalidFileName, "您请求的文件名为空")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.InvalidFileName, "您请求的文件名为空", HttpStatusCode.BadRequest)
                 }
                 FileExceptionMsg.DIRECTORY_NOT_FOUND->{
-                    R.error(Code.DirectoryNotFound, "您请求的文件目录未找到")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.DirectoryNotFound, "您请求的文件目录未找到", HttpStatusCode.NotFound)
                 }
                 FileExceptionMsg.INVALID_DIRECTORY_NAME->{
-                    R.error(Code.InvalidDirectoryName, "您请求的文件路径出错(可能是请求了一个文件的地址)")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.InvalidDirectoryName, "您请求的文件路径出错(可能是请求了一个文件的地址)",
+                        HttpStatusCode.BadRequest)
                 }
                 FileExceptionMsg.FILE_ALREADY_EXIST->{
-                    R.error(Code.FileAlreadyExist, "您请求的文件已存在")
-                    call.response.status(HttpStatusCode.NotFound)
+                    R.error(Code.FileAlreadyExist, "您请求的文件已存在", HttpStatusCode.BadRequest)
                 }
             }
         }
@@ -63,36 +57,34 @@ fun Application.configureStatusPages() {
         exception<FileChunkException> {
             when(it.fileChunkExceptionMsg) {
                 FileChunkExceptionMsg.NON_UPLOADER_REQUEST->{
-                    R.error(Code.NonUploaderRequest, "您的上传请求出错")
-                    call.response.status(HttpStatusCode.BadRequest)
+                    R.error(Code.NonUploaderRequest, "您的上传请求出错", HttpStatusCode.BadRequest)
                 }
                 FileChunkExceptionMsg.INVALID_UPLOADER_REQUEST1->{
-                    R.error(Code.InvalidUploaderRequest1, "上传文件出错：文件块数量出错")
-                    call.response.status(HttpStatusCode.InternalServerError)
+                    R.error(Code.InvalidUploaderRequest1, "上传文件出错：文件块数量出错",
+                        HttpStatusCode.InternalServerError)
                 }
                 FileChunkExceptionMsg.INVALID_UPLOADER_REQUEST2->{
-                    R.error(Code.InvalidUploaderRequest2, "上传文件出错：文件块大小超出限制")
-                    call.response.status(HttpStatusCode.InternalServerError)
+                    R.error(Code.InvalidUploaderRequest2, "上传文件出错：文件块大小超出限制",
+                        HttpStatusCode.PayloadTooLarge)
                 }
                 FileChunkExceptionMsg.INVALID_UPLOADER_REQUEST3->{
-                    R.error(Code.InvalidUploaderRequest3, "上传文件出错：文件块大小出错")
-                    call.response.status(HttpStatusCode.InternalServerError)
+                    R.error(Code.InvalidUploaderRequest3, "上传文件出错：文件块大小出错",
+                        HttpStatusCode.InternalServerError)
                 }
                 FileChunkExceptionMsg.INVALID_UPLOADER_REQUEST4->{
-                    R.error(Code.InvalidUploaderRequest4, "上传文件出错：最后一个文件块出错")
-                    call.response.status(HttpStatusCode.InternalServerError)
+                    R.error(Code.InvalidUploaderRequest4, "上传文件出错：最后一个文件块出错",
+                        HttpStatusCode.InternalServerError)
                 }
                 FileChunkExceptionMsg.INVALID_UPLOADER_REQUEST5->{
-                    R.error(Code.InvalidUploaderRequest5, "上传文件出错：单文件块文件大小出错")
-                    call.response.status(HttpStatusCode.InternalServerError)
+                    R.error(Code.InvalidUploaderRequest5, "上传文件出错：单文件块文件大小出错",
+                        HttpStatusCode.InternalServerError)
                 }
             }
         }
 
 
         status(HttpStatusCode.NotFound) {
-            R.error(Code.NotFound, "您请求的页面不存在")
-            call.response.status(HttpStatusCode.NotFound)
+            R.error(Code.NotFound, "您请求的页面不存在", HttpStatusCode.NotFound)
         }
     }
 }

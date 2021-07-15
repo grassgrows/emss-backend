@@ -2,6 +2,7 @@ package top.warmthdawn.emss.utils
 
 import com.fasterxml.jackson.annotation.JsonValue
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.util.pipeline.*
 
@@ -21,16 +22,17 @@ class RestApplication(val call: ApplicationCall) {
         call.respond(ApiResult(Code.Success, data, "请求成功"))
     }
 
-    suspend fun error(code: Code, message: String) {
-        call.respond(ApiResult(code, Unit, message))
+    suspend fun error(code: Code, message: String,
+                      statusCode: HttpStatusCode = HttpStatusCode.InternalServerError) {
+        call.respond(statusCode, ApiResult(code, Unit, message))
     }
 
-    suspend fun error(e: Throwable) {
-        call.respond(ApiResult(Code.UnknownError, Unit, e.message))
+    suspend fun error(e: Throwable, statusCode: HttpStatusCode = HttpStatusCode.InternalServerError) {
+        call.respond(statusCode, ApiResult(Code.UnknownError, Unit, e.message))
     }
 
-    suspend fun expected(message: String) {
-        call.respond(ApiResult(Code.UnexpectedError, Unit, message))
+    suspend fun unexpected(message: String) {
+        call.respond(HttpStatusCode.InternalServerError, ApiResult(Code.UnexpectedError, Unit, message))
     }
 }
 

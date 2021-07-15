@@ -20,7 +20,7 @@ val appModule = module {
     //setting
     single { SettingService(get(), get()) }
     single { ImageDownloadScheduler(get()) }
-    single { ImageService(get(), get(), get(), get()) }
+    single { ImageService(get(), get(), get()) }
 
     //server
     single { ContainerService(get()) }
