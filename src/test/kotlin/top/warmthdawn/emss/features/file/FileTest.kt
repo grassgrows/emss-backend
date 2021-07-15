@@ -4,6 +4,7 @@ import io.ebean.Database
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.*
+import org.junit.Ignore
 import org.junit.Test
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.SettingType
@@ -39,16 +40,49 @@ internal class FileTest {
             root.value = "D:\\Test"
             root.update()
 
-            val url = "/file/list?${parametersOf("path", "/root/新建文件夹").formUrlEncode()}"
+            val url1 = "/file/list?${parametersOf("path", "/root/新建文件夹").formUrlEncode()}"
+            val url2 = "/file/list?${parametersOf("path", "/root/新建文件夹/新建文件夹").formUrlEncode()}"
+            val url3 = "/file/list?${parametersOf("path", "/root/新建文件夹/1.txt").formUrlEncode()}"
+            val url4 = "/file/list?${parametersOf("path", "/root/1").formUrlEncode()}"
+            val url5 = "/file/list?${parametersOf("path", "/新建文件夹").formUrlEncode()}"
 
-            handleRequest(HttpMethod.Get, url).apply {
+            handleRequest(HttpMethod.Get, url1).apply {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val apiResult = response.content
                 assertNotNull(apiResult)
                 val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
                 assertEquals(7, json.jsonArray.size)
                 val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
-                assertEquals("/root/新建文件夹/1", path)
+                assertEquals("/root/新建文件夹/1.txt", path)
+            }
+
+            handleRequest(HttpMethod.Get, url2).apply {
+                assertEquals(HttpStatusCode.OK, response.status())
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
+                assertEquals(0, json.jsonArray.size)
+            }
+
+            handleRequest(HttpMethod.Get, url3).apply {
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D116", json.jsonPrimitive.content)
+            }
+
+            handleRequest(HttpMethod.Get, url4).apply {
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D115", json.jsonPrimitive.content)
+            }
+
+            handleRequest(HttpMethod.Get, url5).apply {
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D112", json.jsonPrimitive.content)
             }
         }
     }
@@ -61,22 +95,27 @@ internal class FileTest {
             root.value = "D:\\Test"
             root.update()
 
-            val url1 = "/file/create?${parametersOf("path", "/root/新建文件夹/1").formUrlEncode()}"
+            val url1 = "/file/create?${parametersOf("path", "/root/新建文件夹/1/2/3").formUrlEncode()}"
 
             handleRequest(HttpMethod.Post, url1).apply {
                 assertEquals(HttpStatusCode.OK, response.status())
             }
 
-            val url2 = "/file/list?${parametersOf("path", "/root/新建文件夹").formUrlEncode()}"
+            val url2 = "/file/search?${
+                parametersOf(
+                    "path" to listOf("/root/新建文件夹/1/2"),
+                    "keyword" to listOf("3")
+                ).formUrlEncode()
+            }"
 
             handleRequest(HttpMethod.Get, url2).apply {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val apiResult = response.content
                 assertNotNull(apiResult)
                 val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
-                assertEquals(7, json.jsonArray.size)
+                assertEquals(1, json.jsonArray.size)
                 val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
-                assertEquals("/root/新建文件夹/1", path)
+                assertEquals("/root/新建文件夹/1/2/3", path)
             }
         }
     }
@@ -89,9 +128,10 @@ internal class FileTest {
             root.value = "D:\\Test"
             root.update()
 
-            val url = "/file/download?${parametersOf("path", "/root/新建文件夹/ktor_logo.png").formUrlEncode()}"
+            val url1 = "/file/download?${parametersOf("path", "/root/新建文件夹/ktor_logo.png").formUrlEncode()}"
+            val url2 = "/file/download?${parametersOf("path", "/root/新建文件夹/emss.png").formUrlEncode()}"
 
-            handleRequest(HttpMethod.Get, url).apply {
+            handleRequest(HttpMethod.Get, url1).apply {
                 assertEquals(HttpStatusCode.OK, response.status())
                 val content = response.byteContent ?: ByteArray(4)
 
@@ -108,6 +148,12 @@ internal class FileTest {
                     response.headers[HttpHeaders.ContentDisposition]
                 )
             }
+            handleRequest(HttpMethod.Get, url2).apply {
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D113", json.jsonPrimitive.content)
+            }
         }
     }
 
@@ -121,14 +167,21 @@ internal class FileTest {
 
             val url1 = "/file/rename?${
                 parametersOf(
-                    "path" to listOf("/root/新建文件夹/1.txt"),
-                    "newName" to listOf("2.txt")
+                    "path" to listOf("/root/新建文件夹/2.txt"),
+                    "newName" to listOf("2.png")
                 ).formUrlEncode()
             }"
 
-            handleRequest(HttpMethod.Post, url1) {}.apply {
-                assertEquals(HttpStatusCode.OK, response.status())
+            handleRequest(HttpMethod.Post, url1).apply {
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D113", json.jsonPrimitive.content)
             }
+
+//            handleRequest(HttpMethod.Post, url1) {}.apply {
+//                //assertEquals(HttpStatusCode.OK, response.status())
+//            }
 
             val url2 = "/file/search?${
                 parametersOf(
@@ -137,15 +190,15 @@ internal class FileTest {
                 ).formUrlEncode()
             }"
 
-            handleRequest(HttpMethod.Get, url2).apply {
-                assertEquals(HttpStatusCode.OK, response.status())
-                val apiResult = response.content
-                assertNotNull(apiResult)
-                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
-                assertEquals(1, json.jsonArray.size)
-                val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
-                assertEquals("/root/新建文件夹/2.txt", path)
-            }
+//            handleRequest(HttpMethod.Get, url2).apply {
+//                assertEquals(HttpStatusCode.OK, response.status())
+//                val apiResult = response.content
+//                assertNotNull(apiResult)
+//                val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
+//                assertEquals(1, json.jsonArray.size)
+//                val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
+//                assertEquals("/root/新建文件夹/2.txt", path)
+//            }
         }
     }
 
@@ -170,8 +223,8 @@ internal class FileTest {
                 assertNotNull(apiResult)
                 val json = Json.parseToJsonElement(apiResult).jsonObject["data"]!!
                 assertEquals(3, json.jsonArray.size)
-                val path = json.jsonArray[0].jsonObject["filePath"]!!.jsonPrimitive.content
-                assertEquals("/root/新建文件夹/新建文件夹", path)
+                val path = json.jsonArray[1].jsonObject["filePath"]!!.jsonPrimitive.content
+                assertEquals("/root/新建文件夹/新建文件夹 (2)", path)
             }
         }
     }
@@ -189,14 +242,17 @@ internal class FileTest {
 //            assertEquals(3, list.size)
 //            assertEquals("新建文件夹 (2)", list[1].fileName)
 
-            val url = "/file/copy?${parametersOf("path", "/root/新建文件夹/新建文件夹").formUrlEncode()}"
+            val url = "/file/copy?${parametersOf("path", "/root/新建文件夹/新建文件夹 (4)").formUrlEncode()}"
 
             handleRequest(HttpMethod.Post, url) {
-                val data = listOf("/root/新建文件夹/1.txt", "/root/新建文件夹/2.txt")
+                val data = listOf("/root/新建文件夹/2.docx", "/root/新建文件夹/3.rar")
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 setBody(json.writeValueAsString(data))
             }.apply {
-                assertEquals(HttpStatusCode.OK, response.status())
+                val apiResult = response.content
+                assertNotNull(apiResult)
+                val json = Json.parseToJsonElement(apiResult).jsonObject["code"]!!
+                assertEquals("D117", json.jsonPrimitive.content)
             }
         }
     }
@@ -210,7 +266,7 @@ internal class FileTest {
             root.update()
 
             handleRequest(HttpMethod.Post, "/file/delete") {
-                val data = listOf("/root/新建文件夹/新建文件夹/1.txt", "/root/新建文件夹/新建文件夹/2.txt")
+                val data = listOf("/root/新建文件夹/新建文件夹/2.docx", "/root/新建文件夹/新建文件夹/3.rar")
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 setBody(json.writeValueAsString(data))
             }.apply {
@@ -227,15 +283,30 @@ internal class FileTest {
             root.value = "D:\\Test"
             root.update()
 
-            val url = "/file/cut?${parametersOf("path", "/root/新建文件夹/新建文件夹").formUrlEncode()}"
+            val url = "/file/cut?${parametersOf("path", "/root/新建文件夹/新建文件夹(2)").formUrlEncode()}"
 
             handleRequest(HttpMethod.Post, url) {
-                val data = listOf("/root/新建文件夹/1.txt", "/root/新建文件夹/2.txt")
+                val data = listOf("/root/新建文件夹/2.docx", "/root/新建文件夹/3.rar")
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 setBody(json.writeValueAsString(data))
             }.apply {
                 assertEquals(HttpStatusCode.OK, response.status())
             }
+        }
+    }
+
+    @Test
+    @Ignore
+    fun uploadFileTest(){
+        withTestServer {
+            val db by application.inject<Database>()
+            val root = QSetting(db).type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!
+            root.value = "D:\\Test"
+            val temp = QSetting(db).type.eq(SettingType.TEMPORARY_FOLDER).findOne()!!
+            root.value = "D:\\Test\\temp"
+            root.update()
+
+            val url = "/file/upload"
         }
     }
 }

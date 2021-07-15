@@ -38,11 +38,23 @@ fun Application.configureStatusPages() {
         exception<FileException> {
             when(it.fileExceptionMsg) {
                 FileExceptionMsg.FILE_NOT_FOUND->{
-                    R.error(Code.FileNotFound, "您访问的文件未找到")
+                    R.error(Code.FileNotFound, "您请求的文件未找到")
                     call.response.status(HttpStatusCode.NotFound)
                 }
                 FileExceptionMsg.INVALID_FILE_NAME->{
-                    R.error(Code.InvalidFileName, "您输入的文件名为空")
+                    R.error(Code.InvalidFileName, "您请求的文件名为空")
+                    call.response.status(HttpStatusCode.NotFound)
+                }
+                FileExceptionMsg.DIRECTORY_NOT_FOUND->{
+                    R.error(Code.DirectoryNotFound, "您请求的文件目录未找到")
+                    call.response.status(HttpStatusCode.NotFound)
+                }
+                FileExceptionMsg.INVALID_DIRECTORY_NAME->{
+                    R.error(Code.InvalidDirectoryName, "您请求的文件路径出错(可能是请求了一个文件的地址)")
+                    call.response.status(HttpStatusCode.NotFound)
+                }
+                FileExceptionMsg.FILE_ALREADY_EXIST->{
+                    R.error(Code.FileAlreadyExist, "您请求的文件已存在")
                     call.response.status(HttpStatusCode.NotFound)
                 }
             }

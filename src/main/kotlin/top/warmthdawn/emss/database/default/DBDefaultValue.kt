@@ -36,6 +36,6 @@ fun Application.tryInitDefault() {
     if(!db.find(Setting::class.java).exists()) {
         Setting(SettingType.NAME, "EMSS").save()
         Setting(SettingType.SERVER_ROOT_DIRECTORY, "~/emss/").save()
-        Setting(SettingType.TEMPORARY_FOLDER, "~/emss/tmp").save()
+        Setting(SettingType.TEMPORARY_FOLDER, "~/emss/temp").save()
     }
 }

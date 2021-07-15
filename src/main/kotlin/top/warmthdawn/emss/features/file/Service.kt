@@ -19,6 +19,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 
 /**
@@ -31,7 +32,7 @@ class FileService {
 
     fun processPath(input: String): Path {
 
-        var uri = URI(input).normalize().path
+        var uri = Path(input).normalize().invariantSeparatorsPathString
 
         if (uri == "/" || uri == "") {
             uri = "/root/"
@@ -64,7 +65,7 @@ class FileService {
 
     private fun processTempPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): Path {
         val filePathRaw =
-            FileChunkManager.getTmpPath(identifier, chunkNumber, isTemp)
+            FileChunkManager.getTempPath(identifier, chunkNumber, isTemp)
         createDirs(processPath(filePathRaw).toString())
         return processPath(filePathRaw)
     }
@@ -130,8 +131,17 @@ class FileService {
 
     }
 
+    private fun fileListCheck(filePath: Path) {
+        if (filePath.toFile().isFile) {
+            throw FileException(FileExceptionMsg.INVALID_DIRECTORY_NAME)
+        } else if (!filePath.toFile().isDirectory) {
+            throw FileException(FileExceptionMsg.DIRECTORY_NOT_FOUND)
+        }
+    }
+
     suspend fun getFileList(path: String): List<FileListInfoVO> {
-        val filePath: Path = processPath(path)
+        val filePath = processPath(path)
+        fileListCheck(filePath)
         val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
         val result = mutableListOf<FileListInfoVO>()
         val fileTree = filePath.toFile().walk()
@@ -179,12 +189,21 @@ class FileService {
 
     suspend fun copyFile(path: String, newPath: String) {
         val file = processPath(path).toFile()
+        if(!file.exists()){
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        }
         val newFile = processPath(newPath).toFile()
+        if(newFile.exists()){
+            throw FileException(FileExceptionMsg.FILE_ALREADY_EXIST)
+        }
         file.copyRecursively(newFile)
     }
 
     suspend fun deleteFile(path: String) {
         val file = processPath(path).toFile()
+        if(!file.exists()){
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        }
         file.deleteRecursively()
     }
 

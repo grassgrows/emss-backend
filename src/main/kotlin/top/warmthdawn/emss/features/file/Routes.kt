@@ -9,6 +9,8 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
 import io.ktor.locations.KtorExperimentalLocationsAPI
+import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.exists
 import io.ktor.locations.post as postL
 import io.ktor.locations.get as getL
@@ -58,6 +60,9 @@ fun Route.fileEndpoint() {
             get {
                 val filePath = call.request.queryParameters["path"]!!
                 val file = fileService.processPath(filePath).toFile()
+                if(!file.exists()){
+                    throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+                }
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)

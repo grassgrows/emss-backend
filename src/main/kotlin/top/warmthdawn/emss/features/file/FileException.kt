@@ -22,7 +22,10 @@ class FileException(
 
 enum class FileExceptionMsg {
     FILE_NOT_FOUND,
-    INVALID_FILE_NAME
+    INVALID_FILE_NAME,
+    DIRECTORY_NOT_FOUND,
+    INVALID_DIRECTORY_NAME,
+    FILE_ALREADY_EXIST
 }
 
 class FileChunkException(

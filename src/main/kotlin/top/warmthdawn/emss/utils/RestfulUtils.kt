@@ -101,6 +101,21 @@ enum class Code(
     InvalidFileName("D114"),
 
     /**
+     * 请求文件目录未找到
+     */
+    DirectoryNotFound("D115"),
+
+    /**
+     * 请求文件路径出错(可能是请求了一个文件的地址)
+     */
+    InvalidDirectoryName("D116"),
+
+    /**
+     * 请求文件已存在
+     */
+    FileAlreadyExist("D117"),
+
+    /**
      * 上传请求出错
      */
     NonUploaderRequest("D120"),

@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.features.file
 
+import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 
 
@@ -9,8 +11,8 @@ import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
  * @date 2021/7/12
  */
 object FileChunkManager {
-    val temporaryFolder: String = "~/emss/tmp"
-    val maxFileSize: Int = 1024 * 8
+    private val temporaryFolder = QSetting().type.eq(SettingType.TEMPORARY_FOLDER).findOne()!!.value
+    private const val maxFileSize: Int = 1024 * 8
 
     init {
         TODO("新建文件夹")
@@ -21,7 +23,7 @@ object FileChunkManager {
         return re.replace(flowIdentifier, "")
     }
 
-    fun getTmpPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): String {
+    fun getTempPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): String {
         val chunkString = chunkNumber.toString().padStart(5, '0')
         if (isTemp) {
             return "${temporaryFolder}/$identifier}/chunk-${chunkString}.emssdownloading"
