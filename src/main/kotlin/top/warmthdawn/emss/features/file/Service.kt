@@ -64,10 +64,14 @@ class FileService {
     }
 
     private fun processTempPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): Path {
-        val filePathRaw =
-            FileChunkManager.getTempPath(identifier, chunkNumber, isTemp)
-        createDirs(processPath(filePathRaw).toString())
-        return processPath(filePathRaw)
+        val root = Path(QSetting().type.eq(SettingType.TEMPORARY_FOLDER).findOne()!!.value)
+        val chunkString = chunkNumber.toString().padStart(5, '0')
+        val relativePath = if (isTemp) {
+            "/$identifier}/chunk-${chunkString}.emssdownloading"
+        } else {
+            "/$identifier}/chunk-${chunkString}.emsschunk"
+        }
+        return root.combineSafe(Path(relativePath)).toPath()
     }
 
     private fun processFinalPath(destinationPath: String, flowRelativePath: String, flowFilename: String): Path {
@@ -189,11 +193,11 @@ class FileService {
 
     suspend fun copyFile(path: String, newPath: String) {
         val file = processPath(path).toFile()
-        if(!file.exists()){
+        if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         val newFile = processPath(newPath).toFile()
-        if(newFile.exists()){
+        if (newFile.exists()) {
             throw FileException(FileExceptionMsg.FILE_ALREADY_EXIST)
         }
         file.copyRecursively(newFile)
@@ -201,7 +205,7 @@ class FileService {
 
     suspend fun deleteFile(path: String) {
         val file = processPath(path).toFile()
-        if(!file.exists()){
+        if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         file.deleteRecursively()

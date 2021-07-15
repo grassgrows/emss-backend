@@ -11,7 +11,6 @@ import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
  * @date 2021/7/12
  */
 object FileChunkManager {
-    private val temporaryFolder = QSetting().type.eq(SettingType.TEMPORARY_FOLDER).findOne()!!.value
     private const val maxFileSize: Int = -1
 
     private fun cleanIdentifier(flowIdentifier: String): String {
@@ -19,13 +18,6 @@ object FileChunkManager {
         return re.replace(flowIdentifier, "")
     }
 
-    fun getTempPath(identifier: String, chunkNumber: Int, isTemp: Boolean = false): String {
-        val chunkString = chunkNumber.toString().padStart(5, '0')
-        if (isTemp) {
-            return "${temporaryFolder}/$identifier}/chunk-${chunkString}.emssdownloading"
-        }
-        return "${temporaryFolder}/$identifier}/chunk-${chunkString}.emsschunk"
-    }
 
     fun getFinalPath(destinationPath: String, flowRelativePath: String, fileName: String): String {
         return "${destinationPath}/${flowRelativePath}/${fileName}"
