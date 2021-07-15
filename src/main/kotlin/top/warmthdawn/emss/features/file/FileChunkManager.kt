@@ -19,8 +19,8 @@ object FileChunkManager {
     }
 
 
-    fun getFinalPath(destinationPath: String, flowRelativePath: String, fileName: String): String {
-        return "${destinationPath}/${flowRelativePath}/${fileName}"
+    fun getFinalPath(destinationPath: String, flowRelativePath: String): String {
+        return "${destinationPath}/${flowRelativePath}"
     }
 
     fun validateRequest(info: FileChunkInfoDTO) {
