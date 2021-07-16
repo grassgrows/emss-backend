@@ -47,6 +47,11 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
+        delete("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            serverService.removeServer(id)
+            R.ok()
+        }
 
 
 

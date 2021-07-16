@@ -324,16 +324,10 @@ object DockerManager {
 
 
     // 删除容器
-    fun removeContainer(containerId: String): Boolean {
-
-        return try {
-            dockerClient
-                .removeContainerCmd(containerId)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
+    fun removeContainer(containerId: String) {
+        dockerClient
+            .removeContainerCmd(containerId)
+            .exec()
     }
 
 

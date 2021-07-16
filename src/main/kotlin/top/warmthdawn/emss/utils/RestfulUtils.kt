@@ -69,10 +69,39 @@ enum class Code(
      * Image下载失败
      */
     ImageDownloadFailed("B112"),
+    /**
+     * Image未找到
+     */
     ImageNotFound("B120"),
+    /**
+     * Image未下载
+     */
     ImageNotDownloaded("B122"),
+    /**
+     * Image删除失败
+     */
     ImageRemoveFailed("B130"),
-    ImageRemoveWhenUsed("B132"),
+    /**
+     * Image的数据库信息删除失败
+     */
+    ImageDatabaseRemoveFailed("B132"),
+    /**
+     * Image删除时正在被使用
+     */
+    ImageRemoveWhenUsed("B134"),
+    /**
+     * 服务器未找到
+     */
+    ServerNotFound("B220"),
+    /**
+     * 服务器删除失败
+     */
+    ServerRemoveFailed("B230"),
+    /**
+     * 服务器的数据库信息删除失败
+     */
+    ServerDatabaseRemoveFailed("B232"),
+
 
     //系统错误
     /**

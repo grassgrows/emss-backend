@@ -4,6 +4,7 @@ import com.github.dockerjava.api.command.AttachContainerCmd
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
+import top.warmthdawn.emss.database.entity.ServerRealTime
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
@@ -67,7 +68,7 @@ class ServerService(
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
-        if(QImage(db).id.eq(serverInfoDTO.imageId).findOne() == null)
+        if(!QImage(db).id.eq(serverInfoDTO.imageId).exists())
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_FOUND)
         if(imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
@@ -84,6 +85,11 @@ class ServerService(
             volumeBind = serverInfoDTO.volumeBind,
         )
         server.insert()
+
+        val serverRealTime = ServerRealTime(
+            status = ServerStatus.Stopped
+        )
+        serverRealTime.insert()
     }
 
     suspend fun start(id: Long) {
@@ -126,6 +132,7 @@ class ServerService(
         DockerManager.startContainer(containerId)
 
         serverRealTime.lastStartDate = LocalDateTime.now()
+        serverRealTime.status = ServerStatus.Running
         server.update()
         serverRealTime.update()
 
@@ -140,6 +147,7 @@ class ServerService(
         val containerId = server.containerId!!
         DockerManager.stopContainer(containerId)
         serverRealTime.lastStartDate = LocalDateTime.now()
+        serverRealTime.status = ServerStatus.Stopped
         serverRealTime.update()
     }
 
@@ -156,6 +164,36 @@ class ServerService(
         DockerManager.stopContainer(containerId)
 
     }
+
+    suspend fun removeServer(id: Long)
+    {
+        if (config.testing) {
+            return
+        }
+        if(!QServer().id.eq(id).exists())
+            throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+
+        val server = QServer().id.eq(id).findOne()
+        if(server!!.containerId != null) {
+            if (containerService.getContainerStatus(server.containerId) == ContainerStatus.Running)
+                stop(id)
+
+            try {
+                DockerManager.removeContainer(server.containerId!!)
+            } catch (e: Exception) {
+                throw ServerException(ServerExceptionMsg.SERVER_REMOVE_FAILED)
+            }
+        }
+
+        val serverRealTime = QServerRealTime().id.eq(id).findOne()
+        if(!server.delete()||!serverRealTime!!.delete())
+            throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
+
+    }
+
+
+
+
 
 //    suspend fun stats(id: Long):ServerStatsVO{
 //

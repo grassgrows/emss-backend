@@ -13,6 +13,7 @@ import top.warmthdawn.emss.features.server.vo.DiskVO
 import top.warmthdawn.emss.features.server.vo.MemoryUsageVO
 import top.warmthdawn.emss.features.server.vo.NetworkVO
 import top.warmthdawn.emss.utils.withTestServer
+import java.lang.Thread.sleep
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -89,7 +90,7 @@ internal class DockerManagerTest {
     @Test
     fun inspectContainerTest() {
         val containerId =
-            "testContainer006" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
+            "testContainer009" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
         val container = DockerManager.inspectContainer(containerId)
 
         if (container != null) {
@@ -105,6 +106,11 @@ internal class DockerManagerTest {
             print("******** " + container.status + " ********\n")
         } else {
             print("******** not found ********\n")
+        }
+        while(true)
+        {
+            sleep(100)
+            val container = DockerManager.inspectContainer(containerId)
         }
 
     }
@@ -134,10 +140,10 @@ internal class DockerManagerTest {
     fun removeContainerTest() {
         val containerId = ""//"83d364defa655d5c149eff90ed9fa6cbeb04c8423e5505b9c87f1f939e592687"
 
-        if (DockerManager.removeContainer(containerId))
-            print("******** succeed ********\n")
-        else
-            print("******** fail ********\n")
+//        if (DockerManager.removeContainer(containerId))
+//            print("******** succeed ********\n")
+//        else
+//            print("******** fail ********\n")
     }
 
 

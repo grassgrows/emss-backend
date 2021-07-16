@@ -6,6 +6,8 @@ import io.ktor.http.*
 import top.warmthdawn.emss.features.docker.ImageException
 import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.file.*
+import top.warmthdawn.emss.features.server.ServerException
+import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
 
@@ -95,8 +97,25 @@ fun Application.configureStatusPages() {
                 ImageExceptionMsg.IMAGE_REMOVE_FAILED -> {
                     R.error(Code.ImageRemoveFailed, "镜像删除失败！", HttpStatusCode.InternalServerError)
                 }
+                ImageExceptionMsg.IMAGE_DATABASE_REMOVE_FAILED -> {
+                    R.error(Code.ImageDatabaseRemoveFailed, "镜像数据库信息删除失败！", HttpStatusCode.InternalServerError)
+                }
                 ImageExceptionMsg.IMAGE_REMOVE_WHEN_USED -> {
                     R.error(Code.ImageRemoveWhenUsed, "镜像正在被使用中！请删除使用该镜像的服务器！", HttpStatusCode.Forbidden)
+                }
+            }
+        }
+
+        exception<ServerException> {
+            when (it.serverExceptionMsg) {
+                ServerExceptionMsg.SERVER_NOT_FOUND -> {
+                    R.error(Code.ServerNotFound, "查无对应服务器！", HttpStatusCode.NotFound)
+                }
+                ServerExceptionMsg.SERVER_REMOVE_FAILED -> {
+                    R.error(Code.ServerRemoveFailed, "服务器删除失败！", HttpStatusCode.InternalServerError)
+                }
+                ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED -> {
+                    R.error(Code.ServerDatabaseRemoveFailed, "服务器数据库信息删除失败！", HttpStatusCode.InternalServerError)
                 }
             }
         }
