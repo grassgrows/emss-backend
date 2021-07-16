@@ -1,11 +1,10 @@
 package top.warmthdawn.emss.features.server
 
 import io.ktor.application.*
-import io.ktor.http.*
 import io.ktor.request.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.utils.R
 
@@ -18,14 +17,36 @@ import top.warmthdawn.emss.utils.R
 fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
-    route("/server"){
-        get("/list") {
-            R.ok(serverService.getServerInfo())
+    val statsService by inject<StatsService>()
+    route("/servers"){
+        get {
+            R.ok(serverService.getServersBriefInfo())
         }
-        post("/create") {
+
+        post {
             val dtoServerInfo = call.receive<ServerInfoDTO>()
             serverService.createServerInfo(dtoServerInfo)
             R.ok()
+        }
+
+        delete("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            serverService.removeServer(id)
+            R.ok()
+        }
+        get("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            R.ok(serverService.getServerInfo(id))
+        }
+        post("/{id}") {
+            val id = call.parameters["id"]!!.toLong()
+            val dto = call.receive<ServerInfoDTO>()
+            serverService.updateServerInfo(id, dto)
+            R.ok()
+        }
+        get("/{id}/stats"){
+            val id = call.parameters["id"]!!.toLong()
+            R.ok(statsService.serverStatsInfoMap[id]!!)
         }
         post("/{id}/start") {
             val id = call.parameters["id"]!!.toLong()
@@ -47,20 +68,9 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
-        delete("/{id}"){
-            val id = call.parameters["id"]!!.toLong()
-            serverService.removeServer(id)
-            R.ok()
-        }
 
 
 
-//        post("/{id}/attach") {
-//            val id = call.parameters["id"]!!.toLong()
-//            val serverAttach = call.receive<ServerAttachDTO>()
-//            serverService.attachContainer(id,serverAttach)
-//            R.ok()
-//        }
     }
 
 }

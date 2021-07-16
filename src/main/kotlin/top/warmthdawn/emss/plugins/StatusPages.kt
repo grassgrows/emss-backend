@@ -1,8 +1,11 @@
 package top.warmthdawn.emss.plugins
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import top.warmthdawn.emss.features.docker.ContainerException
+import top.warmthdawn.emss.features.docker.ContainerExceptionMsg
 import top.warmthdawn.emss.features.docker.ImageException
 import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.file.*
@@ -22,6 +25,10 @@ fun Application.configureStatusPages() {
         exception<Throwable> {
             R.error(it)
             throw it
+        }
+
+        exception<MismatchedInputException> {
+            R.error(it, HttpStatusCode.BadRequest)
         }
 
         exception<PathException> {
@@ -54,6 +61,9 @@ fun Application.configureStatusPages() {
                 }
                 FileExceptionMsg.FILE_ALREADY_EXIST->{
                     R.error(Code.FileAlreadyExist, "您请求的文件已存在", HttpStatusCode.BadRequest)
+                }
+                FileExceptionMsg.FILE_SIZE_TOO_LARGE->{
+                    R.error(Code.FileSizeTooLarge, "文件体积过大", HttpStatusCode.BadRequest)
                 }
             }
         }
@@ -102,6 +112,13 @@ fun Application.configureStatusPages() {
                 }
                 ImageExceptionMsg.IMAGE_REMOVE_WHEN_USED -> {
                     R.error(Code.ImageRemoveWhenUsed, "镜像正在被使用中！请删除使用该镜像的服务器！", HttpStatusCode.Forbidden)
+                }
+            }
+        }
+        exception<ContainerException> {
+            when (it.containerExceptionMsg) {
+                ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED -> {
+                    R.error(Code.ContainerGetInfoFailed, "获取容器信息失败！", HttpStatusCode.InternalServerError)
                 }
             }
         }

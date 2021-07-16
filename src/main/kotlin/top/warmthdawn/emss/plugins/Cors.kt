@@ -15,7 +15,12 @@ fun Application.configureCors() {
     {
         method(HttpMethod.Get)
         method(HttpMethod.Post)
+        method(HttpMethod.Delete)
         header(HttpHeaders.XForwardedProto)
+        header(HttpHeaders.XForwardedFor)
+        header(HttpHeaders.XForwardedHost)
+        header(HttpHeaders.XHttpMethodOverride)
+        header(HttpHeaders.XForwardedServer)
         anyHost()
         allowCredentials = true
         allowNonSimpleContentTypes = true

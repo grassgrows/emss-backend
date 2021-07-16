@@ -15,8 +15,10 @@ import org.koin.dsl.single
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
+import top.warmthdawn.emss.features.command.CommandService
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
@@ -63,7 +65,7 @@ val appTestModule = module {
     single<DBFactory> { DBFactoryImpl(get()) }
 
     //setting
-    single { SettingService(get(), get(),get()) }
+    single { SettingService(get(), get(), get()) }
     single { ImageDownloadScheduler(get()) }
     single { ImageService(get(), get(), get()) }
 
@@ -73,4 +75,10 @@ val appTestModule = module {
 
     //file
     single { FileService() }
+
+    //status
+    single { StatsService() }
+
+    //command
+    single { CommandService() }
 }

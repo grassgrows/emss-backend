@@ -1,6 +1,6 @@
-package top.warmthdawn.emss.features.docker.timerTask
+package top.warmthdawn.emss.features.dockerStats.timerTask
 
-import top.warmthdawn.emss.features.server.vo.*
+import top.warmthdawn.emss.features.dockerStats.*
 import java.util.*
 
 /**
@@ -9,16 +9,14 @@ import java.util.*
  */
 
 data class TimerTaskInfo(
-    val cpuUsageVO: CpuUsageVO,
-    val memoryUsageVO: MemoryUsageVO,
-    val diskVO: DiskVO, //TODO 磁盘监控
-    val networkVO: NetworkVO,
+    val serverStatsInfo: ServerStatsInfo,
     val cpuUsageList: MutableList<Double>,
     val memoryUsageList: MutableList<Long>,
     var availableMemory: Long,
+    val diskReadList: MutableList<Long>,
+    val diskWriteList: MutableList<Long>,
     val networkNew: MutableMap<String, EachNetworkForSecond>
 )
-
 
 class StatsTimerTask(
     val timerTaskInfo: TimerTaskInfo,
@@ -29,10 +27,9 @@ class StatsTimerTask(
 
         with(timerTaskInfo) {
 
-            with(cpuUsageVO) {
+            with(serverStatsInfo.cpuUsage) {
                 // CPU使用率
-                if(timestamps.count()>=timestampsMax)
-                {
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
                     values.removeFirst()
                 }
@@ -47,9 +44,10 @@ class StatsTimerTask(
 
                 cpuUsageList.clear()
             }
-            with(memoryUsageVO) {
+
+            with(serverStatsInfo.memoryUsage) {
                 // 内存使用
-                if(timestamps.count()>=timestampsMax) {
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
                     values.removeFirst()
                 }
@@ -66,20 +64,44 @@ class StatsTimerTask(
                 memoryUsageList.clear()
             }
 
-            //TODO 磁盘
-
-
-            with(networkVO) {
-                // 网络IO
-                if(timestamps.count()>=timestampsMax)
-                {
+            with(serverStatsInfo.disk) {
+                // 磁盘IO
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
-                    timestamps.add(System.currentTimeMillis() / 1000)
+                    diskReadValues.removeFirst()
+                    diskWriteValues.removeFirst()
                 }
+                timestamps.add(System.currentTimeMillis() / 1000)
+                if (diskReadList.isNotEmpty()) {
+                    diskReadValues.add(diskReadList.average().toLong())
+                    currentRead = diskReadList.last()
+                } else {
+                    diskReadValues.add(0)
+                    currentRead = 0
+                }
+                if (diskWriteList.isNotEmpty()) {
+                    diskWriteValues.add(diskWriteList.average().toLong())
+                    currentWrite = diskWriteList.last()
+                } else {
+                    diskWriteValues.add(0)
+                    currentWrite = 0
+                }
+
+                diskReadList.clear()
+                diskWriteList.clear()
+            }
+
+
+            with(serverStatsInfo.network) {
+                // 网络IO
+                if (timestamps.count() >= timestampsMax) {
+                    timestamps.removeFirst()
+                }
+                timestamps.add(System.currentTimeMillis() / 1000)
                 with(network)
                 {
                     for (key in networkNew.keys) {
-                        if (!(keys.contains(key))) {
+                        if (!keys.contains(key)) {
                             put(key, EachNetwork(
                                 mutableListOf(), mutableListOf(), 0, 0
                             ))
@@ -106,11 +128,28 @@ class StatsTimerTask(
                             }
                         }
                     }
+                    for (key in keys) {
+                        if (!networkNew.keys.contains(key)) {
+                            with(getValue(key))
+                            {
+                                if (receiveValues.count() >= timestampsMax) {
+                                    receiveValues.removeFirst()
+                                    sendValues.removeFirst()
+                                }
+                                receiveValues.add(0)
+                                currentRxBytes = 0
 
-                    networkNew.clear()
+                                sendValues.add(0)
+                                currentTxBytes = 0
+
+                            }
+                        }
+                    }
+
+
                 }
 
-
+                networkNew.clear()
             }
         }
 
@@ -119,9 +158,9 @@ class StatsTimerTask(
 
 //测试
 fun main() {
-    val cpuUsageVO = CpuUsageVO(mutableListOf(0), mutableListOf(0.0), 0.0)
-    val memoryUsageVO = MemoryUsageVO(mutableListOf(0), mutableListOf(0), 0, 0)
-    val diskVO = DiskVO(0, 0)
+    val cpuUsageVO = CpuUsage(mutableListOf(0), mutableListOf(0.0), 0.0)
+    val memoryUsageVO = MemoryUsage(mutableListOf(0), mutableListOf(0), 0, 0)
+    //val diskVO = Disk(0, 0)
     //val networkVO = NetworkVO(mutableListOf(0), mutableListOf(0), mutableListOf(0), 0, 0)
     //Timer().schedule(StatsTimerTask(cpuUsageVO,memoryUsageVO,diskVO,networkVO), Date(), 1000)
 

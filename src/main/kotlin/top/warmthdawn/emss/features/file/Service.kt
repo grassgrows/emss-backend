@@ -1,19 +1,15 @@
 package top.warmthdawn.emss.features.file
 
+import ch.qos.logback.core.joran.conditional.IfAction
 import io.ktor.util.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.*
 import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.file.vo.FileListInfoVO
 import top.warmthdawn.emss.features.file.vo.buildVirtualDirectory
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.InputStream
+import java.io.*
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDateTime
@@ -80,7 +76,7 @@ class FileService {
         return tempPath
     }
 
-    fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
+    private fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
         val path = processPath(destinationPath)
         val relative = Path(flowRelativePath).normalizeAndRelativize()
         if (relative.startsWith("..")) {
@@ -110,7 +106,6 @@ class FileService {
             try {
                 //下载完成 改名
                 filePathDownloading.toFile().renameTo(filePathChunk.toFile())
-
 
                 if (info.flowChunkNumber == info.flowTotalChunks) {
                     BufferedOutputStream(
@@ -216,6 +211,8 @@ class FileService {
         }
     }
 
+    // TODO: 2021/7/16 创建文件夹的内部方法（覆盖原文件，不检查路径头） 
+
     suspend fun renameFile(path: String, name: String) {
         val filePath = processPath(path)
         val file = filePath.toFile()
@@ -238,6 +235,8 @@ class FileService {
         }
         file.copyRecursively(newFile)
     }
+
+    // TODO: 2021/7/16 复制文件的内部方法（覆盖原文件）
 
     suspend fun deleteFile(path: String) {
         val file = processPath(path).toFile()
@@ -274,4 +273,36 @@ class FileService {
             }
         return result
     }
+
+    suspend fun readTextFile(path: String, pageNum: Int, pageSize: Int = 1000): String {
+        val file = processPath(path).toFile()
+        if (!file.exists()) {
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        }
+        return withContext(Dispatchers.IO) {
+            BufferedReader(InputStreamReader(file.inputStream())).use {
+                runCatching {
+                    if (it.skip(pageNum * pageSize.toLong()) < 0) {
+                        ""
+                    } else {
+                        val buffer = CharArray(pageSize)
+                        val read = it.read(buffer, 0, buffer.size)
+                        if (read > 0)
+                            String(buffer, 0, read)
+                        else
+                            ""
+                    }
+                }.getOrElse { "" }
+            }
+        }
+
+    }
+
+    suspend fun saveTextFile(path: String, text: String) {
+        File(path).writeText(text)
+        //TODO: 有机会改成服务器设置
+        if (File(path).length() > 1024 * 1024)
+            throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)
+    }
+
 }

@@ -90,23 +90,28 @@ enum class Code(
      * Image删除时正在被使用
      */
     ImageRemoveWhenUsed("B144"),
-    //服务器（容器）
+    //容器
+    /**
+     *  获取容器信息失败
+     */
+    ContainerGetInfoFailed("B220"),
+    //服务器
     /**
      * 服务器未找到
      */
-    ServerNotFound("B220"),
+    ServerNotFound("B320"),
     /**
      *  服务器未启动
      */
-    ServerNotRunning("B230"),
+    ServerNotRunning("B330"),
     /**
      * 服务器删除失败
      */
-    ServerRemoveFailed("B240"),
+    ServerRemoveFailed("B340"),
     /**
      * 服务器的数据库信息删除失败
      */
-    ServerDatabaseRemoveFailed("B242"),
+    ServerDatabaseRemoveFailed("B342"),
 
 
     //系统错误
@@ -155,6 +160,10 @@ enum class Code(
      * 请求文件已存在
      */
     FileAlreadyExist("D117"),
+    /**
+     * 请求文件已存在
+     */
+    FileSizeTooLarge("D118"),
 
     /**
      * 上传请求出错

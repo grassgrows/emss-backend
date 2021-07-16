@@ -1,40 +1,41 @@
-package top.warmthdawn.emss.features.server.vo
+package top.warmthdawn.emss.features.dockerStats
 
-import top.warmthdawn.emss.features.docker.ContainerStatus
-import top.warmthdawn.emss.features.server.ServerStatus
-import java.lang.management.MemoryUsage
-import java.time.LocalDateTime
+/**
+ * @author takanashi
+ * @since 2021-07-15
+ */
 
-
-data class ServerStatsVO(
-    var cpuUsageVO: CpuUsageVO,
-    var memoryUsageVO: MemoryUsageVO,
-    var diskVO: DiskVO,
-    var networkVO: NetworkVO
+data class ServerStatsInfo(
+    var cpuUsage: CpuUsage,
+    var memoryUsage: MemoryUsage,
+    var disk: Disk,
+    var network: Network
 )
 
 
 
-data class CpuUsageVO(
+data class CpuUsage(
     var timestamps: MutableList<Long>,  //时间戳表（单位秒）
     var values: MutableList<Double>,    //cpu利用率队列，一段时间刷新一次（单位%）
     var current: Double,         //当前cpu利用率
 )
-data class MemoryUsageVO(
+data class MemoryUsage(
     var timestamps: MutableList<Long>,  //时间戳表（单位秒）
     var values: MutableList<Long>,      //已使用内存队列，一段时间刷新一次（单位Bytes）
-    var available: Long,   //总可用内存（单位Bytes）
+    var available: Long,         //总可用内存（单位Bytes）
     var current: Long,           //当前已使用内存
 )
-data class DiskVO(
-    //TODO 磁盘读写监控
-    var diskRead: Long,
-    var diskWrite: Long
+data class Disk(
+    var timestamps: MutableList<Long>,       //时间戳表（单位秒）
+    var diskReadValues: MutableList<Long>,   //磁盘读（单位Bytes）
+    var diskWriteValues: MutableList<Long>,  //磁盘写（单位Bytes）
+    var currentRead: Long,    //当前磁盘读（单位Bytes）
+    var currentWrite: Long,   //当前磁盘写（单位Bytes）
 )
-data class NetworkVO(
+data class Network(
     var timestamps: MutableList<Long>,     //时间戳表（单位秒）
     //map第一个参数为网络名
-    var network: MutableMap<String,EachNetwork>
+    var network: MutableMap<String, EachNetwork>
 )
 data class EachNetwork(
     var receiveValues: MutableList<Long>,  //接收字节队列，一段时间刷新一次（单位Bytes）

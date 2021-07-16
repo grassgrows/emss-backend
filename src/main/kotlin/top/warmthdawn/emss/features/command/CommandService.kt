@@ -11,6 +11,7 @@ import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.features.server.ServerStatus
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.CoroutineContext
 
@@ -40,7 +41,6 @@ class CommandService {
     }
 }
 
-
 class AttachProxy(
     bufferSize: Int = 1024*32,
     context: CoroutineContext? = null
@@ -49,7 +49,8 @@ class AttachProxy(
     private val input = PipedInputStream(bufferSize)
     private val output = PipedOutputStream(input)
     private val lock = ReentrantLock()
-
+    private val EOL =  "\n".toByteArray()
+    private val RETURN =  "\r".toByteArray()[0]
     override val coroutineContext: CoroutineContext = if(context == null) Dispatchers.IO else context + Dispatchers.IO
 
     private fun onMessage(msg: ByteArray) {
@@ -84,6 +85,11 @@ class AttachProxy(
     fun sendMessage(msg: ByteArray) {
         lock.lock()
         output.write(msg)
+        if(msg.lastOrNull() == RETURN){
+            onMessage(msg + EOL)
+        }else{
+            onMessage(msg)
+        }
         lock.unlock()
     }
 }

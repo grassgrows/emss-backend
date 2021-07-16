@@ -25,7 +25,8 @@ enum class FileExceptionMsg {
     INVALID_FILE_NAME,
     DIRECTORY_NOT_FOUND,
     INVALID_DIRECTORY_NAME,
-    FILE_ALREADY_EXIST
+    FILE_ALREADY_EXIST,
+    FILE_SIZE_TOO_LARGE
 }
 
 class FileChunkException(

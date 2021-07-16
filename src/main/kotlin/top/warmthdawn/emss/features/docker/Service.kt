@@ -41,6 +41,7 @@ class ContainerService(private val db: Database) {
         val cmd = mutableListOf("/bin/sh", "-c", command)
         return DockerManager.createContainer(containerName, imageName, portBindingList, volumeBindList, workingDir, cmd)
     }
+    /*
 
     suspend fun getContainerName(containerId: String?): String {
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.name
@@ -68,5 +69,6 @@ class ContainerService(private val db: Database) {
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.status
             ?: ContainerStatus.Unknown else ContainerStatus.Unknown
     }
+    */
 
 }

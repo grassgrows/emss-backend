@@ -11,14 +11,15 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
-import top.warmthdawn.emss.features.docker.timerTask.StatsTimerTask
-import top.warmthdawn.emss.features.docker.timerTask.TimerTaskInfo
+import top.warmthdawn.emss.features.dockerStats.timerTask.TimerTaskInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
-import top.warmthdawn.emss.features.server.vo.*
+import top.warmthdawn.emss.features.dockerStats.EachNetworkForSecond
 import java.io.Closeable
 import java.io.InputStream
+import java.lang.NullPointerException
 import java.time.Duration
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 /**
@@ -224,22 +225,21 @@ object DockerManager {
         } catch (e: Exception) {
             null
         }
-
     }
 
 
     // 获取容器信息
-    fun inspectContainer(containerId: String): ContainerInfo? {
-
-        return try {
+    fun inspectContainer(containerId: String): ContainerInfo {
+        try {
             val container = dockerClient
                 .inspectContainerCmd(containerId)
                 .exec()
-
-            ContainerInfo(
+            val myDateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
+            val createTime = LocalDateTime.parse(container.created, myDateTimeFormatter)
+            return ContainerInfo(
                 container.id,
                 container.name,
-                container.created,
+                createTime,
                 container.imageId,
                 when (container.state.status) {
                     "running" -> ContainerStatus.Running
@@ -254,63 +254,56 @@ object DockerManager {
                     else -> ContainerStatus.Unknown
                 }
             )
-        } catch (e: Exception) {
-            null
+        }catch (e:Exception)
+        {
+            throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
-
     }
 
     // 监控状态
-    fun stats(containerId: String,
-              cpuUsageVO:CpuUsageVO,
-              memoryUsageVO: MemoryUsageVO,
-              diskVO: DiskVO, //TODO 磁盘监控
-              networkVO: NetworkVO,
-              period: Long,
-              timestampMax: Int
-    ) {
+    fun statsContainer(containerId: String, timerTaskInfo: TimerTaskInfo):AsyncResultCallback<Statistics> {
 
-        // TODO 上层判断服务器是否启动
-        val timerTaskInfo = TimerTaskInfo(
-            cpuUsageVO, memoryUsageVO, diskVO, networkVO,
-            mutableListOf(), mutableListOf(),
-            0, mutableMapOf()
-        )
-
-        Timer().schedule(StatsTimerTask(timerTaskInfo,timestampMax), Date(), period)
-
-        dockerClient
+        return dockerClient
             .statsCmd(containerId)
             .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
 
                 override fun onNext(statistics: Statistics?) {
-
                     if (statistics != null) {
-
                         with(statistics) {
+                            //try {
+                                timerTaskInfo.cpuUsageList.add(
+                                    (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                            / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
+                                            * cpuStats.onlineCpus!! * 100)
 
-                            timerTaskInfo.cpuUsageList.add(
-                                (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
-                                        / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
-                                        * cpuStats.onlineCpus!! * 100)
+                                timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
 
-                            timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
+                                timerTaskInfo.availableMemory = memoryStats.limit!!
 
-                            timerTaskInfo.availableMemory = memoryStats.limit!!
-
-
-                            for (key in networks!!.keys) {
-                                if (!(timerTaskInfo.networkNew.keys.contains(key))) {
-                                    timerTaskInfo.networkNew[key] = EachNetworkForSecond(
-                                        mutableListOf(), mutableListOf()
-                                    )
+                                if(blkioStats.ioServiceBytesRecursive != null)
+                                {
+                                    for(blkio in blkioStats.ioServiceBytesRecursive!!)
+                                    {
+                                        if(blkio.op == "Read")
+                                            timerTaskInfo.diskReadList.add(blkio.value)
+                                        if(blkio.op == "Write")
+                                            timerTaskInfo.diskWriteList.add(blkio.value)
+                                    }
                                 }
-                                timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
-                                timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
-                            }
 
+                                for (key in networks!!.keys) {
+                                    if (!(timerTaskInfo.networkNew.keys.contains(key))) {
+                                        timerTaskInfo.networkNew[key] = EachNetworkForSecond(
+                                            mutableListOf(), mutableListOf()
+                                        )
+                                    }
+                                    timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
+                                    timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
+                                }
+                            //}catch (e:NullPointerException){}
                         }
                     }
+
                 }
             })
     }
