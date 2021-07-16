@@ -41,7 +41,7 @@ class ServerService(
                 server.aliasName,
                 server.abbr,
                 realTime.status === ServerStatus.Running,
-                server.portBindings.keys.first(),
+                server.portBindings.keys.firstOrNull(),
                 server.imageId,
                 realTime.lastCrashDate
             )
@@ -68,6 +68,23 @@ class ServerService(
         )
     }
 
+
+    suspend fun updateServerInfo(id: Long, serverInfoDTO: ServerInfoDTO) {
+        val server = QServer(db).id.eq(id).findOne()
+            ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        server.name = serverInfoDTO.name
+        server.aliasName = serverInfoDTO.aliasName ?: ""
+        server.abbr = serverInfoDTO.abbr
+        server.location = serverInfoDTO.location
+        server.startCommand = serverInfoDTO.startCommand
+        server.imageId = serverInfoDTO.imageId
+        server.workingDir = serverInfoDTO.workingDir
+        server.portBindings = serverInfoDTO.portBindings
+        server.volumeBind = serverInfoDTO.volumeBind
+        server.update()
+
+    }
+
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
         if (!QImage(db).id.eq(serverInfoDTO.imageId).exists())
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_FOUND)
@@ -89,14 +106,15 @@ class ServerService(
         server.insert()
 
         val realTime = ServerRealTime(status = ServerStatus.Stopped, serverId = server.id!!)
+        realTime.insert()
 
-        //创建监控信息
-        statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(
-            CpuUsage(mutableListOf(), mutableListOf(), 0.0),
-            MemoryUsage(mutableListOf(), mutableListOf(), 0, 0),
-            Disk(mutableListOf(), mutableListOf(), mutableListOf(),0,0),
-            Network(mutableListOf(), mutableMapOf())
-        )
+//        //创建监控信息
+//        statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(
+//            CpuUsage(mutableListOf(), mutableListOf(), 0.0),
+//            MemoryUsage(mutableListOf(), mutableListOf(), 0, 0),
+//            Disk(mutableListOf(), mutableListOf(), mutableListOf(), 0, 0),
+//            Network(mutableListOf(), mutableMapOf())
+//        )
 
     }
 
@@ -147,7 +165,7 @@ class ServerService(
         serverRealTime.update()
 
         //开始监控
-        statsService.startStats(id,60000,60)
+//        statsService.startStats(id, 60000, 60)
     }
 
     suspend fun stop(id: Long) {
@@ -155,7 +173,7 @@ class ServerService(
             return
         }
         //停止监控
-        statsService.serverStatsProxy[id]!!.callback.close()
+//        statsService.serverStatsProxy[id]!!.callback.close()
         val server = QServer(db).id.eq(id).findOne()!!
         val serverRealTime = QServerRealTime(db).id.eq(id).findOne()!!
         val containerId = server.containerId!!
@@ -199,13 +217,13 @@ class ServerService(
         }
 
         //删除监控信息
-        statsService.serverStatsInfoMap.remove(server.id)
+//        statsService.serverStatsInfoMap.remove(server.id)
 
         val serverRealTime = QServerRealTime().id.eq(id).findOne()
         if (!server.delete() || !serverRealTime!!.delete())
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
 
-
+    }
 
 //    suspend fun stats(id: Long):ServerStatsVO{
 //
@@ -220,6 +238,5 @@ class ServerService(
 //        period: Long,
 //        timestampMax: Int
 //    }
-
 
 }

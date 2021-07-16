@@ -18,25 +18,35 @@ fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
     val statsService by inject<StatsService>()
-    route("servers") {
-
-    }
-    route("/server"){
-        get("/list") {
+    route("/servers"){
+        get {
             R.ok(serverService.getServersBriefInfo())
+        }
+
+        post {
+            val dtoServerInfo = call.receive<ServerInfoDTO>()
+            serverService.createServerInfo(dtoServerInfo)
+            R.ok()
+        }
+
+        delete("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            serverService.removeServer(id)
+            R.ok()
         }
         get("/{id}"){
             val id = call.parameters["id"]!!.toLong()
             R.ok(serverService.getServerInfo(id))
         }
+        post("/{id}") {
+            val id = call.parameters["id"]!!.toLong()
+            val dto = call.receive<ServerInfoDTO>()
+            serverService.updateServerInfo(id, dto)
+            R.ok()
+        }
         get("/{id}/stats"){
             val id = call.parameters["id"]!!.toLong()
             R.ok(statsService.serverStatsInfoMap[id]!!)
-        }
-        post("/create") {
-            val dtoServerInfo = call.receive<ServerInfoDTO>()
-            serverService.createServerInfo(dtoServerInfo)
-            R.ok()
         }
         post("/{id}/start") {
             val id = call.parameters["id"]!!.toLong()
@@ -59,11 +69,6 @@ fun Route.serverEndpoint() {
             R.ok()
         }
 
-        delete("/{id}"){
-            val id = call.parameters["id"]!!.toLong()
-            serverService.removeServer(id)
-            R.ok()
-        }
 
 
     }
