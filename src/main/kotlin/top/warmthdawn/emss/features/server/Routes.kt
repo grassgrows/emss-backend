@@ -22,6 +22,10 @@ fun Route.serverEndpoint() {
         get("/list") {
             R.ok(serverService.getServerInfo())
         }
+        get("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            R.ok(serverService.getServerInfo(id))
+        }
         post("/create") {
             val dtoServerInfo = call.receive<ServerInfoDTO>()
             serverService.createServerInfo(dtoServerInfo)
@@ -54,13 +58,6 @@ fun Route.serverEndpoint() {
         }
 
 
-
-//        post("/{id}/attach") {
-//            val id = call.parameters["id"]!!.toLong()
-//            val serverAttach = call.receive<ServerAttachDTO>()
-//            serverService.attachContainer(id,serverAttach)
-//            R.ok()
-//        }
     }
 
 }

@@ -1,6 +1,6 @@
 package top.warmthdawn.emss.features.docker.timerTask
 
-import top.warmthdawn.emss.features.server.vo.*
+import top.warmthdawn.emss.features.server.*
 import java.util.*
 
 /**
@@ -9,10 +9,10 @@ import java.util.*
  */
 
 data class TimerTaskInfo(
-    val cpuUsageVO: CpuUsageVO,
-    val memoryUsageVO: MemoryUsageVO,
-    val diskVO: DiskVO, //TODO 磁盘监控
-    val networkVO: NetworkVO,
+    val cpuUsage: CpuUsage,
+    val memoryUsage: MemoryUsage,
+    val disk: Disk, //TODO 磁盘监控
+    val network: Network,
     val cpuUsageList: MutableList<Double>,
     val memoryUsageList: MutableList<Long>,
     var availableMemory: Long,
@@ -29,7 +29,7 @@ class StatsTimerTask(
 
         with(timerTaskInfo) {
 
-            with(cpuUsageVO) {
+            with(cpuUsage) {
                 // CPU使用率
                 if(timestamps.count()>=timestampsMax)
                 {
@@ -47,7 +47,7 @@ class StatsTimerTask(
 
                 cpuUsageList.clear()
             }
-            with(memoryUsageVO) {
+            with(memoryUsage) {
                 // 内存使用
                 if(timestamps.count()>=timestampsMax) {
                     timestamps.removeFirst()
@@ -69,7 +69,7 @@ class StatsTimerTask(
             //TODO 磁盘
 
 
-            with(networkVO) {
+            with(network) {
                 // 网络IO
                 if(timestamps.count()>=timestampsMax)
                 {
@@ -119,9 +119,9 @@ class StatsTimerTask(
 
 //测试
 fun main() {
-    val cpuUsageVO = CpuUsageVO(mutableListOf(0), mutableListOf(0.0), 0.0)
-    val memoryUsageVO = MemoryUsageVO(mutableListOf(0), mutableListOf(0), 0, 0)
-    val diskVO = DiskVO(0, 0)
+    val cpuUsageVO = CpuUsage(mutableListOf(0), mutableListOf(0.0), 0.0)
+    val memoryUsageVO = MemoryUsage(mutableListOf(0), mutableListOf(0), 0, 0)
+    val diskVO = Disk(0, 0)
     //val networkVO = NetworkVO(mutableListOf(0), mutableListOf(0), mutableListOf(0), 0, 0)
     //Timer().schedule(StatsTimerTask(cpuUsageVO,memoryUsageVO,diskVO,networkVO), Date(), 1000)
 

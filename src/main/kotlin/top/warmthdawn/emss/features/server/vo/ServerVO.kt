@@ -22,7 +22,7 @@ data class ServerVO(
     var portBindings: Map<Int,Int>,  //端口映射
     var volumeBind: Map<String,String>, //目录映射
     var containerId: String?, //Docker容器64位ID
-    var containerName: String, //Docker容器名
+    var containerName: String?, //Docker容器名
     var containerCreateTime: LocalDateTime?, //Docker容器创建时间
     var containerStatus: ContainerStatus, //Docker容器状态
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间

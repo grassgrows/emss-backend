@@ -1,26 +1,19 @@
 package top.warmthdawn.emss.features.server
 
-import com.github.dockerjava.api.command.AttachContainerCmd
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.ServerRealTime
-import top.warmthdawn.emss.database.entity.SettingType
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
-import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
-import top.warmthdawn.emss.features.server.vo.ServerStatsVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
-import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
 import java.time.LocalDateTime
 
 /**
@@ -32,7 +25,6 @@ import java.time.LocalDateTime
 class ServerService(
     private val db: Database,
     private val config: AppConfig,
-    private val containerService: ContainerService,
     private val imageService: ImageService,
     private val fileService: FileService
 ) {
@@ -54,9 +46,9 @@ class ServerService(
                 server.portBindings,
                 server.volumeBind,
                 server.containerId,
-                containerService.getContainerName(server.containerId),
-                containerService.getContainerCreateTime(server.containerId),
-                containerService.getContainerStatus(server.containerId),
+                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).name else null,
+                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).createTime else null,
+                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).status else ContainerStatus.Unknown,
                 serverRealTime.lastCrashDate,
                 serverRealTime.lastStartDate,
                 serverRealTime.status
@@ -65,6 +57,32 @@ class ServerService(
         }
 
         return list
+    }
+
+    suspend fun getServerInfo(id: Long): ServerVO {
+        val server = QServer(db).id.eq(id).findOne()
+        val serverRealTime = QServerRealTime(db).id.eq(id).findOne()
+        if (server == null || serverRealTime == null)
+            throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        return ServerVO(
+            server.id!!,
+            server.name,
+            server.aliasName,
+            server.abbr,
+            server.location,
+            server.startCommand,
+            server.imageId,
+            server.workingDir,
+            server.portBindings,
+            server.volumeBind,
+            server.containerId,
+            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).name else null,
+            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).createTime else null,
+            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).status else ContainerStatus.Unknown,
+            serverRealTime.lastCrashDate,
+            serverRealTime.lastStartDate,
+            serverRealTime.status
+        )
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -108,8 +126,10 @@ class ServerService(
             val image = QImage().id.eq(server.imageId).findOne()!!
 
             val volumeBind = mutableMapOf<String,String>()
-            volumeBind.putAll(server.volumeBind)
-            val rootPath = fileService.processPath(server.location).toString()
+            server.volumeBind.forEach {
+                volumeBind.put(fileService.processPath(it.key).toString(), it.value)
+            }
+            val rootPath = fileService.processPath("/root/${server.location}").toString()
             volumeBind[rootPath] = server.workingDir
             val id = ContainerService(db).createContainer(
                 containerName,
@@ -123,7 +143,7 @@ class ServerService(
         }
 
         val containerId = server.containerId!!
-        if(ContainerService(db).getContainerStatus(containerId) == ContainerStatus.Running
+        if(DockerManager.inspectContainer(containerId).status == ContainerStatus.Running
            && serverRealTime.status == ServerStatus.Running)
         {
             // TODO 不可重复启动
@@ -175,7 +195,7 @@ class ServerService(
 
         val server = QServer().id.eq(id).findOne()
         if(server!!.containerId != null) {
-            if (containerService.getContainerStatus(server.containerId) == ContainerStatus.Running)
+            if (DockerManager.inspectContainer(server.containerId!!).status == ContainerStatus.Running)
                 stop(id)
 
             try {

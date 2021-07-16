@@ -1,22 +1,16 @@
 package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
-import io.ebean.config.JsonConfig
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.junit.Ignore
 import org.junit.Test
-import org.koin.java.KoinJavaComponent.inject
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.server.vo.CpuUsageVO
-import top.warmthdawn.emss.features.server.vo.DiskVO
-import top.warmthdawn.emss.features.server.vo.MemoryUsageVO
-import top.warmthdawn.emss.features.server.vo.NetworkVO
+import top.warmthdawn.emss.features.server.CpuUsage
+import top.warmthdawn.emss.features.server.Disk
+import top.warmthdawn.emss.features.server.MemoryUsage
+import top.warmthdawn.emss.features.server.Network
 import top.warmthdawn.emss.utils.withTestServer
 import java.lang.Thread.sleep
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 /**
  * @author takanashi
@@ -57,7 +51,7 @@ internal class DockerManagerTest {
     fun getTimeTest() {
         withTestServer {
             val service by application.inject<ContainerService>()
-            service.getContainerCreateTime("testContainer007")
+            //service.getContainerCreateTime("testContainer007")
         }
     }
 
@@ -97,8 +91,8 @@ internal class DockerManagerTest {
             // 自定义格式化:
             val myDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS'Z'")
             // 用自定义格式解析:
-            val dt2 = LocalDateTime.parse(container.createTime, myDateTimeFormatter)
-            print("******** ${dt2.year}年${dt2.monthValue}月${dt2.dayOfMonth}日${dt2.hour}时${dt2.minute}分${dt2.second}秒 ********\n")
+            //val dt2 = LocalDateTime.parse(container.createTime, myDateTimeFormatter)
+            //print("******** ${dt2.year}年${dt2.monthValue}月${dt2.dayOfMonth}日${dt2.hour}时${dt2.minute}分${dt2.second}秒 ********\n")
             print("******** " + container.id + " ********\n")
             print("******** " + container.name + " ********\n")
             print("******** " + container.createTime + " ********\n")
@@ -119,11 +113,11 @@ internal class DockerManagerTest {
     fun statsTest()
     {
         val containerId = "testContainerMC"
-        val cpuUsageVO = CpuUsageVO(mutableListOf(), mutableListOf(),0.0)
-        val memoryUsageVO = MemoryUsageVO(mutableListOf(), mutableListOf(),0,0)
-        val diskVO = DiskVO(0,0)
-        val networkVO = NetworkVO(mutableListOf(), mutableMapOf())
-        DockerManager.stats(containerId, cpuUsageVO, memoryUsageVO, diskVO, networkVO,60000,60)
+        val cpuUsageVO = CpuUsage(mutableListOf(), mutableListOf(),0.0)
+        val memoryUsageVO = MemoryUsage(mutableListOf(), mutableListOf(),0,0)
+        val diskVO = Disk(0,0)
+        val networkVO = Network(mutableListOf(), mutableMapOf())
+        //DockerManager.stats(containerId, cpuUsageVO, memoryUsageVO, diskVO, networkVO,60000,60)
     }
 
     @Test

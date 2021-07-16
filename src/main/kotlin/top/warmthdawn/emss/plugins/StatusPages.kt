@@ -3,6 +3,8 @@ package top.warmthdawn.emss.plugins
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import top.warmthdawn.emss.features.docker.ContainerException
+import top.warmthdawn.emss.features.docker.ContainerExceptionMsg
 import top.warmthdawn.emss.features.docker.ImageException
 import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.file.*
@@ -105,6 +107,13 @@ fun Application.configureStatusPages() {
                 }
                 ImageExceptionMsg.IMAGE_REMOVE_WHEN_USED -> {
                     R.error(Code.ImageRemoveWhenUsed, "镜像正在被使用中！请删除使用该镜像的服务器！", HttpStatusCode.Forbidden)
+                }
+            }
+        }
+        exception<ContainerException> {
+            when (it.containerExceptionMsg) {
+                ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED -> {
+                    R.error(Code.ContainerGetInfoFailed, "获取容器信息失败！", HttpStatusCode.InternalServerError)
                 }
             }
         }
