@@ -74,9 +74,9 @@ class FileService {
         return root.combineSafe(Path(relativePath)).toPath()
     }
 
-    private fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
+    fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
         val filePathRaw = FileChunkManager.getFinalPath(destinationPath, flowRelativePath)
-        createDirs(processPath(filePathRaw).toString())
+//        createDirs(processPath(filePathRaw).toString())
         return processPath(filePathRaw)
     }
 

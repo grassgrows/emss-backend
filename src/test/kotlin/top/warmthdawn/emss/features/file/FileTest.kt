@@ -33,6 +33,18 @@ internal class FileTest {
     }
 
     @Test
+    fun processFinalPathTest(){
+        withTestServer {
+            val fileService by application.inject<FileService>()
+            val root = QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value
+            val destinationPath = "/root/新建文件夹"
+            val flowRelativePath = ""
+            val finalPath = fileService.processFinalPath(destinationPath, flowRelativePath).toFile().invariantSeparatorsPath
+            assertEquals(root + "新建文件夹", finalPath)
+        }
+    }
+
+    @Test
     fun getfileListTest() {
         withTestServer {
             val db by application.inject<Database>()
