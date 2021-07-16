@@ -112,11 +112,11 @@ internal class DockerManagerTest {
     @Test
     fun statsTest()
     {
-        val containerId = "testContainerMC"
-        val cpuUsageVO = CpuUsage(mutableListOf(), mutableListOf(),0.0)
-        val memoryUsageVO = MemoryUsage(mutableListOf(), mutableListOf(),0,0)
-        val diskVO = Disk(0,0)
-        val networkVO = Network(mutableListOf(), mutableMapOf())
+        //val containerId = "testContainerMC"
+        //val cpuUsageVO = CpuUsage(mutableListOf(), mutableListOf(),0.0)
+        //val memoryUsageVO = MemoryUsage(mutableListOf(), mutableListOf(),0,0)
+        //val diskVO = Disk(0,0)
+        //val networkVO = Network(mutableListOf(), mutableMapOf())
         //DockerManager.stats(containerId, cpuUsageVO, memoryUsageVO, diskVO, networkVO,60000,60)
     }
 

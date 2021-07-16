@@ -22,13 +22,15 @@ data class CpuUsage(
 data class MemoryUsage(
     var timestamps: MutableList<Long>,  //时间戳表（单位秒）
     var values: MutableList<Long>,      //已使用内存队列，一段时间刷新一次（单位Bytes）
-    var available: Long,   //总可用内存（单位Bytes）
+    var available: Long,         //总可用内存（单位Bytes）
     var current: Long,           //当前已使用内存
 )
 data class Disk(
-    //TODO 磁盘读写监控
-    var diskRead: Long,
-    var diskWrite: Long
+    var timestamps: MutableList<Long>,       //时间戳表（单位秒）
+    var diskReadValues: MutableList<Long>,   //磁盘读（单位Bytes）
+    var diskWriteValues: MutableList<Long>,  //磁盘写（单位Bytes）
+    var currentRead: Long,    //当前磁盘读（单位Bytes）
+    var currentWrite: Long,   //当前磁盘写（单位Bytes）
 )
 data class Network(
     var timestamps: MutableList<Long>,     //时间戳表（单位秒）

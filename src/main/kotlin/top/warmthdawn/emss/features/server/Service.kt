@@ -115,7 +115,7 @@ class ServerService(
         statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(
             CpuUsage(mutableListOf(), mutableListOf(), 0.0),
             MemoryUsage(mutableListOf(), mutableListOf(), 0, 0),
-            Disk(0, 0),
+            Disk(mutableListOf(), mutableListOf(), mutableListOf(),0,0),
             Network(mutableListOf(), mutableMapOf())
         )
 

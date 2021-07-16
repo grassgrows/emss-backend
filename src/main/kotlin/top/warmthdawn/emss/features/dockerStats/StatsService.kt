@@ -30,7 +30,8 @@ class StatsService {
         val timerTaskInfo = TimerTaskInfo(
             serverStatsInfoMap[serverId]!!,
             mutableListOf(), mutableListOf(),
-            0, mutableMapOf()
+            0, mutableListOf(),
+            mutableListOf(), mutableMapOf()
         )
 
         Timer().schedule(StatsTimerTask(timerTaskInfo, timestampMax), Date(), period)

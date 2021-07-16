@@ -280,7 +280,16 @@ object DockerManager {
 
                                 timerTaskInfo.availableMemory = memoryStats.limit!!
 
-                                //print(blkioStats)
+                                if(blkioStats.ioServiceBytesRecursive != null)
+                                {
+                                    for(blkio in blkioStats.ioServiceBytesRecursive!!)
+                                    {
+                                        if(blkio.op == "Read")
+                                            timerTaskInfo.diskReadList.add(blkio.value)
+                                        if(blkio.op == "Write")
+                                            timerTaskInfo.diskWriteList.add(blkio.value)
+                                    }
+                                }
 
                                 for (key in networks!!.keys) {
                                     if (!(timerTaskInfo.networkNew.keys.contains(key))) {

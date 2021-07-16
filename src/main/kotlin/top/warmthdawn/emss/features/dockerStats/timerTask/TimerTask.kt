@@ -13,6 +13,8 @@ data class TimerTaskInfo(
     val cpuUsageList: MutableList<Double>,
     val memoryUsageList: MutableList<Long>,
     var availableMemory: Long,
+    val diskReadList: MutableList<Long>,
+    val diskWriteList: MutableList<Long>,
     val networkNew: MutableMap<String, EachNetworkForSecond>
 )
 
@@ -42,6 +44,7 @@ class StatsTimerTask(
 
                 cpuUsageList.clear()
             }
+
             with(serverStatsInfo.memoryUsage) {
                 // 内存使用
                 if (timestamps.count() >= timestampsMax) {
@@ -61,7 +64,32 @@ class StatsTimerTask(
                 memoryUsageList.clear()
             }
 
-            //TODO 磁盘
+            with(serverStatsInfo.disk) {
+                // 磁盘IO
+                if (timestamps.count() >= timestampsMax) {
+                    timestamps.removeFirst()
+                    diskReadValues.removeFirst()
+                    diskWriteValues.removeFirst()
+                }
+                timestamps.add(System.currentTimeMillis() / 1000)
+                if (diskReadList.isNotEmpty()) {
+                    diskReadValues.add(diskReadList.average().toLong())
+                    currentRead = diskReadList.last()
+                } else {
+                    diskReadValues.add(0)
+                    currentRead = 0
+                }
+                if (diskWriteList.isNotEmpty()) {
+                    diskWriteValues.add(diskWriteList.average().toLong())
+                    currentWrite = diskWriteList.last()
+                } else {
+                    diskWriteValues.add(0)
+                    currentWrite = 0
+                }
+
+                diskReadList.clear()
+                diskWriteList.clear()
+            }
 
 
             with(serverStatsInfo.network) {
@@ -132,7 +160,7 @@ class StatsTimerTask(
 fun main() {
     val cpuUsageVO = CpuUsage(mutableListOf(0), mutableListOf(0.0), 0.0)
     val memoryUsageVO = MemoryUsage(mutableListOf(0), mutableListOf(0), 0, 0)
-    val diskVO = Disk(0, 0)
+    //val diskVO = Disk(0, 0)
     //val networkVO = NetworkVO(mutableListOf(0), mutableListOf(0), mutableListOf(0), 0, 0)
     //Timer().schedule(StatsTimerTask(cpuUsageVO,memoryUsageVO,diskVO,networkVO), Date(), 1000)
 
