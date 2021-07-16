@@ -6,6 +6,8 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.command.CommandService
+import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.utils.R
 
@@ -18,6 +20,7 @@ import top.warmthdawn.emss.utils.R
 fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
+    val statsService by inject<StatsService>()
     route("/server"){
         get("/list") {
             R.ok(serverService.getServerInfo())
@@ -25,6 +28,10 @@ fun Route.serverEndpoint() {
         get("/{id}"){
             val id = call.parameters["id"]!!.toLong()
             R.ok(serverService.getServerInfo(id))
+        }
+        get("/{id}/stats"){
+            val id = call.parameters["id"]!!.toLong()
+            R.ok(statsService.serverStatsInfoMap)
         }
         post("/create") {
             val dtoServerInfo = call.receive<ServerInfoDTO>()
