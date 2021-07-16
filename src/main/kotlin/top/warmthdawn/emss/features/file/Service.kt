@@ -5,9 +5,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.file.vo.FileListInfoVO
+import top.warmthdawn.emss.features.file.vo.buildVirtualDirectory
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -28,6 +30,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  */
 
 class FileService {
+
 
     fun processPath(input: String): Path {
 
@@ -163,7 +166,19 @@ class FileService {
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     suspend fun getFileList(path: String): List<FileListInfoVO> {
+        if(path.isEmpty() || path == "/")
+        {
+            return buildList {
+                buildVirtualDirectory("服务器根目录(root)", "/root")
+                buildVirtualDirectory("服务器备份目录(backup)", "/backup")
+                QServer().findList().forEach {
+                    buildVirtualDirectory(it.name, "/root/${it.location}")
+                }
+            }
+
+        }
         val filePath = processPath(path)
         fileListCheck(filePath)
         val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)

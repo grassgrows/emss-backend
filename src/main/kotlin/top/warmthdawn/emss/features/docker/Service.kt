@@ -67,7 +67,6 @@ class ContainerService(private val db: Database) {
     suspend fun getContainerStatus(containerId: String?): ContainerStatus {
         return if (containerId != null) DockerManager.inspectContainer(containerId)?.status
             ?: ContainerStatus.Unknown else ContainerStatus.Unknown
-
     }
 
 }

@@ -48,17 +48,17 @@ class SettingService(
         if (!baseSetting.serverRootDirectory.isNullOrEmpty()) {
             val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverRootDirectory)
             setting.update()
-            fileService.createDirs(baseSetting.serverRootDirectory)
+            fileService.createDirs(baseSetting.serverRootDirectory, false)
         }
         if (!baseSetting.serverBackupDirectory.isNullOrEmpty()) {
-            val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverBackupDirectory)
+            val setting = Setting(SettingType.SERVER_BACKUP_DIRECTORY, baseSetting.serverBackupDirectory)
             setting.update()
-            fileService.createDirs(baseSetting.serverBackupDirectory)
+            fileService.createDirs(baseSetting.serverBackupDirectory, false)
         }
         if (!baseSetting.temporaryFolder.isNullOrEmpty()) {
             val setting = Setting(SettingType.TEMPORARY_FOLDER, baseSetting.temporaryFolder)
             setting.update()
-            fileService.createDirs(baseSetting.temporaryFolder)
+            fileService.createDirs(baseSetting.temporaryFolder, false)
         }
     }
 

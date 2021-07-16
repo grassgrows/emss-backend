@@ -213,21 +213,4 @@ class ServerService(
 
 
 
-
-
-
-
-//    suspend fun attachContainer(id: Long, serverAttachDTO: ServerAttachDTO)
-//    {
-//        if (config.testing) {
-//            return
-//        }
-//
-//
-//
-//        val containerId = QServer().id.eq(db.find(Server::class.java, id)!!.id).findOne()!!.containerId!!
-//        DockerManager.attachContainer(containerId,serverAttachDTO.inputStream, serverAttachDTO.outputStream)
-//    }
-
-
 }

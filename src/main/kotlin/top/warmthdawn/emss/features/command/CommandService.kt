@@ -3,12 +3,14 @@ package top.warmthdawn.emss.features.command
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import top.warmthdawn.emss.features.server.ServerException
+import top.warmthdawn.emss.features.server.ServerExceptionMsg
+import top.warmthdawn.emss.features.server.ServerStatus
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
-import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.CoroutineContext
 
@@ -19,10 +21,22 @@ import kotlin.coroutines.CoroutineContext
  */
 typealias ReceiveMessage = suspend (ByteArray)->Unit
 class CommandService {
-    fun getAttachProxy(containerId: Long) : AttachProxy{
-        TODO("获取")
+    fun getAttachProxy(containerId: Long): AttachProxy {
+        val server = QServer().id.eq(containerId).findOne()
+        val serverRealTime = QServerRealTime().id.eq(containerId).findOne()
+        if (server == null || serverRealTime == null)
+            throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
 
-
+        val attachProxy = AttachProxy()
+        if (serverRealTime.status == ServerStatus.Running)
+        {
+            attachProxy.attach(server.containerId!!)
+            return attachProxy
+        }
+        else
+        {
+            throw ServerException(ServerExceptionMsg.SERVER_NOT_RUNNING)
+        }
     }
 }
 
@@ -46,9 +60,9 @@ class AttachProxy(
         }
     }
 
-    fun attach(containerName: String) {
+    fun attach(containerId: String) {
         launch {
-            DockerManager.attachContainer(containerName, input) {
+            DockerManager.attachContainer(containerId, input) {
                 onMessage(it.payload)
             }
         }

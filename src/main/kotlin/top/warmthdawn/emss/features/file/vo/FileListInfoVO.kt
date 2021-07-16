@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.file.vo
 
-import java.nio.file.ClosedDirectoryStreamException
 import java.time.LocalDateTime
 
 
@@ -17,3 +16,15 @@ data class FileListInfoVO(
     val lastModified: LocalDateTime,
     val isDirectory: Boolean
 )
+
+fun MutableList<FileListInfoVO>.buildVirtualDirectory(name: String, path: String): FileListInfoVO {
+    return FileListInfoVO(
+        fileName = name,
+        filePath = path,
+        size = 0,
+        lastModified = LocalDateTime.now(),
+        isDirectory = true
+    ).also {
+        this.add(it)
+    }
+}
