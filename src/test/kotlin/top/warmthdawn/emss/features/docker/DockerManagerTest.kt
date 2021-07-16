@@ -4,10 +4,10 @@ import com.github.dockerjava.api.model.*
 import org.junit.Ignore
 import org.junit.Test
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.server.CpuUsage
-import top.warmthdawn.emss.features.server.Disk
-import top.warmthdawn.emss.features.server.MemoryUsage
-import top.warmthdawn.emss.features.server.Network
+import top.warmthdawn.emss.features.dockerStats.CpuUsage
+import top.warmthdawn.emss.features.dockerStats.Disk
+import top.warmthdawn.emss.features.dockerStats.MemoryUsage
+import top.warmthdawn.emss.features.dockerStats.Network
 import top.warmthdawn.emss.utils.withTestServer
 import java.lang.Thread.sleep
 import java.time.format.DateTimeFormatter

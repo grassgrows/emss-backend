@@ -1,6 +1,6 @@
-package top.warmthdawn.emss.features.docker.timerTask
+package top.warmthdawn.emss.features.dockerStats.timerTask
 
-import top.warmthdawn.emss.features.server.*
+import top.warmthdawn.emss.features.dockerStats.*
 import java.util.*
 
 /**
@@ -9,16 +9,12 @@ import java.util.*
  */
 
 data class TimerTaskInfo(
-    val cpuUsage: CpuUsage,
-    val memoryUsage: MemoryUsage,
-    val disk: Disk, //TODO 磁盘监控
-    val network: Network,
+    val serverStatsInfo: ServerStatsInfo,
     val cpuUsageList: MutableList<Double>,
     val memoryUsageList: MutableList<Long>,
     var availableMemory: Long,
     val networkNew: MutableMap<String, EachNetworkForSecond>
 )
-
 
 class StatsTimerTask(
     val timerTaskInfo: TimerTaskInfo,
@@ -29,7 +25,7 @@ class StatsTimerTask(
 
         with(timerTaskInfo) {
 
-            with(cpuUsage) {
+            with(serverStatsInfo.cpuUsage) {
                 // CPU使用率
                 if(timestamps.count()>=timestampsMax)
                 {
@@ -47,7 +43,7 @@ class StatsTimerTask(
 
                 cpuUsageList.clear()
             }
-            with(memoryUsage) {
+            with(serverStatsInfo.memoryUsage) {
                 // 内存使用
                 if(timestamps.count()>=timestampsMax) {
                     timestamps.removeFirst()
@@ -69,7 +65,7 @@ class StatsTimerTask(
             //TODO 磁盘
 
 
-            with(network) {
+            with(serverStatsInfo.network) {
                 // 网络IO
                 if(timestamps.count()>=timestampsMax)
                 {

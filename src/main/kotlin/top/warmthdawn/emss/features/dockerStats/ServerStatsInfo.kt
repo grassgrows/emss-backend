@@ -1,4 +1,4 @@
-package top.warmthdawn.emss.features.server
+package top.warmthdawn.emss.features.dockerStats
 
 /**
  * @author takanashi
@@ -6,7 +6,6 @@ package top.warmthdawn.emss.features.server
  */
 
 data class ServerStatsInfo(
-    val containerId: String,
     var cpuUsage: CpuUsage,
     var memoryUsage: MemoryUsage,
     var disk: Disk,

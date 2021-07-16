@@ -10,6 +10,7 @@ import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.vo.ServerVO
@@ -26,7 +27,8 @@ class ServerService(
     private val db: Database,
     private val config: AppConfig,
     private val imageService: ImageService,
-    private val fileService: FileService
+    private val fileService: FileService,
+    private val statsService: StatsService
 ) {
 
     suspend fun getServerInfo(): List<ServerVO> {
@@ -108,6 +110,7 @@ class ServerService(
             status = ServerStatus.Stopped
         )
         serverRealTime.insert()
+
     }
 
     suspend fun start(id: Long) {
@@ -156,12 +159,16 @@ class ServerService(
         server.update()
         serverRealTime.update()
 
+        //开始监控
+        //statsService.startStats("id",60000,60)
     }
 
     suspend fun stop(id: Long) {
         if (config.testing) {
             return
         }
+        //停止监控
+        //statsService.serverStatsProxy[id]!!.callback.close()
         val server = QServer(db).id.eq(id).findOne()!!
         val serverRealTime = QServerRealTime(db).id.eq(id).findOne()!!
         val containerId = server.containerId!!

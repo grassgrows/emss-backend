@@ -24,7 +24,7 @@ val appModule = module {
 
     //server
     single { ContainerService(get()) }
-    single { ServerService(get(), get(), get(), get()) }
+    single { ServerService(get(), get(), get(), get(),get()) }
 
     //file
     single { FileService() }
