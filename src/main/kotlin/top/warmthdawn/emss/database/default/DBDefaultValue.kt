@@ -6,6 +6,8 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.Image
 import top.warmthdawn.emss.database.entity.Setting
 import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.query.QSetting
+import top.warmthdawn.emss.features.file.FileService
 
 /**
  *
@@ -15,9 +17,10 @@ import top.warmthdawn.emss.database.entity.SettingType
 
 fun Application.tryInitDefault() {
     val db by inject<Database>()
+    val fileService by inject<FileService>()
 
     //Image初始值
-    if(!db.find(Image::class.java).exists()) {
+    if (!db.find(Image::class.java).exists()) {
         Image(
             name = "OpenJDK 8",
             repository = "openjdk",
@@ -33,10 +36,16 @@ fun Application.tryInitDefault() {
         ).save()
     }
 
-    if(!db.find(Setting::class.java).exists()) {
+    if (!QSetting().type.eq(SettingType.NAME).exists()) {
         Setting(SettingType.NAME, "EMSS").save()
+    }
+    if (!QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).exists()) {
         Setting(SettingType.SERVER_ROOT_DIRECTORY, "~/emss/").save()
+    }
+    if (!QSetting().type.eq(SettingType.SERVER_BACKUP_DIRECTORY).exists()) {
         Setting(SettingType.SERVER_BACKUP_DIRECTORY, "~/emss/backup/").save()
+    }
+    if (!QSetting().type.eq(SettingType.TEMPORARY_FOLDER).exists()) {
         Setting(SettingType.TEMPORARY_FOLDER, "~/emss/temp/").save()
     }
 }
