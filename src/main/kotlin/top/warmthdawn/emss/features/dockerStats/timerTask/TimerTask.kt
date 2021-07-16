@@ -27,8 +27,7 @@ class StatsTimerTask(
 
             with(serverStatsInfo.cpuUsage) {
                 // CPU使用率
-                if(timestamps.count()>=timestampsMax)
-                {
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
                     values.removeFirst()
                 }
@@ -45,7 +44,7 @@ class StatsTimerTask(
             }
             with(serverStatsInfo.memoryUsage) {
                 // 内存使用
-                if(timestamps.count()>=timestampsMax) {
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
                     values.removeFirst()
                 }
@@ -67,15 +66,14 @@ class StatsTimerTask(
 
             with(serverStatsInfo.network) {
                 // 网络IO
-                if(timestamps.count()>=timestampsMax)
-                {
+                if (timestamps.count() >= timestampsMax) {
                     timestamps.removeFirst()
-                    timestamps.add(System.currentTimeMillis() / 1000)
                 }
+                timestamps.add(System.currentTimeMillis() / 1000)
                 with(network)
                 {
                     for (key in networkNew.keys) {
-                        if (!(keys.contains(key))) {
+                        if (!keys.contains(key)) {
                             put(key, EachNetwork(
                                 mutableListOf(), mutableListOf(), 0, 0
                             ))
@@ -102,11 +100,28 @@ class StatsTimerTask(
                             }
                         }
                     }
+                    for (key in keys) {
+                        if (!networkNew.keys.contains(key)) {
+                            with(getValue(key))
+                            {
+                                if (receiveValues.count() >= timestampsMax) {
+                                    receiveValues.removeFirst()
+                                    sendValues.removeFirst()
+                                }
+                                receiveValues.add(0)
+                                currentRxBytes = 0
 
-                    networkNew.clear()
+                                sendValues.add(0)
+                                currentTxBytes = 0
+
+                            }
+                        }
+                    }
+
+
                 }
 
-
+                networkNew.clear()
             }
         }
 

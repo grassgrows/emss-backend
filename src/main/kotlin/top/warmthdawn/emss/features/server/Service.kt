@@ -160,7 +160,7 @@ class ServerService(
         serverRealTime.update()
 
         //开始监控
-        //statsService.startStats("id",60000,60)
+        statsService.startStats(id,60000,60)
     }
 
     suspend fun stop(id: Long) {
@@ -168,7 +168,7 @@ class ServerService(
             return
         }
         //停止监控
-        //statsService.serverStatsProxy[id]!!.callback.close()
+        statsService.serverStatsProxy[id]!!.callback.close()
         val server = QServer(db).id.eq(id).findOne()!!
         val serverRealTime = QServerRealTime(db).id.eq(id).findOne()!!
         val containerId = server.containerId!!
@@ -217,24 +217,6 @@ class ServerService(
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
 
     }
-
-
-
-
-
-//    suspend fun stats(id: Long):ServerStatsVO{
-//
-//
-//
-//
-//        containerId: String,
-//        cpuUsageVO:CpuUsageVO,
-//        memoryUsageVO: MemoryUsageVO,
-//        diskVO: DiskVO, //TODO 磁盘监控
-//        networkVO: NetworkVO,
-//        period: Long,
-//        timestampMax: Int
-//    }
 
 
 

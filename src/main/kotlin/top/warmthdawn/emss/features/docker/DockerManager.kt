@@ -270,7 +270,7 @@ object DockerManager {
                 override fun onNext(statistics: Statistics?) {
                     if (statistics != null) {
                         with(statistics) {
-                            try {
+                            //try {
                                 timerTaskInfo.cpuUsageList.add(
                                     (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
                                             / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
@@ -280,6 +280,7 @@ object DockerManager {
 
                                 timerTaskInfo.availableMemory = memoryStats.limit!!
 
+                                //print(blkioStats)
 
                                 for (key in networks!!.keys) {
                                     if (!(timerTaskInfo.networkNew.keys.contains(key))) {
@@ -290,7 +291,7 @@ object DockerManager {
                                     timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
                                     timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
                                 }
-                            }catch (e:NullPointerException){}
+                            //}catch (e:NullPointerException){}
                         }
                     }
 

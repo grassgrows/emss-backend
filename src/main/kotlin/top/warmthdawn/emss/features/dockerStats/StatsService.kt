@@ -19,14 +19,14 @@ class StatsService {
     val serverStatsInfoMap = mutableMapOf<Long, ServerStatsInfo>()
     val serverStatsProxy = mutableMapOf<Long, StatsProxy>()
 
-    fun startStats(containerId: String, period: Long, timestampMax: Int) {
-        //val server = QServer().id.eq(serverId).findOne()
-        //val serverRealTime = QServerRealTime().id.eq(serverId).findOne()
-        //if (server == null || serverRealTime == null)
-        //    throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
-        //TODO
 
-        val serverId:Long = 1   //TODO
+    fun startStats(serverId: Long, period: Long, timestampMax: Int) {
+        val server = QServer().id.eq(serverId).findOne()
+        val serverRealTime = QServerRealTime().id.eq(serverId).findOne()
+        if (server == null || serverRealTime == null)
+            throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+
+
 
         if (!serverStatsInfoMap.keys.contains(serverId)) {
             serverStatsInfoMap[serverId] = ServerStatsInfo(
@@ -46,7 +46,7 @@ class StatsService {
         Timer().schedule(StatsTimerTask(timerTaskInfo, timestampMax), Date(), period)
 
         val statsProxy = StatsProxy()
-        statsProxy.stats(containerId, timerTaskInfo)  //TODO
+        statsProxy.stats(server.containerId!!, timerTaskInfo)
 
         serverStatsProxy[serverId] = statsProxy
 
