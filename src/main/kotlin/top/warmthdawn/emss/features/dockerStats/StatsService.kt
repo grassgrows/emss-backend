@@ -27,16 +27,6 @@ class StatsService {
             throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
 
 
-
-        if (!serverStatsInfoMap.keys.contains(serverId)) {
-            serverStatsInfoMap[serverId] = ServerStatsInfo(
-                CpuUsage(mutableListOf(), mutableListOf(), 0.0),
-                MemoryUsage(mutableListOf(), mutableListOf(), 0, 0),
-                Disk(0, 0),
-                Network(mutableListOf(), mutableMapOf())
-            )
-        }
-
         val timerTaskInfo = TimerTaskInfo(
             serverStatsInfoMap[serverId]!!,
             mutableListOf(), mutableListOf(),

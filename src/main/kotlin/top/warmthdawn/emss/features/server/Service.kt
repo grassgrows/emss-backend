@@ -10,7 +10,7 @@ import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
-import top.warmthdawn.emss.features.dockerStats.StatsService
+import top.warmthdawn.emss.features.dockerStats.*
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.vo.ServerVO
@@ -88,9 +88,9 @@ class ServerService(
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
-        if(!QImage(db).id.eq(serverInfoDTO.imageId).exists())
+        if (!QImage(db).id.eq(serverInfoDTO.imageId).exists())
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_FOUND)
-        if(imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
+        if (imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
 
         val server = Server(
@@ -110,6 +110,14 @@ class ServerService(
             status = ServerStatus.Stopped
         )
         serverRealTime.insert()
+
+        //创建监控信息
+        statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(
+            CpuUsage(mutableListOf(), mutableListOf(), 0.0),
+            MemoryUsage(mutableListOf(), mutableListOf(), 0, 0),
+            Disk(0, 0),
+            Network(mutableListOf(), mutableMapOf())
+        )
 
     }
 
@@ -212,9 +220,14 @@ class ServerService(
             }
         }
 
+        //删除监控信息
+        statsService.serverStatsInfoMap.remove(server.id)
+
         val serverRealTime = QServerRealTime().id.eq(id).findOne()
         if(!server.delete()||!serverRealTime!!.delete())
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
+
+
 
     }
 
