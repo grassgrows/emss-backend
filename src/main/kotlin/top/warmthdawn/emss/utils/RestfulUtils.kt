@@ -65,6 +65,7 @@ enum class Code(
 
     //已知错误
     //Docker相关
+    //Image
     /**
      * Image下载失败
      */
@@ -80,27 +81,32 @@ enum class Code(
     /**
      * Image删除失败
      */
-    ImageRemoveFailed("B130"),
+    ImageRemoveFailed("B140"),
     /**
      * Image的数据库信息删除失败
      */
-    ImageDatabaseRemoveFailed("B132"),
+    ImageDatabaseRemoveFailed("B142"),
     /**
      * Image删除时正在被使用
      */
-    ImageRemoveWhenUsed("B134"),
+    ImageRemoveWhenUsed("B144"),
+    //服务器（容器）
     /**
      * 服务器未找到
      */
     ServerNotFound("B220"),
     /**
+     *  服务器未启动
+     */
+    ServerNotRunning("B230"),
+    /**
      * 服务器删除失败
      */
-    ServerRemoveFailed("B230"),
+    ServerRemoveFailed("B240"),
     /**
      * 服务器的数据库信息删除失败
      */
-    ServerDatabaseRemoveFailed("B232"),
+    ServerDatabaseRemoveFailed("B242"),
 
 
     //系统错误

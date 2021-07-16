@@ -111,6 +111,9 @@ fun Application.configureStatusPages() {
                 ServerExceptionMsg.SERVER_NOT_FOUND -> {
                     R.error(Code.ServerNotFound, "查无对应服务器！", HttpStatusCode.NotFound)
                 }
+                ServerExceptionMsg.SERVER_NOT_RUNNING -> {
+                    R.error(Code.ServerNotRunning,"服务器未启动！", HttpStatusCode.Forbidden)
+                }
                 ServerExceptionMsg.SERVER_REMOVE_FAILED -> {
                     R.error(Code.ServerRemoveFailed, "服务器删除失败！", HttpStatusCode.InternalServerError)
                 }

@@ -312,7 +312,7 @@ object DockerManager {
                         }
                     }
                 }
-            }).awaitCompletion()
+            })
     }
 
     // 删除镜像

@@ -11,6 +11,8 @@ class ServerException(
 
 enum class ServerExceptionMsg {
     SERVER_NOT_FOUND,
+    SERVER_NOT_RUNNING,
     SERVER_REMOVE_FAILED,
     SERVER_DATABASE_REMOVE_FAILED
+
 }
