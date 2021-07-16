@@ -71,7 +71,9 @@ class FileService {
         } else {
             "/$identifier}/chunk-${chunkString}.emsschunk"
         }
-        return root.combineSafe(Path(relativePath)).toPath()
+        val tempPath = root.combineSafe(Path(relativePath)).toPath()
+        createDirs(tempPath.parent.toString())
+        return tempPath
     }
 
     fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
