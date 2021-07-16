@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <migration xmlns="http://ebean-orm.github.io/xml/ns/dbmigration">
     <changeSet type="apply">
-        <alterColumn columnName="image_id" tableName="image" currentType="varchar" notnull="false" currentNotnull="true"/>
-        <addColumn tableName="image">
-            <column name="can_remove" type="boolean" defaultValue="false" notnull="true"/>
-        </addColumn>
-        <alterColumn columnName="container_id" tableName="server" currentType="varchar" notnull="false" currentNotnull="true"/>
+        <createTable name="server_real_time" pkName="pk_server_real_time">
+            <column name="id" type="bigint" primaryKey="true"/>
+            <column name="last_crash_date" type="timestamp"/>
+            <column name="last_start_date" type="timestamp"/>
+            <column name="status" type="integer" notnull="true" checkConstraint="check ( status in (0,1,2))" checkConstraintName="ck_server_real_time_status"/>
+            <column name="when_created" type="timestamp" notnull="true"/>
+            <column name="when_modified" type="timestamp" notnull="true"/>
+        </createTable>
+    </changeSet>
+    <changeSet type="pendingDrops">
+        <dropColumn columnName="last_crash_date" tableName="server"/>
+        <dropColumn columnName="last_start_date" tableName="server"/>
     </changeSet>
 </migration>

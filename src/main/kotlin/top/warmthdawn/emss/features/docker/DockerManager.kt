@@ -1,21 +1,25 @@
 package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.PullImageResultCallback
-import com.github.dockerjava.api.model.Bind
-import com.github.dockerjava.api.model.HostConfig
-import com.github.dockerjava.api.model.PortBinding
-import com.github.dockerjava.api.model.PullResponseItem
+import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
+import com.github.dockerjava.core.InvocationBuilder.AsyncResultCallback
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
-import top.warmthdawn.emss.features.docker.dto.ImageInfo
-import top.warmthdawn.emss.features.docker.vo.ContainerStatus
+import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
+import top.warmthdawn.emss.features.docker.timerTask.StatsTimerTask
+import top.warmthdawn.emss.features.docker.timerTask.TimerTaskInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.server.vo.*
 import java.io.Closeable
+import java.io.InputStream
 import java.time.Duration
+import java.util.*
+
 
 /**
  * @author takanashi
@@ -159,19 +163,20 @@ object DockerManager {
     // 创建容器
     fun createContainer(
         containerName: String, imageName: String,
-        portBinding: PortBinding,
-        volumeBind: Bind, cmd: List<String>
+        portBinding: MutableList<PortBinding>,
+        volumeBind: MutableList<Bind>,workingDir: String, cmd: MutableList<String>,
     ): String? {
 
         val container = dockerClient.createContainerCmd(imageName)
             .withName(containerName)
-            .withName(containerName)
-            .withExposedPorts()
             .withHostConfig(
                 HostConfig.newHostConfig()
                     .withBinds(volumeBind).withPortBindings(portBinding)
             )
             .withCmd(cmd)
+            .withWorkingDir(workingDir)
+            .withAttachStdin(true)
+            .withStdinOpen(true)
             .exec()
 
         return container.id
@@ -204,17 +209,17 @@ object DockerManager {
 
 
     // 获取镜像信息
-    fun inspectImage(imageId: String): ImageInfo? {
+    fun inspectImage(imageName: String): ImageMoreInfo? {
 
         return try {
             val image = dockerClient
-                .inspectImageCmd(imageId)
+                .inspectImageCmd(imageName)
                 .exec()
 
-            ImageInfo(
+            ImageMoreInfo(
                 image.id,
                 image.created,
-                image.size
+                image.size,
             )
         } catch (e: Exception) {
             null
@@ -236,15 +241,16 @@ object DockerManager {
                 container.name,
                 container.created,
                 container.imageId,
-                when(container.state.status)
-                {
+                when (container.state.status) {
                     "running" -> ContainerStatus.Running
                     "created",
-                    "exited" -> ContainerStatus.Stopped
+                    "exited",
+                    -> ContainerStatus.Stopped
                     "paused",
                     "restarting",
                     "removing",
-                    "dead" -> ContainerStatus.Unknown
+                    "dead",
+                    -> ContainerStatus.Unknown
                     else -> ContainerStatus.Unknown
                 }
             )
@@ -254,35 +260,95 @@ object DockerManager {
 
     }
 
+    // 监控状态
+    fun stats(containerId: String,
+              cpuUsageVO:CpuUsageVO,
+              memoryUsageVO: MemoryUsageVO,
+              diskVO: DiskVO, //TODO 磁盘监控
+              networkVO: NetworkVO,
+              period: Long,
+              timestampMax: Int
+    ) {
+
+        // TODO 上层判断服务器是否启动
+        val timerTaskInfo = TimerTaskInfo(
+            cpuUsageVO, memoryUsageVO, diskVO, networkVO,
+            mutableListOf(), mutableListOf(),
+            0, mutableMapOf()
+        )
+
+        Timer().schedule(StatsTimerTask(timerTaskInfo,timestampMax), Date(), period)
+
+        dockerClient
+            .statsCmd(containerId)
+            .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
+
+                override fun onNext(statistics: Statistics?) {
+
+                    if (statistics != null) {
+
+                        with(statistics) {
+
+                            timerTaskInfo.cpuUsageList.add(
+                                (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                        / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
+                                        * cpuStats.onlineCpus!! * 100)
+
+                            timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
+
+                            timerTaskInfo.availableMemory = memoryStats.limit!!
+
+
+                            for (key in networks!!.keys) {
+                                if (!(timerTaskInfo.networkNew.keys.contains(key))) {
+                                    timerTaskInfo.networkNew[key] = EachNetworkForSecond(
+                                        mutableListOf(), mutableListOf()
+                                    )
+                                }
+                                timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
+                                timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
+                            }
+
+                        }
+                    }
+                }
+            }).awaitCompletion()
+    }
 
     // 删除镜像
-    fun removeImage(imageId: String): Boolean {
-
-        return try {
-            dockerClient
-                .removeImageCmd(imageId)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
-
+    fun removeImage(imageName: String) {
+        dockerClient
+            .removeImageCmd(imageName)
+            .exec()
     }
 
 
     // 删除容器
-    fun removeContainer(containerId: String): Boolean {
-
-        return try {
-            dockerClient
-                .removeContainerCmd(containerId)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
-
+    fun removeContainer(containerId: String) {
+        dockerClient
+            .removeContainerCmd(containerId)
+            .exec()
     }
+
+
+    // 获取容器输入输出流
+    fun attachContainer(containerId: String, inputStream: InputStream, callback: (Frame)->Unit): ResultCallback.Adapter<Frame>? {
+
+        return dockerClient
+            .attachContainerCmd(containerId)
+            .withStdOut(true)
+            .withStdErr(true)
+            .withStdIn(inputStream)
+            .withFollowStream(true)
+            .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
+                override fun onNext(frame: Frame?) {
+                    super.onNext(frame)
+                    frame?.let(callback)
+                }
+            }).awaitCompletion()
+    }
+
+
 }
 
 

@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.features.server.dto
 
+import java.io.InputStream
+import java.io.OutputStream
 import java.time.LocalDateTime
 import javax.persistence.Entity
 
@@ -15,7 +17,16 @@ data class ServerInfoDTO(
     var abbr: String, //服务器缩写
     var location: String, //服务器位置
     var startCommand: String, //服务器启动命令
-    var containerPort: Int, //Docker容器端口
-    var hostPort: Int, //主机端口
-    var imageId: Long, //DockerImageId
+    var workingDir: String,  //工作目录
+    var portBindings: Map<Int,Int> = emptyMap(),  //端口映射
+    var volumeBind: Map<String,String> = emptyMap(), //目录映射
+    var imageId: Long, //镜像的数据库Id
+
+//    var containerPort: Int,
+//    var hostPort: Int,
 )
+
+//data class ServerAttachDTO(
+//    var inputStream: InputStream, //输入流
+//    var outputStream: OutputStream //输出流
+//)

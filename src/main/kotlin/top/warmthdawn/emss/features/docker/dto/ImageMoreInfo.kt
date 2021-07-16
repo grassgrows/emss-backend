@@ -5,7 +5,7 @@ package top.warmthdawn.emss.features.docker.dto
  * @since 2021-07-09
  */
 
-data class ImageInfo(
+data class ImageMoreInfo(
     val id: String?,
     val created: String?,
     val size: Long?

@@ -15,9 +15,9 @@ import javax.persistence.Id
  * @date 2021/7/8
  */
 enum class SettingType {
-    Name,
-    ServerRootDirectory,
-    MAX_FILE_SIZE,
+    NAME,
+    SERVER_ROOT_DIRECTORY,
+    SERVER_BACKUP_DIRECTORY,
     TEMPORARY_FOLDER
 }
 

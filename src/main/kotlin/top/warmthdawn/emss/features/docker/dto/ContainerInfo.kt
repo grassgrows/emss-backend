@@ -1,6 +1,6 @@
 package top.warmthdawn.emss.features.docker.dto
 
-import top.warmthdawn.emss.features.docker.vo.ContainerStatus
+import top.warmthdawn.emss.features.docker.ContainerStatus
 
 /**
  * @author takanashi
@@ -8,10 +8,10 @@ import top.warmthdawn.emss.features.docker.vo.ContainerStatus
  */
 
 data class ContainerInfo(
-    val id: String,         // 容器唯一id
+    val id: String,         // 容器64位id
     val name: String,       // 容器名称
     val createTime: String, // 创建时间
-    val imageId: String,    // 创建容器的镜像id
+    val imageId: String,    // 创建容器的镜像64位id
     val status: ContainerStatus?     // 容器状态
 )
 

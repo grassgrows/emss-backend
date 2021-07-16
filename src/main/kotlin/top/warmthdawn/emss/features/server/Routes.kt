@@ -47,6 +47,20 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
+        delete("/{id}"){
+            val id = call.parameters["id"]!!.toLong()
+            serverService.removeServer(id)
+            R.ok()
+        }
+
+
+
+//        post("/{id}/attach") {
+//            val id = call.parameters["id"]!!.toLong()
+//            val serverAttach = call.receive<ServerAttachDTO>()
+//            serverService.attachContainer(id,serverAttach)
+//            R.ok()
+//        }
     }
 
 }

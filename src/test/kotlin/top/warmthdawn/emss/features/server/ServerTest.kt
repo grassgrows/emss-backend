@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.server
 
 import io.ebean.Database
+import io.ebean.annotation.DbJsonB
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
@@ -35,8 +36,9 @@ internal class ServerTest {
                     abbr = "gl",
                     location = "guilong",
                     imageId = 1,
-                    containerPort = 522,
-                    hostPort = 522,
+                    workingDir = "/data/",
+                    portBindings = mapOf(522 to 522),
+                    volumeBind = mapOf(),
                     startCommand = "java -jar forge-2847-universal.jar"
                 )
             )
@@ -47,8 +49,9 @@ internal class ServerTest {
                     abbr = "szy",
                     location = "sun",
                     imageId = 2,
-                    containerPort = 544,
-                    hostPort = 544,
+                    workingDir = "/data/",
+                    portBindings = mapOf(544 to 544),
+                    volumeBind = mapOf(),
                     startCommand = "bash start.sh"
                 )
             )
@@ -96,8 +99,9 @@ internal class ServerUpdateTest {
                     abbr = "qwq",
                     location = "qwq",
                     startCommand = "echo hello world",
-                    containerPort = 666,
-                    hostPort = 666,
+                    workingDir = "/data/",
+                    portBindings = mapOf(666 to 666),
+                    volumeBind = mapOf(),
                     imageId = 1
                 )
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())

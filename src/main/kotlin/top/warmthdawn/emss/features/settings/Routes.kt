@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
@@ -39,7 +40,8 @@ fun Route.settingEndpoint() {
                 if (imageService.downloadImage(id)) {
                     R.ok()
                 } else {
-                    R.error(Code.ImageDownloadFailed, "下载Image失败")
+                    R.error(Code.ImageDownloadFailed, "下载Image失败",
+                        HttpStatusCode.InternalServerError)
                 }
             }
 
@@ -67,6 +69,11 @@ fun Route.settingEndpoint() {
                 R.ok()
             }
 
+            delete("/{id}") {
+                val id = call.parameters["id"]!!.toLong()
+                imageService.removeImage(id)
+                R.ok()
+            }
 
         }
 
