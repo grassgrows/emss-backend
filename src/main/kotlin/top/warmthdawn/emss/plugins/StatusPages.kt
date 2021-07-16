@@ -55,6 +55,9 @@ fun Application.configureStatusPages() {
                 FileExceptionMsg.FILE_ALREADY_EXIST->{
                     R.error(Code.FileAlreadyExist, "您请求的文件已存在", HttpStatusCode.BadRequest)
                 }
+                FileExceptionMsg.FILE_SIZE_TOO_LARGE->{
+                    R.error(Code.FileSizeTooLarge, "文件体积过大", HttpStatusCode.BadRequest)
+                }
             }
         }
 

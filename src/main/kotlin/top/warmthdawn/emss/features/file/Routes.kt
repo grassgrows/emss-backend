@@ -110,7 +110,19 @@ fun Route.fileEndpoint() {
                 R.ok(fileService.searchFile(filePath, keyword))
             }
         }
-
+        route("/read"){
+            get{
+                val filePath = call.request.queryParameters["path"]!!
+                val pageNum = call.request.queryParameters["pageNum"]!!
+                call.respondText(fileService.readTextFile(filePath, pageNum.toInt()))
+            }
+            post("/save"){
+                val filePath = call.request.queryParameters["path"]!!
+                val text = call.receiveText()
+                fileService.saveTextFile(filePath, text)
+                R.ok()
+            }
+        }
 
     }
 }

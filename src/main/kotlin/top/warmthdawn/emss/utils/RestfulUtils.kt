@@ -155,6 +155,10 @@ enum class Code(
      * 请求文件已存在
      */
     FileAlreadyExist("D117"),
+    /**
+     * 请求文件已存在
+     */
+    FileSizeTooLarge("D118"),
 
     /**
      * 上传请求出错
