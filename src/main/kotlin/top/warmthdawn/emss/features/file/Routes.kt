@@ -2,19 +2,16 @@ package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
 import io.ktor.http.*
+import io.ktor.locations.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
-import io.ktor.locations.KtorExperimentalLocationsAPI
-import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.exists
-import io.ktor.locations.post as postL
-import io.ktor.locations.get as getL
 import kotlin.io.path.Path
+import io.ktor.locations.get as getL
+import io.ktor.locations.post as postL
 
 
 /**
@@ -30,9 +27,7 @@ fun Route.fileEndpoint() {
 
     postL<FileChunkInfoDTO> { info ->
         val stream = call.receiveStream()
-        stream.use {
-            fileService.uploadFile(stream, info)
-        }
+        fileService.uploadFile(stream, info)
         R.ok()
     }
     getL<FileChunkInfoDTO> { info ->
@@ -60,7 +55,7 @@ fun Route.fileEndpoint() {
             get {
                 val filePath = call.request.queryParameters["path"]!!
                 val file = fileService.processPath(filePath).toFile()
-                if(!file.exists()){
+                if (!file.exists()) {
                     throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
                 }
                 call.response.header(

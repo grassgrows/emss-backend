@@ -72,7 +72,7 @@ class FileService {
             "/$identifier}/chunk-${chunkString}.emsschunk"
         }
         val tempPath = root.combineSafe(Path(relativePath)).toPath()
-        createDirs(tempPath.parent.toString())
+        createDirs(tempPath.parent.toString(), false)
         return tempPath
     }
 
@@ -116,7 +116,11 @@ class FileService {
                             it.copyTo(output)
                         }
                         chunkFile.delete()
+                        if(chunk == info.flowTotalChunks){
+                            chunkFile.parentFile.delete()
+                        }
                     }
+
                 }
 
             }
@@ -166,8 +170,9 @@ class FileService {
         return result
     }
 
-    fun createDirs(path: String) {
-        val dirsPath = processPath(path)
+    fun createDirs(path: String, process :Boolean= true) {
+
+        val dirsPath = if(process) processPath(path) else Path(path)
         var file = dirsPath.toFile()
         if (!file.isFile && !file.isDirectory) {
             file.mkdirs()
