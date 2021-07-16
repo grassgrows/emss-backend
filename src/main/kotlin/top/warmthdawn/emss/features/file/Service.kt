@@ -77,10 +77,15 @@ class FileService {
         return tempPath
     }
 
-    private fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
-        val filePathRaw = FileChunkManager.getFinalPath(destinationPath, flowRelativePath)
-//        createDirs(processPath(filePathRaw).toString())
-        return processPath(filePathRaw)
+    fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
+        val path = processPath(destinationPath)
+        val relative = Path(flowRelativePath).normalizeAndRelativize()
+        if (relative.startsWith("..")) {
+            throw PathException(PathExceptionMsg.WRONG_PATH_FORMAT)
+        }
+        return path.combineSafe(relative).toPath().also {
+            createDirs(it.parent.toString(), false)
+        }
     }
 
     suspend fun testFile(info: FileChunkInfoDTO): Boolean {
@@ -99,32 +104,41 @@ class FileService {
             }
 
             val filePathChunk = processTempPath(info.flowIdentifier, info.flowChunkNumber)
-            //下载完成 改名
-            filePathDownloading.toFile().renameTo(filePathChunk.toFile())
+            try {
+                //下载完成 改名
+                filePathDownloading.toFile().renameTo(filePathChunk.toFile())
 
 
-            if (info.flowChunkNumber == info.flowTotalChunks) {
-                BufferedOutputStream(
-                    processFinalPath(
-                        info.destinationPath,
-                        info.flowRelativePath,
-                    ).toFile()
-                        .outputStream()
-                ).use { output ->
-                    for (chunk in 1..info.flowTotalChunks) {
-                        val chunkFile = processTempPath(info.flowIdentifier, chunk).toFile()
-                        BufferedInputStream(chunkFile.inputStream()).use {
-                            it.copyTo(output)
+                if (info.flowChunkNumber == info.flowTotalChunks) {
+                    BufferedOutputStream(
+                        processFinalPath(
+                            info.destinationPath,
+                            info.flowRelativePath,
+                        ).toFile()
+                            .outputStream()
+                    ).use { output ->
+                        for (chunk in 1..info.flowTotalChunks) {
+                            val chunkFile = processTempPath(info.flowIdentifier, chunk).toFile()
+                            BufferedInputStream(chunkFile.inputStream()).use {
+                                it.copyTo(output)
+                            }
+                            chunkFile.delete()
+                            if (chunk == info.flowTotalChunks) {
+                                chunkFile.parentFile.delete()
+                            }
                         }
-                        chunkFile.delete()
-                        if(chunk == info.flowTotalChunks){
-                            chunkFile.parentFile.delete()
-                        }
+
                     }
 
                 }
-
+            } catch (e: Exception) {
+                if (info.flowChunkNumber == info.flowTotalChunks) {
+                    val chunkFile = processTempPath(info.flowIdentifier, info.flowChunkNumber).toFile()
+                    chunkFile.parentFile.delete()
+                }
+                throw e
             }
+
         }
 
 //        file.forEachPart { part ->
@@ -171,9 +185,9 @@ class FileService {
         return result
     }
 
-    fun createDirs(path: String, process :Boolean= true) {
+    fun createDirs(path: String, process: Boolean = true) {
 
-        val dirsPath = if(process) processPath(path) else Path(path)
+        val dirsPath = if (process) processPath(path) else Path(path)
         var file = dirsPath.toFile()
         if (!file.isFile && !file.isDirectory) {
             file.mkdirs()
