@@ -49,7 +49,6 @@ class AttachProxy(
     private val input = PipedInputStream(bufferSize)
     private val output = PipedOutputStream(input)
     private val lock = ReentrantLock()
-
     override val coroutineContext: CoroutineContext = if(context == null) Dispatchers.IO else context + Dispatchers.IO
 
     private fun onMessage(msg: ByteArray) {

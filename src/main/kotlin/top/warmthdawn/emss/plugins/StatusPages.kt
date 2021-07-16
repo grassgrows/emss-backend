@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.plugins
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -24,6 +25,10 @@ fun Application.configureStatusPages() {
         exception<Throwable> {
             R.error(it)
             throw it
+        }
+
+        exception<MismatchedInputException> {
+            R.error(it, HttpStatusCode.BadRequest)
         }
 
         exception<PathException> {

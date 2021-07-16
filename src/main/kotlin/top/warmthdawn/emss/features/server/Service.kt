@@ -8,11 +8,11 @@ import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.*
-import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.dockerStats.*
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
+import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
 import java.time.LocalDateTime
@@ -31,31 +31,21 @@ class ServerService(
     private val statsService: StatsService
 ) {
 
-    suspend fun getServerInfo(): List<ServerVO> {
-        val list: MutableList<ServerVO> = mutableListOf()
-        for (i in QServer(db).findList().indices) {
-            val server = QServer(db).findList().elementAt(i)
-            val serverRealTime = QServerRealTime(db).findList().elementAt(i)
-            val serverVO = ServerVO(
+    suspend fun getServersBriefInfo(): List<ServerBriefVO> {
+        val list: MutableList<ServerBriefVO> = mutableListOf()
+        for (server in QServer(db).findList()) {
+            val realTime = QServerRealTime(db).serverId.eq(server.id).findOne()!!
+            val result = ServerBriefVO(
                 server.id!!,
                 server.name,
                 server.aliasName,
                 server.abbr,
-                server.location,
-                server.startCommand,
+                realTime.status === ServerStatus.Running,
+                server.portBindings.keys.first(),
                 server.imageId,
-                server.workingDir,
-                server.portBindings,
-                server.volumeBind,
-                server.containerId,
-                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).name else null,
-                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).createTime else null,
-                if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).status else ContainerStatus.Unknown,
-                serverRealTime.lastCrashDate,
-                serverRealTime.lastStartDate,
-                serverRealTime.status
+                realTime.lastCrashDate
             )
-            list.add(serverVO)
+            list.add(result)
         }
 
         return list
@@ -63,9 +53,7 @@ class ServerService(
 
     suspend fun getServerInfo(id: Long): ServerVO {
         val server = QServer(db).id.eq(id).findOne()
-        val serverRealTime = QServerRealTime(db).id.eq(id).findOne()
-        if (server == null || serverRealTime == null)
-            throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+            ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
         return ServerVO(
             server.id!!,
             server.name,
@@ -77,22 +65,16 @@ class ServerService(
             server.workingDir,
             server.portBindings,
             server.volumeBind,
-            server.containerId,
-            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).name else null,
-            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).createTime else null,
-            if (server.containerId != null) DockerManager.inspectContainer(server.containerId!!).status else ContainerStatus.Unknown,
-            serverRealTime.lastCrashDate,
-            serverRealTime.lastStartDate,
-            serverRealTime.status
         )
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
         if (!QImage(db).id.eq(serverInfoDTO.imageId).exists())
             throw ImageException(ImageExceptionMsg.IMAGE_NOT_FOUND)
-        if (imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
-            throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
-
+        if (!config.testing) {
+            if (imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
+                throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
+        }
         val server = Server(
             name = serverInfoDTO.name,
             aliasName = serverInfoDTO.aliasName ?: "",
@@ -106,10 +88,7 @@ class ServerService(
         )
         server.insert()
 
-        val serverRealTime = ServerRealTime(
-            status = ServerStatus.Stopped
-        )
-        serverRealTime.insert()
+        val realTime = ServerRealTime(status = ServerStatus.Stopped, serverId = server.id!!)
 
         //创建监控信息
         statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(
@@ -136,7 +115,7 @@ class ServerService(
             val containerName = "emss_container_" + server.abbr
             val image = QImage().id.eq(server.imageId).findOne()!!
 
-            val volumeBind = mutableMapOf<String,String>()
+            val volumeBind = mutableMapOf<String, String>()
             server.volumeBind.forEach {
                 volumeBind.put(fileService.processPath(it.key).toString(), it.value)
             }
@@ -154,9 +133,9 @@ class ServerService(
         }
 
         val containerId = server.containerId!!
-        if(DockerManager.inspectContainer(containerId).status == ContainerStatus.Running
-           && serverRealTime.status == ServerStatus.Running)
-        {
+        if (DockerManager.inspectContainer(containerId).status == ContainerStatus.Running
+            && serverRealTime.status == ServerStatus.Running
+        ) {
             // TODO 不可重复启动
             return
         }
@@ -200,16 +179,15 @@ class ServerService(
 
     }
 
-    suspend fun removeServer(id: Long)
-    {
+    suspend fun removeServer(id: Long) {
         if (config.testing) {
             return
         }
-        if(!QServer().id.eq(id).exists())
+        if (!QServer().id.eq(id).exists())
             throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
 
         val server = QServer().id.eq(id).findOne()
-        if(server!!.containerId != null) {
+        if (server!!.containerId != null) {
             if (DockerManager.inspectContainer(server.containerId!!).status == ContainerStatus.Running)
                 stop(id)
 
@@ -224,15 +202,24 @@ class ServerService(
         statsService.serverStatsInfoMap.remove(server.id)
 
         val serverRealTime = QServerRealTime().id.eq(id).findOne()
-        if(!server.delete()||!serverRealTime!!.delete())
+        if (!server.delete() || !serverRealTime!!.delete())
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
 
 
 
-    }
-
-
-
+//    suspend fun stats(id: Long):ServerStatsVO{
+//
+//
+//
+//
+//        containerId: String,
+//        cpuUsageVO:CpuUsageVO,
+//        memoryUsageVO: MemoryUsageVO,
+//        diskVO: DiskVO, //TODO 磁盘监控
+//        networkVO: NetworkVO,
+//        period: Long,
+//        timestampMax: Int
+//    }
 
 
 }

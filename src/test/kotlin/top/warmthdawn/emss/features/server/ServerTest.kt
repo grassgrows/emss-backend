@@ -90,6 +90,23 @@ internal class ServerTest {
 internal class ServerUpdateTest {
 
     @Test
+    fun createServiceTest() {
+        withTestServer {
+            val serverService by application.inject<ServerService>()
+            val data = ServerInfoDTO(
+                name = "Qwq",
+                abbr = "qwq",
+                location = "qwq",
+                startCommand = "echo hello world",
+                workingDir = "/data/",
+                portBindings = mapOf(666 to 666),
+                volumeBind = mapOf(),
+                imageId = 1
+            )
+            serverService.createServerInfo(data)
+        }
+    }
+    @Test
     fun serverTest() {
         withTestServer {
             val db by application.inject<Database>()

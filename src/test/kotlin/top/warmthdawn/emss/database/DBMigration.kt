@@ -12,4 +12,5 @@ fun main() {
     val dbMigration = DbMigration.create()
     dbMigration.setPlatform(Platform.H2)
     dbMigration.generateMigration()
+    dbMigration.generateInitMigration()
 }

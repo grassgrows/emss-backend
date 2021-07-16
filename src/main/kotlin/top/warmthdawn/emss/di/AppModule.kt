@@ -5,8 +5,10 @@ import org.koin.dsl.single
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
+import top.warmthdawn.emss.features.command.CommandService
 import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
+import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
@@ -28,4 +30,10 @@ val appModule = module {
 
     //file
     single { FileService() }
+
+    //status
+    single { StatsService() }
+
+    //command
+    single { CommandService() }
 }

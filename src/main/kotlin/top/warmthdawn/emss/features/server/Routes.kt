@@ -18,9 +18,12 @@ fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
     val statsService by inject<StatsService>()
+    route("servers") {
+
+    }
     route("/server"){
         get("/list") {
-            R.ok(serverService.getServerInfo())
+            R.ok(serverService.getServersBriefInfo())
         }
         get("/{id}"){
             val id = call.parameters["id"]!!.toLong()
@@ -55,6 +58,7 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
+
         delete("/{id}"){
             val id = call.parameters["id"]!!.toLong()
             serverService.removeServer(id)
