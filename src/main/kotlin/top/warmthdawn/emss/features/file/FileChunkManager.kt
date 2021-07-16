@@ -1,7 +1,5 @@
 package top.warmthdawn.emss.features.file
 
-import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 
 

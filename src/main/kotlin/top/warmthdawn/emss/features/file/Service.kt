@@ -12,7 +12,6 @@ import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.InputStream
-import java.net.URI
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDateTime
@@ -54,9 +53,11 @@ class FileService {
 //              TODO("用户权限搞一下")
                 return root.combineSafe(Path(relativePath)).toPath()
             }
-//            "backup" -> {
-//
-//            }
+            "backup" -> {
+                val root = Path(QSetting().type.eq(SettingType.SERVER_BACKUP_DIRECTORY).findOne()!!.value)
+                val relativePath = uri.substringAfter("backup")
+                return root.combineSafe(Path(relativePath)).toPath()
+            }
             else -> {
                 throw PathException(PathExceptionMsg.WRONG_PATH_FORMAT)
             }
@@ -76,7 +77,7 @@ class FileService {
         return tempPath
     }
 
-    fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
+    private fun processFinalPath(destinationPath: String, flowRelativePath: String): Path {
         val filePathRaw = FileChunkManager.getFinalPath(destinationPath, flowRelativePath)
 //        createDirs(processPath(filePathRaw).toString())
         return processPath(filePathRaw)
@@ -244,5 +245,4 @@ class FileService {
             }
         return result
     }
-
 }

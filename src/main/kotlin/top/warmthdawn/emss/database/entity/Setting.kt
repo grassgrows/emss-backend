@@ -17,6 +17,7 @@ import javax.persistence.Id
 enum class SettingType {
     NAME,
     SERVER_ROOT_DIRECTORY,
+    SERVER_BACKUP_DIRECTORY,
     TEMPORARY_FOLDER
 }
 

@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.settings
 
 import org.junit.rules.TemporaryFolder
+import java.nio.file.ClosedDirectoryStreamException
 
 
 /**
@@ -12,5 +13,6 @@ import org.junit.rules.TemporaryFolder
 data class BaseSetting(
     val name: String? = null,
     val serverRootDirectory: String? = null,
+    val serverBackupDirectory: String? = null,
     val temporaryFolder: String? = null,
 )

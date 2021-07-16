@@ -11,7 +11,7 @@ import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
-import top.warmthdawn.emss.features.server.ServerService
+import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -22,13 +22,15 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 class SettingService(
     private val db: Database,
-    private val config: AppConfig
+    private val config: AppConfig,
+    val fileService: FileService
 ) {
     suspend fun getBaseSetting(): BaseSetting {
         val result = QSetting(db).findList().associate { it.type to it.value }
         return BaseSetting(
             result[SettingType.NAME]!!,
             result[SettingType.SERVER_ROOT_DIRECTORY]!!,
+            result[SettingType.SERVER_BACKUP_DIRECTORY]!!,
             result[SettingType.TEMPORARY_FOLDER]!!
         )
 
@@ -46,10 +48,17 @@ class SettingService(
         if (!baseSetting.serverRootDirectory.isNullOrEmpty()) {
             val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverRootDirectory)
             setting.update()
+            fileService.createDirs(baseSetting.serverRootDirectory)
+        }
+        if (!baseSetting.serverBackupDirectory.isNullOrEmpty()) {
+            val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverBackupDirectory)
+            setting.update()
+            fileService.createDirs(baseSetting.serverBackupDirectory)
         }
         if (!baseSetting.temporaryFolder.isNullOrEmpty()) {
             val setting = Setting(SettingType.TEMPORARY_FOLDER, baseSetting.temporaryFolder)
             setting.update()
+            fileService.createDirs(baseSetting.temporaryFolder)
         }
     }
 
