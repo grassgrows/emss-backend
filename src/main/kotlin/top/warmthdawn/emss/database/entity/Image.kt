@@ -15,5 +15,5 @@ class Image(
     var tag: String = "latest",
     var canRemove: Boolean = true,
 ) : BaseEntity() {
-    val imageId: String get() = "$repository:${tag.ifBlank { "latest" }}"
+    val imageName: String get() = "$repository:${tag.ifBlank { "latest" }}"
 }

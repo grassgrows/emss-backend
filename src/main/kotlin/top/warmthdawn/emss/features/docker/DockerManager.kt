@@ -11,12 +11,11 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
-import top.warmthdawn.emss.features.dockerStats.timerTask.TimerTaskInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.dockerStats.EachNetworkForSecond
+import top.warmthdawn.emss.features.dockerStats.timerTask.TimerTaskInfo
 import java.io.Closeable
 import java.io.InputStream
-import java.lang.NullPointerException
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -164,16 +163,21 @@ object DockerManager {
     // 创建容器
     fun createContainer(
         containerName: String, imageName: String,
-        portBinding: MutableList<PortBinding>,
-        volumeBind: MutableList<Bind>,workingDir: String, cmd: MutableList<String>,
+        portBinding: List<PortBinding>,
+        volumeBind: List<Bind>,
+        workingDir: String,
+        cmd: MutableList<String>,
+        exposedPorts: List<ExposedPort>,
     ): String? {
 
         val container = dockerClient.createContainerCmd(imageName)
             .withName(containerName)
             .withHostConfig(
                 HostConfig.newHostConfig()
-                    .withBinds(volumeBind).withPortBindings(portBinding)
+                    .withBinds(volumeBind)
+                    .withPortBindings(portBinding)
             )
+            .withExposedPorts(exposedPorts)
             .withCmd(cmd)
             .withWorkingDir(workingDir)
             .withAttachStdin(true)
@@ -185,27 +189,24 @@ object DockerManager {
 
 
     // 开启容器
-    fun startContainer(containerId: String): Boolean {
-        return try {
-            dockerClient
-                .startContainerCmd(containerId)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
+    fun startContainer(containerId: String) {
+        dockerClient
+            .startContainerCmd(containerId)
+            .exec()
     }
 
     // 关闭容器
-    fun stopContainer(containerId: String): Boolean {
-        return try {
-            dockerClient
-                .stopContainerCmd(containerId)
-                .exec()
-            true
-        } catch (e: Exception) {
-            false
-        }
+    fun stopContainer(containerId: String) {
+        dockerClient
+            .stopContainerCmd(containerId)
+            .exec()
+    }
+
+    // 强制关闭容器
+    fun terminateContainer(containerId: String) {
+        dockerClient
+            .killContainerCmd(containerId)
+            .exec()
     }
 
 
@@ -229,7 +230,10 @@ object DockerManager {
 
 
     // 获取容器信息
-    fun inspectContainer(containerId: String): ContainerInfo {
+    fun inspectContainer(containerId: String?): ContainerInfo {
+        if (containerId == null) {
+            throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
+        }
         try {
             val container = dockerClient
                 .inspectContainerCmd(containerId)
@@ -254,14 +258,13 @@ object DockerManager {
                     else -> ContainerStatus.Unknown
                 }
             )
-        }catch (e:Exception)
-        {
+        } catch (e: Exception) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
     }
 
     // 监控状态
-    fun statsContainer(containerId: String, timerTaskInfo: TimerTaskInfo):AsyncResultCallback<Statistics> {
+    fun statsContainer(containerId: String, timerTaskInfo: TimerTaskInfo): AsyncResultCallback<Statistics> {
 
         return dockerClient
             .statsCmd(containerId)
@@ -271,35 +274,34 @@ object DockerManager {
                     if (statistics != null) {
                         with(statistics) {
                             //try {
-                                timerTaskInfo.cpuUsageList.add(
-                                    (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
-                                            / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
-                                            * cpuStats.onlineCpus!! * 100)
+                            timerTaskInfo.cpuUsageList.add(
+                                (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
+                                        / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
+                                        * cpuStats.onlineCpus!! * 100
+                            )
 
-                                timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
+                            timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
 
-                                timerTaskInfo.availableMemory = memoryStats.limit!!
+                            timerTaskInfo.availableMemory = memoryStats.limit!!
 
-                                if(blkioStats.ioServiceBytesRecursive != null)
-                                {
-                                    for(blkio in blkioStats.ioServiceBytesRecursive!!)
-                                    {
-                                        if(blkio.op == "Read")
-                                            timerTaskInfo.diskReadList.add(blkio.value)
-                                        if(blkio.op == "Write")
-                                            timerTaskInfo.diskWriteList.add(blkio.value)
-                                    }
+                            if (blkioStats.ioServiceBytesRecursive != null) {
+                                for (blkio in blkioStats.ioServiceBytesRecursive!!) {
+                                    if (blkio.op == "Read")
+                                        timerTaskInfo.diskReadList.add(blkio.value)
+                                    if (blkio.op == "Write")
+                                        timerTaskInfo.diskWriteList.add(blkio.value)
                                 }
+                            }
 
-                                for (key in networks!!.keys) {
-                                    if (!(timerTaskInfo.networkNew.keys.contains(key))) {
-                                        timerTaskInfo.networkNew[key] = EachNetworkForSecond(
-                                            mutableListOf(), mutableListOf()
-                                        )
-                                    }
-                                    timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
-                                    timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
+                            for (key in networks!!.keys) {
+                                if (!(timerTaskInfo.networkNew.keys.contains(key))) {
+                                    timerTaskInfo.networkNew[key] = EachNetworkForSecond(
+                                        mutableListOf(), mutableListOf()
+                                    )
                                 }
+                                timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
+                                timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
+                            }
                             //}catch (e:NullPointerException){}
                         }
                     }
@@ -325,7 +327,12 @@ object DockerManager {
 
 
     // 获取容器输入输出流
-    fun attachContainer(containerId: String, inputStream: InputStream, callback: (Frame)->Unit): ResultCallback.Adapter<Frame>? {
+    fun attachContainer(
+        containerId: String,
+        inputStream: InputStream,
+        complete: () -> Unit = {},
+        callback: (Frame) -> Unit,
+    ): ResultCallback.Adapter<Frame> {
 
         return dockerClient
             .attachContainerCmd(containerId)
@@ -338,7 +345,12 @@ object DockerManager {
                     super.onNext(frame)
                     frame?.let(callback)
                 }
-            }).awaitCompletion()
+
+                override fun onComplete() {
+                    super.onComplete()
+                    complete()
+                }
+            })
     }
 
 

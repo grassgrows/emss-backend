@@ -194,7 +194,7 @@ class ServerService(
         val containerId = server.containerId!!
         DockerManager.stopContainer(containerId)
         serverRealTime.lastStartDate = LocalDateTime.now()
-        serverRealTime.status = ServerStatus.Stopped
+        serverRealTime.state = ServerStatus.Stopped
         serverRealTime.update()
     }
 
