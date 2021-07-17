@@ -163,8 +163,7 @@ class FileService {
 
     @OptIn(ExperimentalStdlibApi::class)
     suspend fun getFileList(path: String): List<FileListInfoVO> {
-        if(path.isEmpty() || path == "/")
-        {
+        if (path.isEmpty() || path == "/") {
             return buildList {
                 buildVirtualDirectory("服务器根目录(root)", "/root")
                 buildVirtualDirectory("服务器备份目录(backup)", "/backup")
@@ -230,10 +229,7 @@ class FileService {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         val newFile = processPath(newPath).toFile()
-        if (newFile.exists()) {
-            throw FileException(FileExceptionMsg.FILE_ALREADY_EXIST)
-        }
-        file.copyRecursively(newFile)
+        file.copyRecursively(newFile, true)
     }
 
     // TODO: 2021/7/16 复制文件的内部方法（覆盖原文件）
@@ -304,5 +300,45 @@ class FileService {
         if (File(path).length() > 1024 * 1024)
             throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)
     }
+
+    fun innerCreateDirs(path: String) {
+        val dirsPath = Path(path)
+        val file = dirsPath.toFile()
+        if (!file.isFile && !file.isDirectory) {
+            file.mkdirs()
+        }
+    }
+
+    fun findDuplicateFiles(path: String, newPath: String): Int {
+        val file = processPath(path).toFile()
+        if (!file.exists()) {
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        }
+        val newFile = processPath(newPath).toFile()
+        if (newFile.exists()) {
+            if (newFile.isDirectory && newFile.length() == 0L) {
+                return 1
+            } else if (newFile.isFile) {
+                return 1
+            }
+            val fileTree = file.walk()
+            val files = mutableListOf<String>()
+            fileTree.maxDepth(Int.MAX_VALUE)
+                .filterNot { it.path == file.path }
+                .forEach {
+                    files.add(it.name)
+                }
+            val newfileTree = newFile.walk()
+            val newfiles = mutableListOf<String>()
+            newfileTree.maxDepth(Int.MAX_VALUE)
+                .filterNot { it.path == newFile.path }
+                .forEach {
+                    newfiles.add(it.name)
+                }
+            return files.intersect(newfiles).size
+        }
+        return 0
+    }
+
 
 }

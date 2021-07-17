@@ -94,6 +94,15 @@ fun Route.fileEndpoint() {
             }
         }
         route("/copy") {
+            get("/check"){
+                val target = call.request.queryParameters["path"]!!
+                val filePaths = call.receive<Array<String>>()
+                var count = 0
+                filePaths.forEach {
+                    count += fileService.findDuplicateFiles(it, target + "/" + Path(it).fileName)
+                }
+                R.ok(count)
+            }
             post {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
