@@ -37,11 +37,15 @@ class PassiveStatisticsProviderImpl(
     override fun start() {
         launch {
             while (true) {
-                lock.lock()
-                val result = results.reduce { a, b -> a + b }
-                results.clear()
-                lock.unlock()
-                offerHistory(result)
+                if (results.isEmpty()) {
+                    offerHistory(0.0)
+                } else {
+                    lock.lock()
+                    val result = results.reduce { a, b -> a + b }
+                    results.clear()
+                    lock.unlock()
+                    offerHistory(result)
+                }
                 delay(delay)
             }
         }

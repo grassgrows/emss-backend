@@ -48,7 +48,7 @@ class ServerService(
                 server.name,
                 server.aliasName,
                 server.abbr,
-                ServerObject.isRunning(running.state),
+                ServerObject.isRunning(running.serverState),
                 server.portBindings.keys.firstOrNull(),
                 server.imageId,
                 running.lastCrashDate
@@ -122,7 +122,7 @@ class ServerService(
         )
         server.insert()
 
-        val realTime = ServerRealTime(state = ServerState.INITIALIZE, serverId = server.id!!)
+        val realTime = ServerRealTime(serverState = ServerState.INITIALIZE, serverId = server.id!!)
         realTime.insert()
 
         serverInfoDTO.permissionGroup.forEach {

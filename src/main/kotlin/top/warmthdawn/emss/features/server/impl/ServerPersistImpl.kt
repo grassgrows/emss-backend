@@ -36,13 +36,14 @@ class ServerPersistImpl(
 
     override fun saveState(state: ServerState) {
         QServerRealTime(db).id.eq(id).findOne()?.let {
-            it.state = state
+            it.serverState = state
             it.update()
         }
     }
 
     override fun getState(): ServerState {
-        return QServerRealTime(db).id.eq(id).select(QServerRealTime._alias.state).findOne()!!.state
+        val server = QServerRealTime(db).serverId.eq(id).findOne()
+        return server!!.serverState
     }
 
 }

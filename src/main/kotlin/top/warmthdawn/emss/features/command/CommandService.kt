@@ -7,7 +7,6 @@ import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
-import top.warmthdawn.emss.features.server.entity.ServerState
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.*
@@ -24,24 +23,20 @@ typealias ReceiveMessage = suspend (ByteArray) -> Unit
 class CommandService {
     private val attaches: MutableMap<Long, AttachProxy> = mutableMapOf()
 
-    suspend fun createAttach(serverId: Long, detach: ()->Unit) {
+    suspend fun createAttach(serverId: Long, detach: () -> Unit) {
         coroutineScope {
             val server = QServer().id.eq(serverId).findOne()
             val serverRealTime = QServerRealTime().serverId.eq(serverId).findOne()
             if (server == null || serverRealTime == null)
                 throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
             val attachProxy = attaches.getOrDefault(serverId, AttachProxy())
-            if (serverRealTime.state == ServerState.RUNNING) {
-                attachProxy.attach(server.containerId!!, detach)
-                attaches.put(serverId, attachProxy)
-            } else {
-                throw ServerException(ServerExceptionMsg.SERVER_NOT_RUNNING)
-            }
+            attachProxy.attach(server.containerId!!, detach)
+            attaches.put(serverId, attachProxy)
         }
     }
 
     fun getAttachProxy(serverId: Long): AttachProxy {
-        if(!attaches.containsKey(serverId)){
+        if (!attaches.containsKey(serverId)) {
             attaches[serverId] = AttachProxy()
         }
         return attaches.get(serverId)!!
@@ -72,7 +67,7 @@ class AttachProxy(
         }
     }
 
-    fun attach(containerId: String, onComplete: ()->Unit = {}) {
+    fun attach(containerId: String, onComplete: () -> Unit = {}) {
         if (attached) {
             return
         }

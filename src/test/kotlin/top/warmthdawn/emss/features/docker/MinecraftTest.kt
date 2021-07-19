@@ -23,14 +23,14 @@ fun mmain() {
     val exposedPort = ExposedPort(80)
     val binding = Ports.Binding(null, 80.toString())
     val portBinding = mutableListOf(PortBinding(binding, exposedPort))
-    val dockerId = DockerManager.createContainer(containerName, "openjdk:8", portBinding, bind, "/data/", cmd)
+//    val dockerId = DockerManager.createContainer(containerName, "openjdk:8", portBinding, bind, "/data/", cmd)
 
-    if (dockerId == null) {
-        print("*********** failed *************/n")
-        return
-    }
-
-    DockerManager.startContainer(dockerId)
+//    if (dockerId == null) {
+//        print("*********** failed *************/n")
+//        return
+//    }
+//
+//    DockerManager.startContainer(dockerId)
     //DockerManager.attachContainer(dockerId, System.`in`, System.out)
 
 }

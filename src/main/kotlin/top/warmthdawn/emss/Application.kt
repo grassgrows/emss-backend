@@ -25,4 +25,7 @@ fun Application.module(testing: Boolean = false, koinModules: List<Module> = lis
     install(ForwardedHeaderSupport)
     configureSockets()
     configureRouting()
+
+
+    initialize()
 }
