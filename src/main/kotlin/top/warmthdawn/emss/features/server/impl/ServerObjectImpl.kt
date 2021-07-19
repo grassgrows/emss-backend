@@ -4,9 +4,11 @@ import io.ebean.Database
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.command.CommandService
 import top.warmthdawn.emss.features.docker.ContainerException
 import top.warmthdawn.emss.features.docker.ContainerExceptionMsg
+import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.api.ServerPersist
 import top.warmthdawn.emss.features.server.entity.ServerState
@@ -27,16 +29,35 @@ class ServerObjectImpl(
     parentContext: CoroutineContext,
 ) : AbstractServer(),
     ServerPersist by ServerPersistImpl(db, id) {
+    companion object {
+        val logger = LoggerFactory.getLogger(ServerObjectImpl::class.java)
+    }
+
     private val job = Job()
-
-
-    override suspend fun startComplete() {
-        //连接服务器终端
-        commandService.createAttach(this.id) {
-            launch {
-                changeState(ServerState.STOPPED, force = true)
+    override suspend fun stateError() {
+        val state = currentState
+        logger.error("状态切换异常, curr:$state")
+        if (state == ServerState.STARTING || state == ServerState.STOPPING) {
+            val inspect = dockerService.inspectContainer(id)
+            if (inspect == ContainerStatus.Running) {
+                changeState(ServerState.RUNNING, true)
+            } else if (inspect == ContainerStatus.Stopped) {
+                changeState(ServerState.STOPPED, true)
             }
         }
+    }
+
+    override suspend fun startComplete() {
+        launch {
+            dockerService.waitContainer(id)
+            changeState(ServerState.STOPPED, force = true)
+        }
+
+        //连接服务器终端
+        commandService.createAttach(this.id)
+        commandService.sendMessage(id, "------------------------")
+        commandService.sendMessage(id, "---------服务器开启-------")
+        commandService.sendMessage(id, "------------------------")
         //开始服务器状态监控
         statisticsService.startMonitoring(this.id)
         updateRunning(lastStartDate = LocalDateTime.now())
@@ -48,11 +69,19 @@ class ServerObjectImpl(
 
     override suspend fun serverCrashed() {
         updateRunning(lastCrashDate = LocalDateTime.now())
+        commandService.sendMessage(id, "------------------------")
+        commandService.sendMessage(id, "---------服务器崩溃-------")
+        commandService.sendMessage(id, "------------------------")
     }
 
     override suspend fun serverStop() {
         //停止服务器状态监控
         statisticsService.stopMonitoring(this.id)
+        //停止连接服务器终端
+        commandService.sendMessage(id, "------------------------")
+        commandService.sendMessage(id, "---------服务器关闭-------")
+        commandService.sendMessage(id, "------------------------")
+        commandService.detach(this.id)
     }
 
     private suspend fun containerRunCatching(setState: Boolean = true, action: suspend () -> Unit) {
@@ -68,6 +97,10 @@ class ServerObjectImpl(
     }
 
     override suspend fun startContainer() = containerRunCatching {
+
+        commandService.sendMessage(id, "------------------------")
+        commandService.sendMessage(id, "-------尝试开启服务器------")
+        commandService.sendMessage(id, "------------------------")
         dockerService.startContainer(this.id)
         changeState(ServerState.RUNNING, force = true)
     }

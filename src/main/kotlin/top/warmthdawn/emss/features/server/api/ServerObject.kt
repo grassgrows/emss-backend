@@ -14,6 +14,7 @@ interface ServerObject : CoroutineScope, ServerPersist {
     val running: Boolean
     suspend fun changeState(state: ServerState, force: Boolean = false)
 
+    suspend fun waitForState(state: ServerState, timeout: Long, fallback: suspend () -> Unit = {})
 
     companion object {
         fun isRunning(state: ServerState): Boolean {
@@ -23,4 +24,5 @@ interface ServerObject : CoroutineScope, ServerPersist {
             }
         }
     }
+
 }

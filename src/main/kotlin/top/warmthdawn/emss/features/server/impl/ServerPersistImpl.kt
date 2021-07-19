@@ -42,7 +42,7 @@ class ServerPersistImpl(
     }
 
     override fun getState(): ServerState {
-        val server = QServerRealTime(db).serverId.eq(id).findOne()
+        val server = QServerRealTime(db).serverId.eq(id).findOne()!!
         return server!!.serverState
     }
 

@@ -1,10 +1,12 @@
 package top.warmthdawn.emss.features.server.impl
 
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.server.api.ServerObject
 import top.warmthdawn.emss.features.server.api.ServerObject.Companion.isRunning
 import top.warmthdawn.emss.features.server.entity.ServerState
+import kotlin.coroutines.resume
 
 /**
  *
@@ -22,73 +24,99 @@ abstract class AbstractServer : ServerObject {
     override val running
         get() = isRunning(currentState)
 
+    private val stateWaiters = mutableListOf<Pair<ServerState, () -> Unit>>()
+    protected fun addWaiter(state: ServerState, callback: () -> Unit) {
+        stateWaiters.add(Pair(state, callback))
+    }
+
+    protected fun notifyWaiter(state: ServerState) {
+        val waiters = stateWaiters.filter { it.first == state }
+        stateWaiters.removeAll(waiters)
+        waiters.forEach { it.second.invoke() }
+    }
+
+    override suspend fun waitForState(state: ServerState, timeout: Long, fallback: suspend () -> Unit) {
+        withTimeoutOrNull(timeout) {
+            suspendCancellableCoroutine {
+                addWaiter(state) {
+                    it.resume(Unit)
+                }
+            }
+        } ?: fallback()
+    }
+
     override suspend fun changeState(state: ServerState, force: Boolean) {
         val current = currentState
+        saveState(state)
+        notifyWaiter(state)
         kotlin.runCatching {
-            val run = when (current) {
+            when (current) {
                 ServerState.INITIALIZE -> when (state) {
-                    ServerState.STARTING -> launch {
+                    ServerState.STARTING -> {
                         createContainer()
                         startContainer()
                     }
                     else -> throw UnsupportedStateChangeException("服务器未启动")
                 }
                 ServerState.STARTING -> when (state) {
-                    ServerState.RUNNING -> launch {
+                    ServerState.RUNNING -> {
                         startComplete()
                     }
-                    ServerState.STOPPED -> launch {
+                    ServerState.STOPPED -> {
                         startFailed()
                     }
-                    else -> throw UnsupportedStateChangeException("不支持的状态切换")
+                    else -> {
+                        stateError()
+                        throw UnsupportedStateChangeException("不支持的状态切换")
+                    }
 
                 }
                 ServerState.RUNNING -> when (state) {
                     ServerState.INITIALIZE -> throw UnsupportedStateChangeException("不支持的状态切换")
                     ServerState.STARTING -> throw UnsupportedStateChangeException("服务器已经启动")
-                    ServerState.RUNNING -> launch {
+                    ServerState.RUNNING -> {
                     }
-                    ServerState.STOPPING -> launch {
+                    ServerState.STOPPING -> {
                         stopContainer()
                     }
-                    ServerState.STOPPED -> launch {
+                    ServerState.STOPPED -> {
                         serverCrashed()
                         serverStop()
                     }
                 }
                 ServerState.STOPPING -> when (state) {
-                    ServerState.STOPPED -> launch {
+                    ServerState.STOPPED -> {
                         serverStop()
                     }
-                    else -> throw UnsupportedStateChangeException("不支持的状态切换")
+                    else -> {
+                        stateError()
+                        throw UnsupportedStateChangeException("不支持的状态切换")
+                    }
 
                 }
                 ServerState.STOPPED -> when (state) {
-                    ServerState.INITIALIZE -> launch {
+                    ServerState.INITIALIZE -> {
                         deleteContainer()
                     }
-                    ServerState.STARTING -> launch {
+                    ServerState.STARTING -> {
                         startContainer()
                     }
-                    ServerState.RUNNING -> launch {
+                    ServerState.RUNNING -> {
                         startComplete()
                     }
                     else -> throw UnsupportedStateChangeException("服务器未启动")
                 }
             }
 
-            saveState(state)
-            run.join()
+
         }.onFailure {
             log.error("更新服务器状态${current}->${state}失败， 强制: $force", it)
-            if (force)
-                saveState(state)
-            throw it
-
         }
 
 
     }
+
+    protected abstract suspend fun stateError()
 
     protected abstract suspend fun startComplete()
     protected abstract suspend fun startFailed()

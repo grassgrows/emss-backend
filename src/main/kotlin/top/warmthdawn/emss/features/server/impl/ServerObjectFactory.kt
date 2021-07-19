@@ -27,7 +27,6 @@ class ServerObjectFactory(
             val test = dockerService.inspectContainer(it)
             when (test) {
                 ContainerStatus.Unknown -> {
-
                     ServerPersistImpl(db, it).saveState(ServerState.INITIALIZE)
                 }
                 ContainerStatus.Running -> {

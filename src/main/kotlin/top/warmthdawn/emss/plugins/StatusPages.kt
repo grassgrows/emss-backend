@@ -145,6 +145,9 @@ fun Application.configureStatusPages() {
                 ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED -> {
                     R.error(Code.ServerDatabaseRemoveFailed, "服务器数据库信息删除失败！", HttpStatusCode.InternalServerError)
                 }
+                ServerExceptionMsg.SERVER_NOT_STOPPED -> {
+                    R.error(Code.ServerNotStopped,"服务器正在运行！", HttpStatusCode.Forbidden)
+                }
             }
         }
 

@@ -2,10 +2,11 @@ package top.warmthdawn.emss.features.server.impl
 
 import io.ebean.Database
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.api.StatisticsProvider
-import top.warmthdawn.emss.features.server.entity.StatisticsType
+import top.warmthdawn.emss.features.server.entity.ServerState
 import top.warmthdawn.emss.features.server.entity.contains
 import top.warmthdawn.emss.features.server.impl.statistics.ServerStatisticsFactory
 import top.warmthdawn.emss.features.server.impl.statistics.passive
@@ -37,10 +38,10 @@ class StatisticsService(
 
     suspend fun init() {
         val servers = QServer(db).findList()
-
         servers.forEach {
             addServer(it.id!!, factory.createService(it.abbr))
         }
+
     }
 
     fun delServer(id: Long) {

@@ -113,7 +113,11 @@ enum class Code(
     /**
      *  服务器未启动
      */
-    ServerNotRunning("B330"),
+    ServerNotRunning("B331"),
+    /**
+     *  服务器未关闭
+     */
+    ServerNotStopped("B332"),
 
     /**
      * 服务器删除失败

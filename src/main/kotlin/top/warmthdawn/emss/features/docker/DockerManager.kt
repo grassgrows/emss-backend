@@ -268,12 +268,13 @@ object DockerManager {
             .statsCmd(containerId)
             .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
                 override fun onNext(statistics: Statistics?) {
-                    super.onNext(statistics)
+                    if (statistics != null) {
+                        callback(statistics)
+                    }
                 }
 
             })
     }
-
 
 
     // 删除镜像
@@ -317,6 +318,13 @@ object DockerManager {
                     complete()
                 }
             })
+    }
+
+    fun waitContainer(containerId: String): ResultCallback<WaitResponse> {
+        return dockerClient
+            .waitContainerCmd(containerId)
+            .exec(ResultCallback.Adapter())
+            .awaitCompletion()
     }
 
 

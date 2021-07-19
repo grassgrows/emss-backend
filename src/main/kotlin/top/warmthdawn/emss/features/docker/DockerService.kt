@@ -2,10 +2,12 @@ package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
 import io.ebean.Database
+import kotlinx.coroutines.suspendCancellableCoroutine
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.file.FileService
+import kotlin.coroutines.resume
 
 /**
  *
@@ -61,6 +63,16 @@ class DockerService(
 
     fun terminateContainer(serverId: Long) {
         DockerManager.stopContainer(getContainerId(serverId))
+    }
+
+    suspend fun waitContainer(serverId: Long) {
+        suspendCancellableCoroutine<Unit> {
+            DockerManager.waitContainer(getContainerId(serverId))
+            it.resume(Unit)
+            it.invokeOnCancellation {
+                stopContainer(serverId)
+            }
+        }
     }
 
     fun inspectContainer(serverId: Long): ContainerStatus {
