@@ -8,6 +8,7 @@ import top.warmthdawn.emss.database.entity.UserGroup
 import top.warmthdawn.emss.database.entity.query.*
 import top.warmthdawn.emss.features.login.vo.UserInfoVO
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
+import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 
 
 /**
@@ -29,13 +30,14 @@ class PermissionService
 
     suspend fun getGroupInfo(): List<PermissionGroupVO> {
         val result: MutableList<PermissionGroupVO> = mutableListOf()
-        for (row in QUser(db).findList()) {
+        for (row in QPermissionGroup(db).findList()) {
             val permissionGroupVO = PermissionGroupVO(
                 row.id!!,
-                row.username,
-                row.permissionLevel,
-                usersInGroup(row.id!!)
-            )
+                row.groupName,
+                row.maxPermissionLevel,
+                usersInGroup(row.id!!),
+                serversOfGroup(row.id!!)
+                )
             result.add(permissionGroupVO)
         }
         return result
@@ -45,6 +47,14 @@ class PermissionService
         val result: MutableList<User> = mutableListOf()
         for (row in QUserGroup(db).groupId.eq(id).findList()) {
             result.plus(QUser(db).id.eq(row.userId).findList())
+        }
+        return result
+    }
+
+    private fun serversOfGroup(id: Long): List<String> {
+        val result: MutableList<String> = mutableListOf()
+        for (row in QGroupServer(db).groupId.eq(id).findList()) {
+            result.add(QServer(db).id.eq(row.serverId).findOne()!!.name)
         }
         return result
     }

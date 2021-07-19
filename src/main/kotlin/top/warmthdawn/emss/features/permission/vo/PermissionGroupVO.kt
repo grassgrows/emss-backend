@@ -15,6 +15,6 @@ data class PermissionGroupVO(
     var id: Long,
     var groupName: String,
     var maxPermissionLevel: Int,
-    var members: List<User>,
-    var servers: List<ServerBriefVO>
+    var member: List<User>,
+    var serverName: List<String>
 )
