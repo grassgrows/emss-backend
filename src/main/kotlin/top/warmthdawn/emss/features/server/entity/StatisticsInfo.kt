@@ -6,17 +6,14 @@ package top.warmthdawn.emss.features.server.entity
  * @since 2021-07-17
  */
 class StatisticsInfo(
-    val name: String,
+    val type: StatisticsType,
     val value: Double,
 )
 
-/**
- *
- * [[{name: ]]
- */
 class StatisticsList(
+    val type: StatisticsType,
     val timestamps: List<Long>,
-    val values: List<StatisticsInfo>
+    val values: List<Double>
 )
 
 
@@ -32,7 +29,19 @@ enum class StatisticsType(
     ONLINE_PLAYER(64),
     TPS(128);
 
-    fun join(vararg types: StatisticsType): Int {
-        return types.map { it.flag }.reduce { a, b -> a and b }
+    companion object {
+        val types = values()
+        fun join(vararg types: StatisticsType): Int {
+            return types.map { it.flag }.reduce { a, b -> a and b }
+        }
+
+        fun containsAll(types: Int): List<StatisticsType> {
+            return values().filter { (it.flag and types) == it.flag }
+        }
     }
+
+}
+
+operator fun Int.contains(type: StatisticsType): Boolean {
+    return (type.flag and this) == type.flag
 }

@@ -7,7 +7,7 @@ import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
-import top.warmthdawn.emss.features.server.ServerStatus
+import top.warmthdawn.emss.features.server.entity.ServerState
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.*
@@ -31,7 +31,7 @@ class CommandService {
             if (server == null || serverRealTime == null)
                 throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
             val attachProxy = attaches.getOrDefault(serverId, AttachProxy())
-            if (serverRealTime.status == ServerStatus.Running) {
+            if (serverRealTime.state == ServerState.RUNNING) {
                 attachProxy.attach(server.containerId!!, detach)
                 attaches.put(serverId, attachProxy)
             } else {

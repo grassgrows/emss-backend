@@ -19,7 +19,7 @@ class ServerPersistImpl(
 
 
     override fun getRunning(): ServerRealTime {
-        TODO("Not yet implemented")
+        return QServerRealTime(db).id.eq(id).findOne()!!
     }
 
     override fun updateRunning(lastCrashDate: LocalDateTime?, lastStartDate: LocalDateTime?) {
@@ -42,7 +42,7 @@ class ServerPersistImpl(
     }
 
     override fun getState(): ServerState {
-        return QServerRealTime(db).id.eq(id).select(QServerRealTime._alias.status).findOne()!!.state
+        return QServerRealTime(db).id.eq(id).select(QServerRealTime._alias.state).findOne()!!.state
     }
 
 }

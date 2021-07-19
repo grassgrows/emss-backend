@@ -1,7 +1,5 @@
 package top.warmthdawn.emss.database.entity
 
-import io.ebean.annotation.DbDefault
-import top.warmthdawn.emss.features.server.ServerStatus
 import top.warmthdawn.emss.features.server.entity.ServerState
 import java.time.LocalDateTime
 import javax.persistence.Entity

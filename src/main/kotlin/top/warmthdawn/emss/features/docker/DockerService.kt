@@ -40,7 +40,7 @@ class DockerService(
         server.update()
     }
 
-    private fun getContainerId(serverId: Long): String {
+    fun getContainerId(serverId: Long): String {
         val server = QServer(db).id.eq(serverId).findOne()!!
         //inspect一次，判断容器是否存在
         DockerManager.inspectContainer(server.containerId)

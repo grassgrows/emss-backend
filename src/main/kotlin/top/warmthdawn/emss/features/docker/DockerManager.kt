@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
-import top.warmthdawn.emss.features.dockerStats.EachNetworkForSecond
-import top.warmthdawn.emss.features.dockerStats.timerTask.TimerTaskInfo
 import java.io.Closeable
 import java.io.InputStream
 import java.time.Duration
@@ -264,51 +262,19 @@ object DockerManager {
     }
 
     // 监控状态
-    fun statsContainer(containerId: String, timerTaskInfo: TimerTaskInfo): AsyncResultCallback<Statistics> {
+    fun statsContainer(containerId: String, callback: (Statistics) -> Unit): AsyncResultCallback<Statistics> {
 
         return dockerClient
             .statsCmd(containerId)
             .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
-
                 override fun onNext(statistics: Statistics?) {
-                    if (statistics != null) {
-                        with(statistics) {
-                            //try {
-                            timerTaskInfo.cpuUsageList.add(
-                                (cpuStats.cpuUsage!!.totalUsage!! - preCpuStats.cpuUsage!!.totalUsage!!) * 1.0
-                                        / (cpuStats.systemCpuUsage!! - (if (preCpuStats.systemCpuUsage == null) 0 else preCpuStats.systemCpuUsage)!!)
-                                        * cpuStats.onlineCpus!! * 100
-                            )
-
-                            timerTaskInfo.memoryUsageList.add(memoryStats.usage!! - memoryStats.stats!!.cache!!)
-
-                            timerTaskInfo.availableMemory = memoryStats.limit!!
-
-                            if (blkioStats.ioServiceBytesRecursive != null) {
-                                for (blkio in blkioStats.ioServiceBytesRecursive!!) {
-                                    if (blkio.op == "Read")
-                                        timerTaskInfo.diskReadList.add(blkio.value)
-                                    if (blkio.op == "Write")
-                                        timerTaskInfo.diskWriteList.add(blkio.value)
-                                }
-                            }
-
-                            for (key in networks!!.keys) {
-                                if (!(timerTaskInfo.networkNew.keys.contains(key))) {
-                                    timerTaskInfo.networkNew[key] = EachNetworkForSecond(
-                                        mutableListOf(), mutableListOf()
-                                    )
-                                }
-                                timerTaskInfo.networkNew[key]!!.receiveValues.add(networks!![key]!!.rxBytes!!)
-                                timerTaskInfo.networkNew[key]!!.sendValues.add(networks!![key]!!.txBytes!!)
-                            }
-                            //}catch (e:NullPointerException){}
-                        }
-                    }
-
+                    super.onNext(statistics)
                 }
+
             })
     }
+
+
 
     // 删除镜像
     fun removeImage(imageName: String) {

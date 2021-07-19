@@ -109,7 +109,7 @@ class ImageService(
 
         if (result == null) {
             val image = settingService.getImage(id)
-            val status = DockerManager.inspectImage(image.imageId)
+            val status = DockerManager.inspectImage(image.imageName)
             return ImageStatusVO(
                 if (status == null) ImageStatus.Ready else ImageStatus.Downloaded
             )
@@ -125,7 +125,7 @@ class ImageService(
 
         val image = settingService.getImage(id)
         try {
-            DockerManager.removeImage(image.imageId)
+            DockerManager.removeImage(image.imageName)
         } catch (e: Exception) {
             throw ImageException(ImageExceptionMsg.IMAGE_REMOVE_FAILED)
         }

@@ -4,8 +4,9 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
+import top.warmthdawn.emss.features.server.impl.StatisticsService
+import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkPermission
 import top.warmthdawn.emss.utils.checkServerPermission
@@ -19,8 +20,8 @@ import top.warmthdawn.emss.utils.checkServerPermission
 fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
-    val statsService by inject<StatsService>()
-    route("/servers"){
+    val statisticsService by inject<StatisticsService>()
+    route("/servers") {
         get {
             R.ok(serverService.getServersBriefInfo())
         }
@@ -38,7 +39,7 @@ fun Route.serverEndpoint() {
             serverService.removeServer(id)
             R.ok()
         }
-        get("/{id}"){
+        get("/{id}") {
             val id = call.parameters["id"]!!.toLong()
             R.ok(serverService.getServerInfo(id))
         }
@@ -49,9 +50,15 @@ fun Route.serverEndpoint() {
             serverService.updateServerInfo(id, dto)
             R.ok()
         }
-        get("/{id}/stats"){
+        get("/{id}/stats") {
             val id = call.parameters["id"]!!.toLong()
-            R.ok(statsService.serverStatsInfoMap[id]!!)
+            val flag = call.parameters["type"]!!.toInt()
+            val type = statisticsService.getProvider(id).getByFlag(flag)
+                .map {
+                    val history = it.getHistory()
+                    ServerStatisticsVO(history.timestamps, it.getCurrent().value, history.values)
+                }
+            R.ok(type)
         }
         post("/{id}/start") {
             val id = call.parameters["id"]!!.toLong()
@@ -77,7 +84,6 @@ fun Route.serverEndpoint() {
             serverService.terminate(id)
             R.ok()
         }
-
 
 
     }

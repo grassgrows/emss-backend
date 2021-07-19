@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.server.impl
 
+import io.ebean.Database
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -18,21 +19,26 @@ import kotlin.coroutines.CoroutineContext
  * @since 2021-07-17
  */
 class ServerObjectImpl(
-    val id: Long,
-    val dockerService: DockerService,
-    val commandService: CommandService,
+    private val db: Database,
+    override val id: Long,
+    private val dockerService: DockerService,
+    private val commandService: CommandService,
+    private val statisticsService: StatisticsService,
     parentContext: CoroutineContext,
 ) : AbstractServer(),
-    ServerPersist by ServerPersistImpl(id) {
+    ServerPersist by ServerPersistImpl(db, id) {
     private val job = Job()
 
 
     override suspend fun startComplete() {
+        //连接服务器终端
         commandService.createAttach(this.id) {
             launch {
-                changeState(ServerState.STOPPED)
+                changeState(ServerState.STOPPED, force = true)
             }
         }
+        //开始服务器状态监控
+        statisticsService.startMonitoring(this.id)
         updateRunning(lastStartDate = LocalDateTime.now())
     }
 
@@ -45,7 +51,8 @@ class ServerObjectImpl(
     }
 
     override suspend fun serverStop() {
-
+        //停止服务器状态监控
+        statisticsService.stopMonitoring(this.id)
     }
 
     private suspend fun containerRunCatching(setState: Boolean = true, action: suspend () -> Unit) {
@@ -55,14 +62,14 @@ class ServerObjectImpl(
             if (e.containerExceptionMsg == ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED
                 && setState
             ) {
-                changeState(ServerState.INITIALIZE)
+                changeState(ServerState.INITIALIZE, force = true)
             }
         }
     }
 
     override suspend fun startContainer() = containerRunCatching {
         dockerService.startContainer(this.id)
-        changeState(ServerState.RUNNING)
+        changeState(ServerState.RUNNING, force = true)
     }
 
     override suspend fun stopContainer() = containerRunCatching {
