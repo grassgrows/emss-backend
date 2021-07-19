@@ -72,7 +72,7 @@ class FileService {
             "/$identifier}/chunk-${chunkString}.emsschunk"
         }
         val tempPath = root.combineSafe(Path(relativePath)).toPath()
-        createDirs(tempPath.parent.toString(), false)
+        innerCreateDirs(tempPath.parent.toString())
         return tempPath
     }
 
@@ -83,7 +83,7 @@ class FileService {
             throw PathException(PathExceptionMsg.WRONG_PATH_FORMAT)
         }
         return path.combineSafe(relative).toPath().also {
-            createDirs(it.parent.toString(), false)
+            innerCreateDirs(it.parent.toString())
         }
     }
 
