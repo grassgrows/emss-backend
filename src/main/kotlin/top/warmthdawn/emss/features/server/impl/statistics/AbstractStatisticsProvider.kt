@@ -1,4 +1,4 @@
-package top.warmthdawn.emss.features.server.impl
+package top.warmthdawn.emss.features.server.impl.statistics
 
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -7,6 +7,7 @@ import top.warmthdawn.emss.features.server.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.StatisticsInfo
 import top.warmthdawn.emss.features.server.entity.StatisticsList
 import top.warmthdawn.emss.features.server.entity.StatisticsType
+import java.io.Closeable
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -18,7 +19,7 @@ import kotlin.coroutines.CoroutineContext
 abstract class AbstractStatisticsProvider(
     val delay: Long,
     val maxHistory: Int,
-    val type: StatisticsType,
+    override val type: StatisticsType,
     parentContext: CoroutineContext,
     abbr: String,
 ) : StatisticsProvider, CoroutineScope {
@@ -33,15 +34,25 @@ abstract class AbstractStatisticsProvider(
     }
 
     private val historyQueue = LinkedList<Pair<Long, Double>>()
+    val histories get() = historyQueue.toList()
     protected fun offerHistory(value: Double) {
+        offerHistory(System.currentTimeMillis() / 100, value)
+    }
+
+    fun extendForm(old: List<Pair<Long, Double>>) {
+        old.forEach { offerHistory(it.first, it.second) }
+    }
+
+    private fun offerHistory(timestamp: Long, value: Double) {
         if (historyQueue.size > maxHistory) {
             historyQueue.pop()
         }
-        historyQueue.offer(Pair(System.currentTimeMillis() / 100, value))
+        historyQueue.offer(Pair(timestamp, value))
     }
 
-    abstract fun start()
-    abstract fun close()
+    abstract override fun start()
+    abstract override fun close()
+
 
     override val coroutineContext: CoroutineContext =
         CoroutineName("STATUS_PROVIDER($abbr)")

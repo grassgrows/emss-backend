@@ -1,9 +1,9 @@
-package top.warmthdawn.emss.features.server.impl
+package top.warmthdawn.emss.features.server.impl.statistics
 
-import io.ktor.network.util.*
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import top.warmthdawn.emss.features.server.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import kotlin.coroutines.CoroutineContext
 
@@ -12,17 +12,22 @@ import kotlin.coroutines.CoroutineContext
  * @author WarmthDawn
  * @since 2021-07-17
  */
-abstract class ActiveStatisticsProviderImpl(
+class ActiveStatisticsProviderImpl(
     maxHistory: Int,
-    type: StatisticsType,
     parentContext: CoroutineContext,
-    abbr: String, delay: Long
+    type: StatisticsType,
+    abbr: String, delay: Long,
+    private val infoFunc: (() -> Double)? = null,
 ) : AbstractStatisticsProvider(delay, maxHistory, type, parentContext, abbr) {
-    abstract suspend fun getInfo(): Double
+    var enabled = false
     override fun start() {
         launch {
             while (true) {
-                offerHistory(getInfo())
+                if (infoFunc != null && enabled) {
+                    offerHistory(infoFunc.invoke())
+                } else {
+                    offerHistory(0.0)
+                }
                 delay(delay)
             }
         }
@@ -32,3 +37,5 @@ abstract class ActiveStatisticsProviderImpl(
         coroutineContext.cancel()
     }
 }
+
+val StatisticsProvider.active get() = this as ActiveStatisticsProviderImpl

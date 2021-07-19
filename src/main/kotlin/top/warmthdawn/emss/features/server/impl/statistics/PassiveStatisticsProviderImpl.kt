@@ -1,14 +1,12 @@
-package top.warmthdawn.emss.features.server.impl
+package top.warmthdawn.emss.features.server.impl.statistics
 
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import top.warmthdawn.emss.features.server.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import java.util.*
-import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -16,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
  * @author WarmthDawn
  * @since 2021-07-17
  */
-abstract class PassiveStatisticsProviderImpl(
+class PassiveStatisticsProviderImpl(
     maxHistory: Int,
     type: StatisticsType,
     parentContext: CoroutineContext,
@@ -25,35 +23,27 @@ abstract class PassiveStatisticsProviderImpl(
     AbstractStatisticsProvider(delay, maxHistory, type, parentContext, abbr) {
 
 
-    abstract suspend fun beginListen(valueCallback: (Double) -> Unit): Double
+    /**
+     * 像Provider提供数据
+     */
+    fun onResult(double: Double) {
+        lock.lock()
+        results.add(double)
+        lock.unlock()
+    }
 
+    private val results = LinkedList<Double>()
+    private val lock = ReentrantLock()
     override fun start() {
         launch {
-            val results = LinkedList<Double>()
-            val lock = ReentrantLock()
-            val valueTask = async {
-                beginListen {
-                    lock.lock()
-                    results.add(it)
-                    lock.unlock()
-                }
+            while (true) {
+                lock.lock()
+                val result = results.reduce { a, b -> a + b }
+                results.clear()
+                lock.unlock()
+                offerHistory(result)
+                delay(delay)
             }
-
-            val resultTask = async {
-                while (true) {
-                    lock.lock()
-                    val result = results.reduce { a, b -> a + b }
-                    results.clear()
-                    lock.unlock()
-                    offerHistory(result)
-                    delay(delay)
-                }
-            }
-
-            valueTask.await()
-            resultTask.cancel()
-            resultTask.await()
-
         }
     }
 
@@ -61,3 +51,6 @@ abstract class PassiveStatisticsProviderImpl(
         coroutineContext.cancel()
     }
 }
+
+
+val StatisticsProvider.passive get() = this as PassiveStatisticsProviderImpl
