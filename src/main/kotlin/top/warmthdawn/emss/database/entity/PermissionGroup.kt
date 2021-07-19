@@ -10,7 +10,7 @@ import javax.persistence.Entity
  */
 
 @Entity
-class Group(
-    groupName: String,
-    maxPermissionLevel: Int
+class PermissionGroup(
+    var groupName: String,
+    var maxPermissionLevel: Int
 ) : BaseEntity()
