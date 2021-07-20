@@ -1,10 +1,12 @@
 package top.warmthdawn.emss.features.login
 
+import com.auth0.jwt.JWT
 import io.ebean.Database
 import top.warmthdawn.emss.database.entity.PermissionGroup
 import top.warmthdawn.emss.database.entity.query.QPermissionGroup
 import top.warmthdawn.emss.database.entity.query.QUser
 import top.warmthdawn.emss.database.entity.query.QUserGroup
+import top.warmthdawn.emss.features.login.dto.UserLoginDTO
 import top.warmthdawn.emss.features.login.vo.UserInfoVO
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
@@ -39,5 +41,17 @@ class LoginService(
         }
         return result
     }
+
+    // 登陆验证
+    fun loginValidate(username: String, password: String): Boolean
+    {
+        if(!QUser(db).username.eq(username).exists())
+            return false
+
+        val user = QUser(db).username.eq(username).findOne()!!
+        return password == user.password
+    }
+
+
 }
 

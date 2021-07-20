@@ -1,20 +1,30 @@
 package top.warmthdawn.emss.plugins
 
 import io.ktor.auth.*
-import io.ktor.util.*
 import io.ktor.auth.jwt.*
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.request.*
+import top.warmthdawn.emss.features.login.AuthProvider
 
 fun Application.configureSecurity() {
 
-//    val jwtIssuer = environment.config.property("jwt.domain").getString()
-//    val jwtAudience = environment.config.property("jwt.audience").getString()
-//    val jwtRealm = environment.config.property("jwt.realm").getString()
+
+    install(Authentication) {
+        jwt("auth-jwk") {
+            realm = AuthProvider.realm
+//            verifier(AuthProvider.jwkProvider, AuthProvider.jwkIssuer)
+            verifier(JWT
+                .require(Algorithm.HMAC256(AuthProvider.SECRET_KEY))
+                .withAudience(AuthProvider.audience)
+                .withIssuer(AuthProvider.issuer)
+                .build())
+            validate {
+                AuthProvider.validate(it)
+            }
+        }
+    }
 //    authentication {
 //        jwt {
 //            realm = jwtRealm

@@ -64,6 +64,9 @@ dependencies {
     kapt("io.ebean:kotlin-querybean-generator:$ebean_version")
     implementation("com.h2database:h2:$h2_version")
     implementation("io.ebean:ebean-migration:12.4.0")
+    // JWT
+    implementation("io.ktor:ktor-auth:$ktor_version")
+    implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")

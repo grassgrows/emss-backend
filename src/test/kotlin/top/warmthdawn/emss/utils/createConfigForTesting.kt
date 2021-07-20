@@ -20,6 +20,7 @@ import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.login.LoginService
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
@@ -81,4 +82,6 @@ val appTestModule = module {
 
     //command
     single { CommandService() }
+
+    single { LoginService(get()) }
 }

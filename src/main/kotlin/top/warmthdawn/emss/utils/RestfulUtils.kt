@@ -204,10 +204,15 @@ enum class Code(
      */
     InvalidUploaderRequest5("D125"),
 
-    //权限相关
+    //登录相关
     /**
-     * 当前请求用户权限等级不足
+     * 用户名或密码错误
      */
-    InsufficientPermissionLevel("E110"),
+    UserNameOrPasswordWrong("E101"),
+    /**
+     * JWT证书验证错误
+     */
+    CredentialWrong("E201"),
+
 }
 

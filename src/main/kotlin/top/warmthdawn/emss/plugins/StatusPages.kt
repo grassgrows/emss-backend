@@ -11,6 +11,10 @@ import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.file.*
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.features.permission.PermissionExceptionMsg
+import top.warmthdawn.emss.features.login.JWTException
+import top.warmthdawn.emss.features.login.JWTExceptionMsg
+import top.warmthdawn.emss.features.login.LoginException
+import top.warmthdawn.emss.features.login.LoginExceptionMsg
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.utils.Code
@@ -140,6 +144,22 @@ fun Application.configureStatusPages() {
                 }
                 ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED -> {
                     R.error(Code.ServerDatabaseRemoveFailed, "服务器数据库信息删除失败！", HttpStatusCode.InternalServerError)
+                }
+            }
+        }
+
+        exception<JWTException> {
+            when (it.jwtExceptionMsg) {
+                JWTExceptionMsg.CREDENTIAL_WRONG -> {
+                    R.error(Code.CredentialWrong, "JWT证书验证错误！", HttpStatusCode.Unauthorized)
+                }
+            }
+        }
+
+        exception<LoginException> {
+            when (it.loginExceptionMsg) {
+                LoginExceptionMsg.USERNAME_OR_PASSWORD_WRONG -> {
+                    R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误！", HttpStatusCode.Unauthorized)
                 }
             }
         }
