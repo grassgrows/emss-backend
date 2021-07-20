@@ -80,6 +80,14 @@ internal class LoginTest {
     @Test
     fun validateTest(){
         withTestServer {
+            val db by application.inject<Database>()
+            db.insert(
+                User(
+                    "takanashi",
+                    "123456789",
+                    1
+                )
+            )
             handleRequest(HttpMethod.Get, "/login/validate") {
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 addHeader(HttpHeaders.Authorization,

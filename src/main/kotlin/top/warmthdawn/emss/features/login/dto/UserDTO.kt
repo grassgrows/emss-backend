@@ -5,7 +5,7 @@ package top.warmthdawn.emss.features.login.dto
  * @since 2021-07-19
  */
 
-data class UserLoginDTO(
+data class UserDTO(
     var username: String,
     var password: String
 )

@@ -1,14 +1,12 @@
 package top.warmthdawn.emss.features.login
 
-import com.auth0.jwt.JWT
 import io.ebean.Database
 import top.warmthdawn.emss.database.entity.PermissionGroup
+import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.query.QPermissionGroup
 import top.warmthdawn.emss.database.entity.query.QUser
 import top.warmthdawn.emss.database.entity.query.QUserGroup
-import top.warmthdawn.emss.features.login.dto.UserLoginDTO
 import top.warmthdawn.emss.features.login.vo.UserInfoVO
-import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
 
 /**
@@ -20,6 +18,7 @@ import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 class LoginService(
     private val db: Database
 ) {
+    /*
     suspend fun getUserInfo(): List<UserInfoVO> {
         val result: MutableList<UserInfoVO> = mutableListOf()
         for (row in QUser(db).findList()) {
@@ -41,6 +40,7 @@ class LoginService(
         }
         return result
     }
+    */
 
     // 登陆验证
     fun loginValidate(username: String, password: String): Boolean
@@ -52,6 +52,17 @@ class LoginService(
         return password == user.password
     }
 
+    // 创建用户
+    fun createUser(username: String, password: String)
+    {
+        //TODO 合法性判断
+
+        User(
+            username,
+            password, //TODO 密码加密
+            1
+        ).insert()
+    }
 
 }
 

@@ -12,7 +12,7 @@ fun Application.configureSecurity() {
 
 
     install(Authentication) {
-        jwt("auth-jwk") {
+        jwt("auth-jwt") {
             realm = AuthProvider.realm
 //            verifier(AuthProvider.jwkProvider, AuthProvider.jwkIssuer)
             verifier(JWT

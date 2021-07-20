@@ -1,20 +1,15 @@
 package top.warmthdawn.emss.features.login
 
-import com.auth0.jwk.*
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.request.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.docker.ContainerService
-import top.warmthdawn.emss.features.login.dto.UserLoginDTO
+import top.warmthdawn.emss.features.login.dto.UserDTO
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
-import java.util.concurrent.TimeUnit
 
 /**
  * @author takanashi
@@ -28,7 +23,7 @@ fun Route.loginEndpoint() {
     route("/login") {
 
         post {
-            val user = call.receive<UserLoginDTO>()
+            val user = call.receive<UserDTO>()
             if (loginService.loginValidate(user.username, user.password)) {
                 R.ok(AuthProvider.sign(user.username))
             } else {
@@ -36,8 +31,8 @@ fun Route.loginEndpoint() {
             }
         }
 
-        authenticate("auth-jwk") {
-            // TODO 测试，不留
+        // TODO 测试，不留
+        authenticate("auth-jwt") {
             get("/validate") {
                 val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
                 val issuedTime = (call.authentication.principal as JWTPrincipal).payload.issuedAt
@@ -48,6 +43,15 @@ fun Route.loginEndpoint() {
             }
         }
 
+    }
+
+    route("/user")
+    {
+        post("/create") {
+            val user = call.receive<UserDTO>()
+            loginService.createUser(user.username, user.password)
+            R.ok()
+        }
     }
 
 

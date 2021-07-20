@@ -16,12 +16,15 @@ import top.warmthdawn.emss.features.settings.settingEndpoint
 
 fun Application.configureRouting() {
     val routing = routing {
-        settingEndpoint()
-        serverEndpoint()
-        dockerEndpoint()
-        fileEndpoint()
-        commandEndpoint()
+
+        authenticate("auth-jwt") {
+            settingEndpoint()
+            serverEndpoint()
+            dockerEndpoint()
+            fileEndpoint()
+            commandEndpoint()
+            permissionEndpoint()
+        }
         loginEndpoint()
-        permissionEndpoint()
     }
 }
