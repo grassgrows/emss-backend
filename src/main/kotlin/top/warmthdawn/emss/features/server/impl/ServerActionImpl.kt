@@ -18,7 +18,7 @@ class ServerActionImpl(
 ) : Actionable {
     override suspend fun start() {
         val current = server.currentState
-        if (current != ServerState.STOPPED || current != ServerState.RUNNING) {
+        if (current != ServerState.STOPPED && current != ServerState.INITIALIZE) {
             throw ServerException(ServerExceptionMsg.SERVER_NOT_STOPPED)
         }
         server.changeState(ServerState.STARTING)

@@ -10,6 +10,7 @@ import top.warmthdawn.emss.features.docker.ContainerException
 import top.warmthdawn.emss.features.docker.ContainerExceptionMsg
 import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.DockerService
+import top.warmthdawn.emss.features.server.api.ServerObject
 import top.warmthdawn.emss.features.server.api.ServerPersist
 import top.warmthdawn.emss.features.server.entity.ServerState
 import java.time.LocalDateTime
@@ -43,6 +44,37 @@ class ServerObjectImpl(
                 changeState(ServerState.RUNNING, true)
             } else if (inspect == ContainerStatus.Stopped) {
                 changeState(ServerState.STOPPED, true)
+            }
+        }
+    }
+
+    override suspend fun checkState() {
+        val serverState = currentState
+        val containerState = dockerService.inspectContainer(id)
+
+        when (containerState) {
+            ContainerStatus.Running -> {
+                if (!ServerObject.isRunning(serverState)) {
+                    saveState(ServerState.RUNNING)
+                    startComplete()
+                }
+            }
+            ContainerStatus.Stopped -> {
+                if (ServerObject.isRunning(serverState)) {
+                    saveState(ServerState.STOPPED)
+                    serverCrashed()
+                    serverStop()
+                }
+            }
+            ContainerStatus.Unknown -> {
+                if (serverState != ServerState.INITIALIZE) {
+                    saveState(ServerState.INITIALIZE)
+                    if (ServerObject.isRunning(serverState)) {
+                        serverCrashed()
+                        serverStop()
+                    }
+                    deleteContainer()
+                }
             }
         }
     }

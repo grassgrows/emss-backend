@@ -36,6 +36,9 @@ abstract class AbstractServer : ServerObject {
     }
 
     override suspend fun waitForState(state: ServerState, timeout: Long, fallback: suspend () -> Unit) {
+        if (currentState == state) {
+            return
+        }
         withTimeoutOrNull(timeout) {
             suspendCancellableCoroutine {
                 addWaiter(state) {
@@ -45,10 +48,18 @@ abstract class AbstractServer : ServerObject {
         } ?: fallback()
     }
 
+
     override suspend fun changeState(state: ServerState, force: Boolean) {
         val current = currentState
-        saveState(state)
+        checkState()
+        val changed = currentState
+        if (state != changed) {
+            saveState(state)
+        }
+        log.info("服务器状态切换: $current->$state")
         notifyWaiter(state)
+
+
         kotlin.runCatching {
             when (current) {
                 ServerState.INITIALIZE -> when (state) {
@@ -111,6 +122,9 @@ abstract class AbstractServer : ServerObject {
 
         }.onFailure {
             log.error("更新服务器状态${current}->${state}失败， 强制: $force", it)
+            if (!force && state != changed) {
+                saveState(changed)
+            }
         }
 
 
