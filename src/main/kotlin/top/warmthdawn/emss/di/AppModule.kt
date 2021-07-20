@@ -30,9 +30,6 @@ val appModule = module {
     single { ImageService(get(), get(), get()) }
 
     //server
-    single { ContainerService(get()) }
-    single { ServerService(get(), get(), get(), get(), get()) }
-
     single { ServerService(get(), get(), get(), get(), get(), get()) }
     single { ServerInstanceFactory(get(), get(), get(), get()) }
     single { ServerInstanceHolder(get()) }
@@ -44,11 +41,9 @@ val appModule = module {
     //file
     single { FileService() }
     //command
-    single { CommandService() }
+    single { CommandService(get()) }
 
     //permission
     single { PermissionService(get()) }
-
     single { LoginService(get()) }
-    single { CommandService(get()) }
 }

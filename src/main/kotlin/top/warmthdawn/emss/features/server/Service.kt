@@ -49,9 +49,8 @@ class ServerService(
                 obj.isRunning(),
                 server.portBindings.keys.firstOrNull(),
                 server.imageId,
-                obj.getRunningInfo().lastCrashDate
-                running.lastCrashDate
-                groupsOfServer(server.id!!)
+                obj.getRunningInfo().lastCrashDate,
+                groupsOfServer(server.id!!),
             )
             list.add(result)
         }

@@ -87,12 +87,9 @@ val appTestModule = module {
     //file
     single { FileService() }
     //command
-    single { CommandService() }
+    single { CommandService(get()) }
 
     //permission
     single { PermissionService(get()) }
-
-
     single { LoginService(get()) }
-    single { CommandService(get()) }
 }
