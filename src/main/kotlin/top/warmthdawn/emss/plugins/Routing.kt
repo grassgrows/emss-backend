@@ -8,6 +8,7 @@ import io.ktor.request.*
 import top.warmthdawn.emss.features.command.commandEndpoint
 import top.warmthdawn.emss.features.docker.dockerEndpoint
 import top.warmthdawn.emss.features.file.fileEndpoint
+import top.warmthdawn.emss.features.permission.permissionEndpoint
 import top.warmthdawn.emss.features.server.serverEndpoint
 import top.warmthdawn.emss.features.settings.settingEndpoint
 
@@ -18,5 +19,6 @@ fun Application.configureRouting() {
         dockerEndpoint()
         fileEndpoint()
         commandEndpoint()
+        permissionEndpoint()
     }
 }

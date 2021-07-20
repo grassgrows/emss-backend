@@ -2,11 +2,10 @@ package top.warmthdawn.emss.features.server
 
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
+import top.warmthdawn.emss.database.entity.GroupServer
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.ServerRealTime
-import top.warmthdawn.emss.database.entity.query.QImage
-import top.warmthdawn.emss.database.entity.query.QServer
-import top.warmthdawn.emss.database.entity.query.QServerRealTime
+import top.warmthdawn.emss.database.entity.query.*
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.dockerStats.*
@@ -43,7 +42,8 @@ class ServerService(
                 realTime.status === ServerStatus.Running,
                 server.portBindings.keys.firstOrNull(),
                 server.imageId,
-                realTime.lastCrashDate
+                realTime.lastCrashDate,
+                groupsOfServer(server.id!!)
             )
             list.add(result)
         }
@@ -65,9 +65,17 @@ class ServerService(
             server.workingDir,
             server.portBindings,
             server.volumeBind,
+            groupsOfServer(server.id!!)
         )
     }
 
+    private fun groupsOfServer(id: Long): List<String> {
+        val result: MutableList<String> = mutableListOf()
+        for (row in QGroupServer(db).serverId.eq(id).findList()) {
+            result.add(QPermissionGroup(db).id.eq(row.groupId).findOne()!!.groupName)
+        }
+        return result
+    }
 
     suspend fun updateServerInfo(id: Long, serverInfoDTO: ServerInfoDTO) {
         val server = QServer(db).id.eq(id).findOne()
@@ -107,6 +115,14 @@ class ServerService(
 
         val realTime = ServerRealTime(status = ServerStatus.Stopped, serverId = server.id!!)
         realTime.insert()
+
+        serverInfoDTO.permissionGroup.forEach {
+            GroupServer(
+                QServer(db).abbr.eq(serverInfoDTO.abbr).findOne()!!.id!!,
+                QPermissionGroup(db).groupName.eq(it).findOne()!!.id!!
+            ).insert()
+        }
+
 
 //        //创建监控信息
 //        statsService.serverStatsInfoMap[server.id!!] = ServerStatsInfo(

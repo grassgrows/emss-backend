@@ -21,5 +21,5 @@ data class ServerVO(
     var workingDir: String,    //工作目录
     var portBindings: Map<Int,Int>,  //端口映射
     var volumeBind: Map<String,String>, //目录映射
-
+    var permissionGroup: List<String>
 )

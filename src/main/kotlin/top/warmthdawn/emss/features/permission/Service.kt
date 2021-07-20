@@ -6,9 +6,7 @@ import top.warmthdawn.emss.database.entity.PermissionGroup
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.UserGroup
 import top.warmthdawn.emss.database.entity.query.*
-import top.warmthdawn.emss.features.login.vo.UserInfoVO
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
-import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 
 
 /**
@@ -37,7 +35,7 @@ class PermissionService
                 row.maxPermissionLevel,
                 usersInGroup(row.id!!),
                 serversOfGroup(row.id!!)
-                )
+            )
             result.add(permissionGroupVO)
         }
         return result
@@ -73,17 +71,23 @@ class PermissionService
             .delete()
     }
 
-    suspend fun addPermissionUG(userName: String, groupName: String) {
+    suspend fun addPermissionUG(groupName: String, user: User) {
         UserGroup(
-            QUser(db).username.eq(userName).findOne()!!.id!!,
+            QUser(db).username.eq(user.username).findOne()!!.id!!,
             QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!
         ).insert()
     }
 
-    suspend fun removePermissionUG(userName: String, groupName: String) {
+    suspend fun removePermissionUG(groupName: String, user: User) {
         QUserGroup(db)
-            .userId.eq(QUser(db).username.eq(userName).findOne()!!.id!!)
+            .userId.eq(QUser(db).username.eq(user.username).findOne()!!.id!!)
             .groupId.eq(QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!)
             .delete()
+    }
+
+    suspend fun modifyUserPermission(modifiedUser: User) {
+        val user = QUser(db).id.eq(modifiedUser.id).findOne()!!
+        user.permissionLevel = modifiedUser.permissionLevel
+        user.update()
     }
 }

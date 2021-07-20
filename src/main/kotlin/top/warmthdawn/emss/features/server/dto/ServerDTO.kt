@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.features.server.dto
 
+import top.warmthdawn.emss.database.entity.PermissionGroup
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.LocalDateTime
@@ -21,6 +22,7 @@ data class ServerInfoDTO(
     var portBindings: Map<Int,Int> = emptyMap(),  //端口映射
     var volumeBind: Map<String,String> = emptyMap(), //目录映射
     var imageId: Long, //镜像的数据库Id
+    var permissionGroup: List<String>
 
 //    var containerPort: Int,
 //    var hostPort: Int,
