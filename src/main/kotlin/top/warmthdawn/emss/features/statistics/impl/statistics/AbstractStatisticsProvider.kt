@@ -1,13 +1,12 @@
-package top.warmthdawn.emss.features.server.impl.statistics
+package top.warmthdawn.emss.features.statistics.impl.statistics
 
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import top.warmthdawn.emss.features.server.api.StatisticsProvider
+import top.warmthdawn.emss.features.statistics.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.StatisticsInfo
 import top.warmthdawn.emss.features.server.entity.StatisticsList
 import top.warmthdawn.emss.features.server.entity.StatisticsType
-import java.io.Closeable
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 

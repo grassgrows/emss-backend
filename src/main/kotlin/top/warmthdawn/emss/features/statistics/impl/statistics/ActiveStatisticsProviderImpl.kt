@@ -1,9 +1,9 @@
-package top.warmthdawn.emss.features.server.impl.statistics
+package top.warmthdawn.emss.features.statistics.impl.statistics
 
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import top.warmthdawn.emss.features.server.api.StatisticsProvider
+import top.warmthdawn.emss.features.statistics.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import kotlin.coroutines.CoroutineContext
 

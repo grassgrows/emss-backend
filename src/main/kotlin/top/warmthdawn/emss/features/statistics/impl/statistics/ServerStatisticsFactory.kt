@@ -1,8 +1,8 @@
-package top.warmthdawn.emss.features.server.impl.statistics
+package top.warmthdawn.emss.features.statistics.impl.statistics
 
 import kotlinx.coroutines.coroutineScope
 import top.warmthdawn.emss.features.server.entity.StatisticsType
-import top.warmthdawn.emss.features.server.impl.ServerStatistics
+import top.warmthdawn.emss.features.statistics.impl.ServerStatistics
 
 /**
  * 用于创建服务器状态监控
@@ -41,7 +41,7 @@ class ServerStatisticsFactory(
     suspend fun createService(abbr: String): ServerStatistics {
         return ServerStatistics(
             cpu = createPassiveProvider(abbr, StatisticsType.CPU),
-            memory = createPassiveProvider(abbr, StatisticsType.Memory),
+            memory = createPassiveProvider(abbr, StatisticsType.MEMORY),
             networkDownload = createPassiveProvider(abbr, StatisticsType.NETWORK_DOWNLOAD),
             networkUpload = createPassiveProvider(abbr, StatisticsType.NETWORK_UPLOAD),
             diskRead = createPassiveProvider(abbr, StatisticsType.DISK_READ),

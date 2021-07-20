@@ -1,4 +1,4 @@
-package top.warmthdawn.emss.features.server.api
+package top.warmthdawn.emss.features.statistics.api
 
 import kotlinx.coroutines.CoroutineScope
 import top.warmthdawn.emss.features.server.entity.StatisticsInfo

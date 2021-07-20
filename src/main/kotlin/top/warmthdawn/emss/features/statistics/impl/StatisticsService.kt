@@ -1,15 +1,14 @@
-package top.warmthdawn.emss.features.server.impl
+package top.warmthdawn.emss.features.statistics.impl
 
 import io.ebean.Database
 import top.warmthdawn.emss.database.entity.query.QServer
-import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
-import top.warmthdawn.emss.features.server.api.StatisticsProvider
-import top.warmthdawn.emss.features.server.entity.ServerState
+import top.warmthdawn.emss.features.server.entity.StatisticsType
+import top.warmthdawn.emss.features.statistics.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.contains
-import top.warmthdawn.emss.features.server.impl.statistics.ServerStatisticsFactory
-import top.warmthdawn.emss.features.server.impl.statistics.passive
+import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
+import top.warmthdawn.emss.features.statistics.impl.statistics.passive
 import java.io.Closeable
 
 /**
@@ -136,6 +135,11 @@ class ServerStatistics(
         return all.filter {
             it.type in flags
         }
+    }
+    fun getByType(statisticsType: StatisticsType): StatisticsProvider {
+        return all.filter {
+            it.type == statisticsType
+        }.first()
     }
 
     fun addMonitor(closeable: Closeable) {
