@@ -10,6 +10,7 @@ import top.warmthdawn.emss.features.docker.ContainerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
@@ -20,13 +21,13 @@ val appModule = module {
     single<DBFactory> { DBFactoryImpl(get()) }
 
     //setting
-    single { SettingService(get(), get(), get()) }
+    single { SettingService(get(), get(), get(), get()) }
     single { ImageDownloadScheduler(get()) }
     single { ImageService(get(), get(), get()) }
 
     //server
     single { ContainerService(get()) }
-    single { ServerService(get(), get(), get(), get(),get()) }
+    single { ServerService(get(), get(), get(), get(), get()) }
 
     //file
     single { FileService() }
@@ -36,4 +37,7 @@ val appModule = module {
 
     //command
     single { CommandService() }
+
+    //permission
+    single { PermissionService(get()) }
 }

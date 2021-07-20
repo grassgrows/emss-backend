@@ -65,7 +65,7 @@ val appTestModule = module {
     single<DBFactory> { DBFactoryImpl(get()) }
 
     //setting
-    single { SettingService(get(), get(), get()) }
+    single { SettingService(get(), get(), get(), get()) }
     single { ImageDownloadScheduler(get()) }
     single { ImageService(get(), get(), get()) }
 

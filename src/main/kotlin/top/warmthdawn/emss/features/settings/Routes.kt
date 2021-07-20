@@ -11,6 +11,8 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
+import top.warmthdawn.emss.utils.checkPermission
+import top.warmthdawn.emss.utils.username
 
 /**
  *
@@ -26,13 +28,13 @@ fun Route.settingEndpoint() {
 
     route("/settings") {
         get("/base") {
-
             R.ok(settingService.getBaseSetting())
         }
         get("/images") {
             R.ok(settingService.getImages())
         }
         post("/base") {
+            checkPermission(1)
             val baseSetting = call.receive<BaseSetting>()
             settingService.updateBaseSetting(baseSetting)
             R.ok()

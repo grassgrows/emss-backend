@@ -69,10 +69,10 @@ class ServerService(
         )
     }
 
-    private fun groupsOfServer(id: Long): List<String> {
-        val result: MutableList<String> = mutableListOf()
+    private fun groupsOfServer(id: Long): List<Long> {
+        val result: MutableList<Long> = mutableListOf()
         for (row in QGroupServer(db).serverId.eq(id).findList()) {
-            result.add(QPermissionGroup(db).id.eq(row.groupId).findOne()!!.groupName)
+            result.add(row.groupId)
         }
         return result
     }
@@ -90,7 +90,6 @@ class ServerService(
         server.portBindings = serverInfoDTO.portBindings
         server.volumeBind = serverInfoDTO.volumeBind
         server.update()
-
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -119,7 +118,7 @@ class ServerService(
         serverInfoDTO.permissionGroup.forEach {
             GroupServer(
                 QServer(db).abbr.eq(serverInfoDTO.abbr).findOne()!!.id!!,
-                QPermissionGroup(db).groupName.eq(it).findOne()!!.id!!
+                it
             ).insert()
         }
 

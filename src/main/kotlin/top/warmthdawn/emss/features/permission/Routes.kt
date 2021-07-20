@@ -33,6 +33,9 @@ fun Route.permissionEndpoint() {
         }
 
         route("/user") {
+            get{
+                R.ok(permissionService.getUserInfo())
+            }
             post("/modify") {
                 val id = call.request.queryParameters["userId"]!!
                 val level = call.request.queryParameters["newLevel"]!!

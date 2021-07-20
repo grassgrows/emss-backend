@@ -26,6 +26,10 @@ class PermissionService
         ).insert()
     }
 
+    suspend fun getUserInfo(): List<User> {
+        return QUser(db).findList()
+    }
+
     suspend fun getGroupInfo(): List<PermissionGroupVO> {
         val result: MutableList<PermissionGroupVO> = mutableListOf()
         for (row in QPermissionGroup(db).findList()) {

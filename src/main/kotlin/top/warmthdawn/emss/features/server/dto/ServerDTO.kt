@@ -22,7 +22,7 @@ data class ServerInfoDTO(
     var portBindings: Map<Int,Int> = emptyMap(),  //端口映射
     var volumeBind: Map<String,String> = emptyMap(), //目录映射
     var imageId: Long, //镜像的数据库Id
-    var permissionGroup: List<String>
+    var permissionGroup: List<Long>
 
 //    var containerPort: Int,
 //    var hostPort: Int,
