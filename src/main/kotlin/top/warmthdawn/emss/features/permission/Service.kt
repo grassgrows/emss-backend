@@ -52,42 +52,48 @@ class PermissionService
     private fun serversOfGroup(id: Long): List<String> {
         val result: MutableList<String> = mutableListOf()
         for (row in QGroupServer(db).groupId.eq(id).findList()) {
-            result.add(QServer(db).id.eq(row.serverId).findOne()!!.name)
+            result.add(QServer(db).id.eq(row.serverId).findOne()!!.abbr)
         }
         return result
     }
 
-    suspend fun addPermissionGS(groupName: String, serverName: String) {
+    suspend fun addPermissionGS(groupId: Long, serverId: Long) {
         GroupServer(
-            QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!,
-            QServer(db).name.eq(serverName).findOne()!!.id!!
+            groupId,
+            serverId
         ).insert()
     }
 
-    suspend fun removePermissionGS(groupName: String, serverName: String) {
+    suspend fun removePermissionGS(groupId: Long, serverId: Long) {
         QGroupServer(db)
-            .groupId.eq(QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!)
-            .serverId.eq(QServer(db).name.eq(serverName).findOne()!!.id!!)
+            .groupId.eq(groupId)
+            .serverId.eq(serverId)
             .delete()
     }
 
-    suspend fun addPermissionUG(groupName: String, user: User) {
+    suspend fun addPermissionUG(groupId: Long, userId: Long) {
         UserGroup(
-            QUser(db).username.eq(user.username).findOne()!!.id!!,
-            QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!
+            userId,
+            groupId
         ).insert()
     }
 
-    suspend fun removePermissionUG(groupName: String, user: User) {
+    suspend fun removePermissionUG(groupId: Long, userId: Long) {
         QUserGroup(db)
-            .userId.eq(QUser(db).username.eq(user.username).findOne()!!.id!!)
-            .groupId.eq(QPermissionGroup(db).groupName.eq(groupName).findOne()!!.id!!)
+            .userId.eq(userId)
+            .groupId.eq(groupId)
             .delete()
     }
 
-    suspend fun modifyUserPermission(modifiedUser: User) {
-        val user = QUser(db).id.eq(modifiedUser.id).findOne()!!
-        user.permissionLevel = modifiedUser.permissionLevel
+    suspend fun modifyUserPermission(userId: Long, newLevel: Int) {
+        val user = QUser(db).id.eq(userId).findOne()!!
+        user.permissionLevel = newLevel
         user.update()
+    }
+
+    suspend fun checkUserPermission(username: String, requiredLevel: Int) {
+        if (QUser(db).username.eq(username).findOne()!!.permissionLevel > requiredLevel) {
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+        }
     }
 }

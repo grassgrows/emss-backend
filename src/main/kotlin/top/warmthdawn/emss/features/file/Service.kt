@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.file
 
-import ch.qos.logback.core.joran.conditional.IfAction
 import io.ktor.util.*
 import kotlinx.coroutines.*
 import top.warmthdawn.emss.database.entity.SettingType
@@ -58,7 +57,7 @@ class FileService {
                 return root.combineSafe(Path(relativePath)).toPath()
             }
             else -> {
-                throw PathException(PathExceptionMsg.WRONG_PATH_FORMAT)
+                throw FileException(FileExceptionMsg.WRONG_PATH_FORMAT)
             }
         }
     }
@@ -80,7 +79,7 @@ class FileService {
         val path = processPath(destinationPath)
         val relative = Path(flowRelativePath).normalizeAndRelativize()
         if (relative.startsWith("..")) {
-            throw PathException(PathExceptionMsg.WRONG_PATH_FORMAT)
+            throw FileException(FileExceptionMsg.WRONG_PATH_FORMAT)
         }
         return path.combineSafe(relative).toPath().also {
             innerCreateDirs(it.parent.toString())

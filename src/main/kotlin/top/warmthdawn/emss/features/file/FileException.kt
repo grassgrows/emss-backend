@@ -7,15 +7,6 @@ package top.warmthdawn.emss.features.file
  * @date 2021/7/13
  */
 
-class PathException(
-    val pathExceptionMsg: PathExceptionMsg
-) : Exception(pathExceptionMsg.toString())
-
-enum class PathExceptionMsg {
-    INSUFFICIENT_PERMISSION_LEVEL,
-    WRONG_PATH_FORMAT
-}
-
 class FileException(
     val fileExceptionMsg: FileExceptionMsg
 ) : Exception(fileExceptionMsg.toString())
@@ -26,7 +17,8 @@ enum class FileExceptionMsg {
     DIRECTORY_NOT_FOUND,
     INVALID_DIRECTORY_NAME,
     FILE_ALREADY_EXIST,
-    FILE_SIZE_TOO_LARGE
+    FILE_SIZE_TOO_LARGE,
+    WRONG_PATH_FORMAT
 }
 
 class FileChunkException(

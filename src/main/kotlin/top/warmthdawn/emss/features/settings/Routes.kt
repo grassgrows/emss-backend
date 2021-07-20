@@ -1,9 +1,12 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
+import io.ktor.util.pipeline.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 import top.warmthdawn.emss.utils.Code
@@ -15,6 +18,7 @@ import top.warmthdawn.emss.utils.R
  * @date 2021/7/8
  */
 
+
 fun Route.settingEndpoint() {
 
     val settingService by inject<SettingService>()
@@ -22,6 +26,7 @@ fun Route.settingEndpoint() {
 
     route("/settings") {
         get("/base") {
+
             R.ok(settingService.getBaseSetting())
         }
         get("/images") {

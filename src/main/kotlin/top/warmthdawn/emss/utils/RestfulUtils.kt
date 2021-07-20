@@ -138,10 +138,6 @@ enum class Code(
     UnexpectedError("C920"),
 
     //文件相关
-    /**
-     * 当前请求用户权限等级不足
-     */
-    InsufficientPermissionLevel("D111"),
 
     /**
      * 请求文件路径格式不对
@@ -208,5 +204,10 @@ enum class Code(
      */
     InvalidUploaderRequest5("D125"),
 
+    //权限相关
+    /**
+     * 当前请求用户权限等级不足
+     */
+    InsufficientPermissionLevel("E110"),
 }
 

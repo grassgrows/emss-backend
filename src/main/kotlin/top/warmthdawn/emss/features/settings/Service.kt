@@ -12,6 +12,7 @@ import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -23,7 +24,8 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
 class SettingService(
     private val db: Database,
     private val config: AppConfig,
-    val fileService: FileService
+    private val fileService: FileService,
+    private val permissionService: PermissionService
 ) {
     suspend fun getBaseSetting(): BaseSetting {
         val result = QSetting(db).findList().associate { it.type to it.value }
@@ -67,6 +69,7 @@ class SettingService(
     }
 
     suspend fun createImage(imageDTO: ImageDTO) {
+
         val image = Image(
             name = imageDTO.name,
             repository = imageDTO.repository,

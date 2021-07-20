@@ -34,44 +34,39 @@ fun Route.permissionEndpoint() {
 
         route("/user") {
             post("/modify") {
-                val users = call.receive<List<User>>()
-                users.forEach {
-                    permissionService.modifyUserPermission(it)
-                }
+                val id = call.request.queryParameters["userId"]!!
+                val level = call.request.queryParameters["newLevel"]!!
+                permissionService.modifyUserPermission(id.toLong(), level.toInt())
             }
         }
 
         route("/GS") {
             post("/add") {
-                val groupName = call.request.queryParameters["groupName"]!!
-                val permissionDTO = call.receive<PermissionDTO>()
-                permissionDTO.addedGS.forEach {
-                    permissionService.addPermissionGS(groupName, it)
-                }
+                val groupId = call.request.queryParameters["groupId"]!!
+                val serverId = call.request.queryParameters["serverId"]!!
+                permissionService.addPermissionGS(groupId.toLong(), serverId.toLong())
             }
             post("/remove") {
-                val groupName = call.request.queryParameters["groupName"]!!
-                val permissionDTO = call.receive<PermissionDTO>()
-                permissionDTO.removedGS.forEach {
-                    permissionService.removePermissionGS(groupName, it)
-                }
+                val groupId = call.request.queryParameters["groupId"]!!
+                val serverId = call.request.queryParameters["serverId"]!!
+                permissionService.removePermissionGS(groupId.toLong(), serverId.toLong())
             }
         }
+    }
 
-        route("/UG") {
-            post("/add") {
-                val groupName = call.request.queryParameters["groupName"]!!
-                val permissionDTO = call.receive<PermissionDTO>()
-                permissionDTO.addedUG.forEach {
-                    permissionService.addPermissionUG(groupName, it)
-                }
+    route("/UG") {
+        post("/add") {
+            val groupId = call.request.queryParameters["groupId"]!!
+            val permissionDTO = call.receive<PermissionDTO>()
+            permissionDTO.addedUG.forEach {
+                permissionService.addPermissionUG(groupId.toLong(), it)
             }
-            post("/remove") {
-                val groupName = call.request.queryParameters["groupName"]!!
-                val permissionDTO = call.receive<PermissionDTO>()
-                permissionDTO.removedUG.forEach {
-                    permissionService.removePermissionUG(groupName, it)
-                }
+        }
+        post("/remove") {
+            val groupId = call.request.queryParameters["groupId"]!!
+            val permissionDTO = call.receive<PermissionDTO>()
+            permissionDTO.removedUG.forEach {
+                permissionService.removePermissionUG(groupId.toLong(), it)
             }
         }
     }

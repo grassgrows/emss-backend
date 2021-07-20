@@ -1,6 +1,8 @@
 package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.request.*
@@ -46,6 +48,7 @@ fun Route.fileEndpoint() {
         }
         route("/create") {
             post {
+                val username = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
                 val dirsPath = call.request.queryParameters["path"]!!
                 fileService.createDirs(dirsPath)
                 R.ok()

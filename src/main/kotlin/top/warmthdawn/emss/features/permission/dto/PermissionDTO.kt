@@ -10,8 +10,6 @@ import top.warmthdawn.emss.database.entity.User
  */
 
 data class PermissionDTO(
-    val addedGS: List<String>,
-    val removedGS: List<String>,
-    val addedUG: List<User>,
-    val removedUG: List<User>
+    val addedUG: List<Long>,
+    val removedUG: List<Long>
 )
