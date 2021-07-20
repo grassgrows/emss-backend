@@ -214,5 +214,12 @@ enum class Code(
      */
     CredentialWrong("E201"),
 
+    //权限相关
+    /**
+     * 当前请求用户权限等级不足
+     */
+    InsufficientPermissionLevel("F110"),
+
+
 }
 
