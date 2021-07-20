@@ -1,18 +1,14 @@
 package top.warmthdawn.emss.features.settings
 
 import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
-import io.ktor.util.pipeline.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkPermission
-import top.warmthdawn.emss.utils.username
 
 /**
  *
@@ -34,7 +30,7 @@ fun Route.settingEndpoint() {
             R.ok(settingService.getImages())
         }
         post("/base") {
-            checkPermission(1)
+            checkPermission(0)
             val baseSetting = call.receive<BaseSetting>()
             settingService.updateBaseSetting(baseSetting)
             R.ok()
@@ -43,6 +39,7 @@ fun Route.settingEndpoint() {
         route("/image") {
 
             post("/{id}/download") {
+                checkPermission(0)
                 val id = call.parameters["id"]!!.toLong()
                 if (imageService.downloadImage(id)) {
                     R.ok()
@@ -53,6 +50,7 @@ fun Route.settingEndpoint() {
             }
 
             post("/{id}/cancelDownload") {
+                checkPermission(0)
                 val id = call.parameters["id"]!!.toLong()
                 imageService.cancelDownloadImage(id)
                 R.ok()
@@ -71,12 +69,14 @@ fun Route.settingEndpoint() {
             }
 
             post {
+                checkPermission(0)
                 val imageDTO = call.receive<ImageDTO>()
                 settingService.createImage(imageDTO)
                 R.ok()
             }
 
             delete("/{id}") {
+                checkPermission(0)
                 val id = call.parameters["id"]!!.toLong()
                 imageService.removeImage(id)
                 R.ok()

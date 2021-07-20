@@ -22,7 +22,7 @@ class PermissionService
     suspend fun createPermissionGroup(groupName: String, maxPermissionLevel: Int) {
         PermissionGroup(
             groupName,
-            maxPermissionLevel
+            maxPermissionLevel,
         ).insert()
     }
 
@@ -78,7 +78,8 @@ class PermissionService
     suspend fun addPermissionUG(groupId: Long, userId: Long) {
         UserGroup(
             userId,
-            groupId
+            groupId,
+            4
         ).insert()
     }
 
@@ -89,10 +90,13 @@ class PermissionService
             .delete()
     }
 
-    suspend fun modifyUserPermission(userId: Long, newLevel: Int) {
-        val user = QUser(db).id.eq(userId).findOne()!!
-        user.permissionLevel = newLevel
-        user.update()
+    suspend fun modifyUserPermission(groupId: Long, userId: Long, newLevel: Int) {
+        val userGroup = QUserGroup(db)
+            .userId.eq(userId)
+            .groupId.eq(groupId)
+            .findOne()!!
+        userGroup.groupPermissionLevel = newLevel
+        userGroup.update()
     }
 
     suspend fun checkUserPermission(username: String, requiredLevel: Int) {
@@ -100,4 +104,35 @@ class PermissionService
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
         }
     }
+
+    suspend fun checkGroupPermission(username: String, requiredLevel: Int, groupId: Long) {
+        val userId = QUser(db).username.eq(username).findOne()!!.id!!
+        if (QUserGroup(db)
+                .userId.eq(userId)
+                .groupId.eq(groupId)
+                .findOne()!!
+                .groupPermissionLevel > requiredLevel
+        ) {
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+        }
+    }
+
+    suspend fun checkServerPermission(username: String, requiredLevel: Int, serverId: Long) {
+        val sql =
+            "SELECT MIN(GROUP_PERMISSION_LEVEL) as RESULT FROM USER_GROUP\n" +
+                    "LEFT JOIN GROUP_SERVER on USER_GROUP.GROUP_ID = GROUP_SERVER.GROUP_ID\n" +
+                    "LEFT JOIN USER ON USER_ID = USER.ID\n" +
+                    "WHERE GROUP_SERVER.SERVER_ID = :server_id AND USER.USERNAME = :username"
+
+        val permissionLevel = db.sqlQuery(sql)
+            .setParameter("server_id", serverId)
+            .setParameter("username", username)
+            .findOne()!!
+            .getInteger("RESULT")
+        if (permissionLevel > requiredLevel
+        ) {
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+        }
+    }
+
 }

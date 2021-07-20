@@ -1,5 +1,7 @@
 package top.warmthdawn.emss.database.entity
 
+import io.ebean.annotation.DbDefault
+import io.ebean.annotation.DbJsonB
 import javax.persistence.Entity
 
 
@@ -12,5 +14,8 @@ import javax.persistence.Entity
 @Entity
 class PermissionGroup(
     var groupName: String,
-    var maxPermissionLevel: Int
+    var maxPermissionLevel: Int,
+    @DbDefault("[]")
+    @DbJsonB
+    var permittedLocation: List<String> = emptyList()
 ) : BaseEntity()

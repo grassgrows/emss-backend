@@ -26,3 +26,13 @@ suspend fun PipelineContext<*, ApplicationCall>.checkPermission(requiredLevel: I
     val permissionService by application.inject<PermissionService>()
     permissionService.checkUserPermission(username = username, requiredLevel)
 }
+
+suspend fun PipelineContext<*, ApplicationCall>.checkGroupPermission(groupId: Long, requiredLevel: Int) {
+    val permissionService by application.inject<PermissionService>()
+    permissionService.checkGroupPermission(username = username, requiredLevel, groupId)
+}
+
+suspend fun PipelineContext<*, ApplicationCall>.checkServerPermission(serverId: Long, requiredLevel: Int) {
+    val permissionService by application.inject<PermissionService>()
+    permissionService.checkServerPermission(username = username, requiredLevel, serverId)
+}

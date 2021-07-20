@@ -219,7 +219,5 @@ enum class Code(
      * 当前请求用户权限等级不足
      */
     InsufficientPermissionLevel("F110"),
-
-
 }
 

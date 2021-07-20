@@ -13,7 +13,6 @@ import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 data class UserInfoVO(
     var id: Long,
     var username: String,
-    var permissionLevel: Int,
     var groups: List<PermissionGroup>
 )
 

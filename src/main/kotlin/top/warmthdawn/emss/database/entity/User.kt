@@ -11,5 +11,5 @@ import javax.persistence.Entity
 class User(
     var username: String, //用户名
     var password: String,//密码
-    var permissionLevel: Int, //用户权限等级
+    var permissionLevel: Int,
 ) : BaseEntity()

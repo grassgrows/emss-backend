@@ -25,7 +25,6 @@ class LoginService(
             val userInfoVO = UserInfoVO(
                 row.id!!,
                 row.username,
-                row.permissionLevel,
                 groupsOfUser(row.id!!)
             )
             result.add(userInfoVO)

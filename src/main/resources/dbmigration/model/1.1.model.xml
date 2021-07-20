@@ -20,6 +20,7 @@
             <column name="id" type="bigint" primaryKey="true"/>
             <column name="user_id" type="bigint" notnull="true"/>
             <column name="group_id" type="bigint" notnull="true"/>
+            <column name="group_permission_level" type="integer" notnull="true"/>
             <column name="when_created" type="timestamp" notnull="true"/>
             <column name="when_modified" type="timestamp" notnull="true"/>
         </createTable>
