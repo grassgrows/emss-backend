@@ -62,7 +62,7 @@ class DockerService(
     }
 
     fun terminateContainer(serverId: Long) {
-        DockerManager.stopContainer(getContainerId(serverId))
+        DockerManager.terminateContainer(getContainerId(serverId))
     }
 
     suspend fun waitContainer(serverId: Long) {
@@ -79,7 +79,7 @@ class DockerService(
         val server = QServer(db).id.eq(serverId).findOne()!!
         return kotlin.runCatching {
             DockerManager.inspectContainer(server.containerId).status
-        }.getOrDefault(ContainerStatus.Unknown)
+        }.getOrDefault(ContainerStatus.Removed)
     }
 
 

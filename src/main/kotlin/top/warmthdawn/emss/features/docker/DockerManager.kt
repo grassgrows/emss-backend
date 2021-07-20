@@ -250,9 +250,10 @@ object DockerManager {
                     -> ContainerStatus.Stopped
                     "paused",
                     "restarting",
+                    -> ContainerStatus.Unknown
                     "removing",
                     "dead",
-                    -> ContainerStatus.Unknown
+                    -> ContainerStatus.Removed
                     else -> ContainerStatus.Unknown
                 }
             )

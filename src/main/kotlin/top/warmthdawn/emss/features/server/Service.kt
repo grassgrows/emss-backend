@@ -14,15 +14,13 @@ import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.database.entity.query.*
 import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
-import top.warmthdawn.emss.features.server.api.ServerObject
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.entity.ServerState
-import top.warmthdawn.emss.features.server.impl.ServerObjectFactory
 import top.warmthdawn.emss.features.server.impl.StatisticsService
-import top.warmthdawn.emss.features.server.impl.UnsupportedStateChangeException
 import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
+import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 /**
  *
@@ -36,21 +34,22 @@ class ServerService(
     private val imageService: ImageService,
     private val dockerService: DockerService,
     private val statisticsService: StatisticsService,
-    private val serverObjectFactory: ServerObjectFactory
+    private val serverInstanceHolder: ServerInstanceHolder,
 ) {
 
     suspend fun getServersBriefInfo(): List<ServerBriefVO> {
         val list: MutableList<ServerBriefVO> = mutableListOf()
         for (server in QServer(db).findList()) {
-            val running = serverObjectFactory.create(server.id!!).getRunning()
+            val obj = serverInstanceHolder.getOrCreate(server.id!!)
             val result = ServerBriefVO(
                 server.id!!,
                 server.name,
                 server.aliasName,
                 server.abbr,
-                ServerObject.isRunning(running.serverState),
+                obj.isRunning(),
                 server.portBindings.keys.firstOrNull(),
                 server.imageId,
+                obj.getRunningInfo().lastCrashDate
                 running.lastCrashDate
                 groupsOfServer(server.id!!)
             )
@@ -140,14 +139,14 @@ class ServerService(
         if (config.testing) {
             return
         }
-        serverObjectFactory.createAction(id).start()
+        serverInstanceHolder.getOrCreate(id).start()
     }
 
     suspend fun stop(id: Long) {
         if (config.testing) {
             return
         }
-        serverObjectFactory.createAction(id).stop()
+        serverInstanceHolder.getOrCreate(id).stop()
     }
 
     suspend fun restart(id: Long) {
@@ -160,7 +159,7 @@ class ServerService(
             return
         }
 
-        serverObjectFactory.createAction(id).terminate()
+        serverInstanceHolder.getOrCreate(id).terminate()
 
     }
 
@@ -178,7 +177,7 @@ class ServerService(
         }
         //删除监控信息
         statisticsService.delServer(id)
-
+        serverInstanceHolder.remove(id)
         val serverRealTime = QServerRealTime().id.eq(id).findOne()
         if (!server.delete() || !serverRealTime!!.delete())
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)

@@ -12,11 +12,12 @@ import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.login.LoginService
 import top.warmthdawn.emss.features.server.ServerService
-import top.warmthdawn.emss.features.server.impl.ServerObjectFactory
 import top.warmthdawn.emss.features.server.impl.StatisticsService
 import top.warmthdawn.emss.features.server.impl.statistics.ServerStatisticsFactory
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
+import top.warmthdawn.emss.utils.server.ServerInstanceFactory
+import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 val appModule = module {
     // Backend Config
@@ -33,15 +34,15 @@ val appModule = module {
     single { ServerService(get(), get(), get(), get(), get()) }
 
     single { ServerService(get(), get(), get(), get(), get(), get()) }
-    single { ServerObjectFactory(get(), get(), get(), get()) }
+    single { ServerInstanceFactory(get(), get(), get(), get()) }
+    single { ServerInstanceHolder(get()) }
+    //docker
     single { DockerService(get(), get()) }
     //status
     single { StatisticsService(get(), get(), get()) }
     single { ServerStatisticsFactory() }
     //file
     single { FileService() }
-
-
     //command
     single { CommandService() }
 

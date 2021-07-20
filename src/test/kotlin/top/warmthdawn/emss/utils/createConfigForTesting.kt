@@ -93,4 +93,5 @@ val appTestModule = module {
 
 
     single { LoginService(get()) }
+    single { CommandService(get()) }
 }

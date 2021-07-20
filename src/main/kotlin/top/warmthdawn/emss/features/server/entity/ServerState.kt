@@ -11,4 +11,5 @@ enum class ServerState {
     RUNNING, //运行状态
     STOPPING, //正在关闭服务器状态：必须经历本状态服务器才算正常关闭，同时强制关闭也仅再本状态有效
     STOPPED, //服务器已经关闭
+    REMOVING, //服务器正在删除，无法启动
 }
