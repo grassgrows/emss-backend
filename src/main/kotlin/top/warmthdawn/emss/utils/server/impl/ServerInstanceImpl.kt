@@ -10,7 +10,7 @@ import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.features.server.entity.ServerState
-import top.warmthdawn.emss.features.server.impl.StatisticsService
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.utils.event.api.EventEmitter
 import top.warmthdawn.emss.utils.event.impl.DefaultEventEmitter
 import top.warmthdawn.emss.utils.server.api.*
@@ -153,6 +153,11 @@ class ServerInstanceImpl(
         start()
     }
 
+    private suspend fun resetServer() {
+        currentAction = ServerAction.RESET
+        emit(ServerContainerEvent.REMOVED, this)
+    }
+
     override suspend fun reset() {
         val current = getState()
         if (current == ServerState.REMOVING) {
@@ -161,9 +166,8 @@ class ServerInstanceImpl(
         if (current != ServerState.STOPPED) {
             throw ServerException(ServerExceptionMsg.SERVER_NOT_STOPPED)
         }
-        currentAction = ServerAction.RESET
         dockerService.removeContainer(id)
-        emit(ServerContainerEvent.REMOVED, this)
+        resetServer()
     }
 
     override fun getRunningInfo(): ServerRealTime {
@@ -214,7 +218,7 @@ class ServerInstanceImpl(
 
         if (dockerState == ContainerStatus.Removed) {
             try {
-                reset()
+                resetServer()
             } catch (e: ServerException) {
             }
             return ServerState.INITIALIZE

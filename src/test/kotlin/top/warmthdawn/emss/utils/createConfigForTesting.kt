@@ -5,7 +5,6 @@ import io.ebean.Database
 import io.ebean.annotation.TxIsolation
 import io.ktor.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import top.warmthdawn.emss.config.AppConfig
@@ -22,11 +21,13 @@ import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.login.LoginService
 import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.server.ServerService
-import top.warmthdawn.emss.features.server.impl.ServerObjectFactory
-import top.warmthdawn.emss.features.server.impl.StatisticsService
-import top.warmthdawn.emss.features.server.impl.statistics.ServerStatisticsFactory
+//import top.warmthdawn.emss.features.statistics.impl.ServerObjectFactory
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
+import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
+import top.warmthdawn.emss.utils.server.ServerInstanceFactory
+import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 fun MapApplicationConfig.createConfigForTesting() {
     // Server config
@@ -76,15 +77,15 @@ val appTestModule = module {
 
     //server
     single { ServerService(get(), get(), get(), get(), get(), get()) }
-    single { ServerObjectFactory(get(), get(), get(), get()) }
+    single { ServerInstanceFactory(get(), get(), get(), get()) }
+    single { ServerInstanceHolder(get()) }
+    //docker
     single { DockerService(get(), get()) }
     //status
     single { StatisticsService(get(), get(), get()) }
     single { ServerStatisticsFactory() }
     //file
     single { FileService() }
-
-
     //command
     single { CommandService() }
 

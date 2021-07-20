@@ -16,7 +16,7 @@ import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.entity.ServerState
-import top.warmthdawn.emss.features.server.impl.StatisticsService
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
@@ -57,6 +57,10 @@ class ServerService(
         }
 
         return list
+    }
+
+    fun getIdByAbbr(abbr: String): Long? {
+        return QServer(db).abbr.eq(abbr).findIds<Long>().firstOrNull()
     }
 
     suspend fun getServerInfo(id: Long): ServerVO {

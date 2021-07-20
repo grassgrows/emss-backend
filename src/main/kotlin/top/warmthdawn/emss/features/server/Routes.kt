@@ -5,7 +5,7 @@ import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
-import top.warmthdawn.emss.features.server.impl.StatisticsService
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkPermission
@@ -49,16 +49,6 @@ fun Route.serverEndpoint() {
             val dto = call.receive<ServerInfoDTO>()
             serverService.updateServerInfo(id, dto)
             R.ok()
-        }
-        get("/{id}/stats") {
-            val id = call.parameters["id"]!!.toLong()
-            val flag = call.parameters["type"]!!.toInt()
-            val type = statisticsService.getProvider(id).getByFlag(flag)
-                .map {
-                    val history = it.getHistory()
-                    ServerStatisticsVO(history.timestamps, it.getCurrent().value, history.values)
-                }
-            R.ok(type)
         }
         post("/{id}/start") {
             val id = call.parameters["id"]!!.toLong()

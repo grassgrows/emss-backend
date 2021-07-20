@@ -21,7 +21,7 @@ enum class StatisticsType(
     val flag: Int,
 ) {
     CPU(1),
-    Memory(2),
+    MEMORY(2),
     DISK_WRITE(4),
     DISK_READ(8),
     NETWORK_UPLOAD(16),

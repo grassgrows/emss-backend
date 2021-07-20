@@ -9,7 +9,6 @@ import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.features.server.entity.ServerState
-import top.warmthdawn.emss.features.server.impl.ServerPersistImpl
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.*
@@ -35,7 +34,7 @@ class CommandService(
             if (server == null || serverRealTime == null)
                 throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
             val attachProxy = getAttachProxy(serverId)
-            if(serverRealTime.serverState == ServerState.RUNNING){
+            if (serverRealTime.serverState == ServerState.RUNNING) {
                 attachProxy.attach(server.containerId!!, detach)
             }
             attaches.put(serverId, attachProxy)
@@ -55,9 +54,8 @@ class CommandService(
 
         if (!attaches.containsKey(serverId)) {
             attaches[serverId] = AttachProxy()
-            if (ServerPersistImpl(db, serverId).getState() == ServerState.RUNNING) {
-                createAttach(serverId)
-            }
+            createAttach(serverId)
+
         }
         return attaches[serverId]!!
     }
@@ -83,7 +81,7 @@ class AttachProxy(
 
     private val history = LinkedList<ByteArray>()
 
-    suspend fun onMessage(msg: ByteArray) {
+    private suspend fun dispachMessage(msg: ByteArray) {
         msgListeners.forEach {
             kotlin.runCatching {
                 it(msg)
@@ -91,17 +89,21 @@ class AttachProxy(
         }
     }
 
+    suspend fun onMessage(msg: ByteArray) {
+        lock.lock()
+        if (history.size > historySize) {
+            history.poll()
+        }
+        history.offer(msg)
+        lock.unlock()
+        dispachMessage(msg)
+    }
+
     fun attach(containerId: String, onComplete: () -> Unit = {}) {
         if (attached) {
             return
         }
         attaching = DockerManager.attachContainer(containerId, input, onComplete) {
-            lock.lock()
-            if (history.size > historySize) {
-                history.poll()
-            }
-            history.offer(it.payload)
-            lock.unlock()
             runBlocking {
                 onMessage(it.payload)
             }
