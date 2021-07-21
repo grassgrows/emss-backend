@@ -11,6 +11,9 @@ import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.utils.R
+import top.warmthdawn.emss.utils.checkPermission
+import top.warmthdawn.emss.utils.checkServerPermission
+import top.warmthdawn.emss.utils.username
 import kotlin.io.path.Path
 import io.ktor.locations.get as getL
 import io.ktor.locations.post as postL
@@ -29,27 +32,33 @@ fun Route.fileEndpoint() {
 
     postL<FileChunkInfoDTO> { info ->
         val stream = call.receiveStream()
+        fileService.ensureHasAuthority(info.destinationPath, username)
         fileService.uploadFile(stream, info)
         R.ok()
     }
     getL<FileChunkInfoDTO> { info ->
+        fileService.ensureHasAuthority(info.destinationPath, username)
         if (fileService.testFile(info)) {
             R.ok()
         } else {
             call.response.status(HttpStatusCode.NoContent)
         }
     }
+
     route("/file") {
         route("/list") {
             get {
                 val filePath = call.request.queryParameters["path"]!!
-                R.ok(fileService.getFileList(filePath))
+                val permits = fileService.ensureHasAuthority(filePath, username)
+                R.ok(fileService.getFileList(filePath).filter {
+                    permits.any { perm -> it.filePath.startsWith(perm) }
+                })
             }
         }
         route("/create") {
             post {
-                val username = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
                 val dirsPath = call.request.queryParameters["path"]!!
+                fileService.ensureHasAuthority(dirsPath, username)
                 fileService.createDirs(dirsPath)
                 R.ok()
             }
@@ -72,6 +81,7 @@ fun Route.fileEndpoint() {
         route("/rename") {
             post {
                 val filePath = call.request.queryParameters["path"]!!
+                fileService.ensureHasAuthority(filePath, username)
                 val newName = call.request.queryParameters["newName"]!!
                 fileService.renameFile(filePath, newName)
                 R.ok()
@@ -80,6 +90,9 @@ fun Route.fileEndpoint() {
         route("/delete") {
             post {
                 val filePaths = call.receive<Array<String>>()
+                filePaths.forEach {
+                    fileService.ensureHasAuthority(it, username)
+                }
                 filePaths.forEach {
                     fileService.deleteFile(it)
                 }
@@ -91,15 +104,21 @@ fun Route.fileEndpoint() {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
+                    fileService.ensureHasAuthority(it, username)
+                }
+                filePaths.forEach {
                     fileService.cutFile(it, target + "/" + Path(it).fileName)
                 }
                 R.ok()
             }
         }
         route("/copy") {
-            get("/check"){
+            get("/check") {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
+                filePaths.forEach {
+                    fileService.ensureHasAuthority(it, username)
+                }
                 var count = 0
                 filePaths.forEach {
                     count += fileService.findDuplicateFiles(it, target + "/" + Path(it).fileName)
@@ -110,6 +129,9 @@ fun Route.fileEndpoint() {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 filePaths.forEach {
+                    fileService.ensureHasAuthority(it, username)
+                }
+                filePaths.forEach {
                     fileService.copyFile(it, target + "/" + Path(it).fileName)
                 }
                 R.ok()
@@ -119,17 +141,22 @@ fun Route.fileEndpoint() {
             get {
                 val filePath = call.request.queryParameters["path"]!!
                 val keyword = call.request.queryParameters["keyword"]!!
-                R.ok(fileService.searchFile(filePath, keyword))
+                val permits = fileService.ensureHasAuthority(filePath, username)
+                R.ok(fileService.searchFile(filePath, keyword).filter {
+                    permits.any { perm -> it.filePath.startsWith(perm) }
+                })
             }
         }
-        route("/read"){
-            get{
+        route("/read") {
+            get {
                 val filePath = call.request.queryParameters["path"]!!
                 val pageNum = call.request.queryParameters["pageNum"]!!
+                fileService.ensureHasAuthority(filePath, username)
                 call.respondText(fileService.readTextFile(filePath, pageNum.toInt()))
             }
-            post("/save"){
+            post("/save") {
                 val filePath = call.request.queryParameters["path"]!!
+                fileService.ensureHasAuthority(filePath, username)
                 val text = call.receiveText()
                 fileService.saveTextFile(filePath, text)
                 R.ok()

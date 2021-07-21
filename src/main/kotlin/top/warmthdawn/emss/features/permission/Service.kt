@@ -64,7 +64,7 @@ class PermissionService
     suspend fun addPermissionGS(groupId: Long, serverId: Long) {
         GroupServer(
             groupId,
-            serverId
+            serverId,
         ).insert()
     }
 

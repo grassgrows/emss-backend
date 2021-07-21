@@ -3,9 +3,7 @@ package top.warmthdawn.emss.database.default
 import io.ebean.Database
 import io.ktor.application.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.database.entity.Image
-import top.warmthdawn.emss.database.entity.Setting
-import top.warmthdawn.emss.database.entity.SettingType
+import top.warmthdawn.emss.database.entity.*
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.FileService
 
@@ -47,5 +45,29 @@ fun Application.tryInitDefault() {
     }
     if (!QSetting().type.eq(SettingType.TEMPORARY_FOLDER).exists()) {
         Setting(SettingType.TEMPORARY_FOLDER, "~/emss/temp/").save()
+    }
+
+    if (!db.find(PermissionGroup::class.java).exists()) {
+        PermissionGroup(
+            groupName = "默认分组",
+            maxPermissionLevel = -1,
+        ).insert()
+    }
+
+    if (!db.find(User::class.java).exists()) {
+        User(
+            username = "admin",
+            password = "123456",
+            // TODO: 2021/7/21 换成加密后的密码
+            permissionLevel = 0
+        ).insert()
+    }
+
+    if (!db.find(UserGroup::class.java).exists()) {
+        UserGroup(
+            userId = 1L,
+            groupId = 1L,
+            groupPermissionLevel = 0
+        ).insert()
     }
 }

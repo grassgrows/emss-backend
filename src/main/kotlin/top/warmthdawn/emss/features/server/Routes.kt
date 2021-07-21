@@ -34,8 +34,8 @@ fun Route.serverEndpoint() {
         }
 
         delete("/{id}"){
-            checkPermission(0)
             val id = call.parameters["id"]!!.toLong()
+            checkServerPermission(id, 2)
             serverService.removeServer(id)
             R.ok()
         }
@@ -45,7 +45,7 @@ fun Route.serverEndpoint() {
         }
         post("/{id}") {
             val id = call.parameters["id"]!!.toLong()
-            checkServerPermission(id, 3)
+            checkServerPermission(id, 2)
             val dto = call.receive<ServerInfoDTO>()
             serverService.updateServerInfo(id, dto)
             R.ok()
