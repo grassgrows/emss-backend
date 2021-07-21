@@ -12,5 +12,7 @@ class PermissionException(
 ) : Exception(permissionExceptionMsg.toString())
 
 enum class PermissionExceptionMsg {
-    INSUFFICIENT_PERMISSION_LEVEL
+    INSUFFICIENT_PERMISSION_LEVEL,
+    GROUP_DATABASE_REMOVE_FAILED,
+    USER_DATABASE_REMOVE_FAILED
 }

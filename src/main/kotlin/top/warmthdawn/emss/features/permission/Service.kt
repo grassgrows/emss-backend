@@ -6,6 +6,7 @@ import top.warmthdawn.emss.database.entity.PermissionGroup
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.UserGroup
 import top.warmthdawn.emss.database.entity.query.*
+import top.warmthdawn.emss.features.permission.vo.BriefGroupInfo
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
 
@@ -26,8 +27,46 @@ class PermissionService
         ).insert()
     }
 
+    suspend fun updatePermissionGroup(groupId: Long, groupName: String?, maxPermissionLevel: Int?) {
+        val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
+        if (groupName != null)
+            group.groupName = groupName
+        if (maxPermissionLevel != null)
+            group.maxPermissionLevel = maxPermissionLevel
+        group.update()
+    }
+
+    suspend fun removePermissionGroup(groupId: Long) {
+        if (!QPermissionGroup(db).id.eq(groupId).findOne()!!.delete() ||
+            QGroupServer(db).groupId.eq(groupId).delete() <= 0 ||
+            QUserGroup(db).groupId.eq(groupId).delete() <= 0
+        ) {
+            throw PermissionException(PermissionExceptionMsg.GROUP_DATABASE_REMOVE_FAILED)
+        }
+    }
+
     suspend fun getUserInfo(): List<User> {
         return QUser(db).findList()
+    }
+
+    suspend fun removeUser(userId: Long) {
+        if (!QUser(db).id.eq(userId).findOne()!!.delete() ||
+            QUserGroup(db).userId.eq(userId).delete() <= 0
+        ) {
+            throw PermissionException(PermissionExceptionMsg.USER_DATABASE_REMOVE_FAILED)
+        }
+    }
+
+    suspend fun getBriefGroupInfo(): List<BriefGroupInfo> {
+        val result: MutableList<BriefGroupInfo> = mutableListOf()
+        for (row in QPermissionGroup(db).findList()) {
+            val briefGroupInfo = BriefGroupInfo(
+                row.id!!,
+                row.groupName,
+            )
+            result.add(briefGroupInfo)
+        }
+        return result
     }
 
     suspend fun getGroupInfo(): List<PermissionGroupVO> {

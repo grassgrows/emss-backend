@@ -191,6 +191,12 @@ fun Application.configureStatusPages() {
                 PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL -> {
                     R.error(Code.InsufficientPermissionLevel, "您的权限不足", HttpStatusCode.Forbidden)
                 }
+                PermissionExceptionMsg.GROUP_DATABASE_REMOVE_FAILED -> {
+                    R.error(Code.GroupDatabaseRemoveFailed, "用户权限组删除失败", HttpStatusCode.InternalServerError)
+                }
+                PermissionExceptionMsg.USER_DATABASE_REMOVE_FAILED -> {
+                    R.error(Code.UserDatabaseRemoveFailed, "用户删除失败", HttpStatusCode.InternalServerError)
+                }
             }
         }
     }

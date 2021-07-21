@@ -20,7 +20,7 @@ import java.security.AuthProvider
 fun Application.tryInitDefault() {
     val db by inject<Database>()
     val loginService by inject<LoginService>()
-    
+
     //Image初始值
     if (!db.find(Image::class.java).exists()) {
         Image(

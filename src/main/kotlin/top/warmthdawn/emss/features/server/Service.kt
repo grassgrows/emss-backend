@@ -174,6 +174,7 @@ class ServerService(
             throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
 
         val server = QServer().id.eq(id).findOne()!!
+        val groupServer = QGroupServer().id.eq(id)
 
         kotlin.runCatching {
             dockerService.removeContainer(id)
@@ -182,7 +183,7 @@ class ServerService(
         statisticsService.delServer(id)
         serverInstanceHolder.remove(id)
         val serverRealTime = QServerRealTime().id.eq(id).findOne()
-        if (!server.delete() || !serverRealTime!!.delete())
+        if (!server.delete() || !serverRealTime!!.delete() || groupServer.delete() <= 0)
             throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
 
     }
