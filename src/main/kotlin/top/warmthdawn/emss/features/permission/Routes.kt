@@ -4,7 +4,6 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.features.permission.dto.PermissionDTO
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkGroupPermission
@@ -26,7 +25,7 @@ fun Route.permissionEndpoint() {
             get {
                 R.ok(permissionService.getGroupInfo())
             }
-            get("/brief"){
+            get("/brief") {
                 R.ok(permissionService.getBriefGroupInfo())
             }
             post("/create") {
@@ -50,11 +49,30 @@ fun Route.permissionEndpoint() {
                 permissionService.removePermissionGroup(groupId)
                 R.ok()
             }
+
+            route("/location"){
+                get {
+                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
+                    R.ok(permissionService.getPermittedLocation(groupId))
+                }
+                post("/add"){
+                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
+                    val location = call.request.queryParameters["location"]!!
+                    checkGroupPermission(groupId, 2)
+                    permissionService.addPermittedLocation(groupId, location)
+                }
+                post("/remove"){
+                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
+                    val location = call.request.queryParameters["location"]!!
+                    checkGroupPermission(groupId, 2)
+                    permissionService.removePermittedLocation(groupId, location)
+                }
+            }
         }
 
         route("/user") {
-            get{
-                R.ok(permissionService.getUserInfo())
+            get {
+                R.ok(permissionService.getAllUserInfo())
             }
             post("/modify") {
                 checkPermission(1)
@@ -74,11 +92,15 @@ fun Route.permissionEndpoint() {
         }
 
         route("/GS") {
+            get {
+                val groupId = call.request.queryParameters["groupId"]!!.toLong()
+                R.ok(permissionService.getBriefServerInfo(groupId))
+            }
             post("/add") {
                 checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
                 val serverId = call.request.queryParameters["serverId"]!!.toLong()
-                checkGroupPermission(groupId.toLong(), 2)
+                checkGroupPermission(groupId, 2)
                 permissionService.addPermissionGS(groupId, serverId)
                 R.ok()
             }
@@ -86,7 +108,7 @@ fun Route.permissionEndpoint() {
                 checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
                 val serverId = call.request.queryParameters["serverId"]!!.toLong()
-                checkGroupPermission(groupId.toLong(), 2)
+                checkGroupPermission(groupId, 2)
                 permissionService.removePermissionGS(groupId, serverId)
                 R.ok()
             }
@@ -94,10 +116,18 @@ fun Route.permissionEndpoint() {
     }
 
     route("/UG") {
+        get {
+            val groupId = call.request.queryParameters["groupId"]!!.toLong()
+            R.ok(permissionService.getBriefUserInfo(groupId))
+        }
+        get("/otherUser") {
+            val groupId = call.request.queryParameters["groupId"]!!.toLong()
+            R.ok(permissionService.getOtherUserInfo(groupId))
+        }
         post("/add") {
             checkPermission(1)
             val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            checkGroupPermission(groupId.toLong(), 2)
+            checkGroupPermission(groupId, 2)
             val permissionDTO = call.receive<PermissionDTO>()
             permissionDTO.addedUG.forEach {
                 permissionService.addPermissionUG(groupId, it)
@@ -107,12 +137,11 @@ fun Route.permissionEndpoint() {
         post("/remove") {
             checkPermission(1)
             val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            checkGroupPermission(groupId.toLong(), 2)
-            val permissionDTO = call.receive<PermissionDTO>()
-            permissionDTO.removedUG.forEach {
-                permissionService.removePermissionUG(groupId, it)
-            }
+            val userId = call.request.queryParameters["userId"]!!.toLong()
+            checkGroupPermission(groupId, 2)
+            permissionService.removePermissionUG(groupId, userId)
             R.ok()
         }
     }
+
 }

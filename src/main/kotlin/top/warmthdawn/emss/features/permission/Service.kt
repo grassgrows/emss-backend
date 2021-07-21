@@ -7,6 +7,8 @@ import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.UserGroup
 import top.warmthdawn.emss.database.entity.query.*
 import top.warmthdawn.emss.features.permission.vo.BriefGroupInfo
+import top.warmthdawn.emss.features.permission.vo.BriefServerInfo
+import top.warmthdawn.emss.features.permission.vo.BriefUserInfo
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
 
@@ -45,8 +47,16 @@ class PermissionService
         }
     }
 
-    suspend fun getUserInfo(): List<User> {
-        return QUser(db).findList()
+    suspend fun getAllUserInfo(): List<BriefUserInfo> {
+        val result: MutableList<BriefUserInfo> = mutableListOf()
+        for (row in QUser(db).findList()) {
+            val briefUserInfo = BriefUserInfo(
+                row.id!!,
+                row.username,
+            )
+            result.add(briefUserInfo)
+        }
+        return result
     }
 
     suspend fun removeUser(userId: Long) {
@@ -55,6 +65,49 @@ class PermissionService
         ) {
             throw PermissionException(PermissionExceptionMsg.USER_DATABASE_REMOVE_FAILED)
         }
+    }
+
+    suspend fun getBriefUserInfo(groupId: Long): List<BriefUserInfo> {
+        val result: MutableList<BriefUserInfo> = mutableListOf()
+        QUserGroup(db).groupId.eq(groupId).findList().forEach {
+            for (row in QUser(db).id.eq(it.userId).findList()) {
+                val briefUserInfo = BriefUserInfo(
+                    row.id!!,
+                    row.username,
+                    it.groupPermissionLevel
+                )
+                result.add(briefUserInfo)
+            }
+        }
+        return result
+    }
+
+    suspend fun getOtherUserInfo(groupId: Long): List<BriefUserInfo> {
+        val result: MutableList<BriefUserInfo> = mutableListOf()
+        for (row in QUser(db).findList()) {
+            val briefUserInfo = BriefUserInfo(
+                row.id!!,
+                row.username,
+            )
+            if (!QUserGroup(db).groupId.eq(groupId).userId.eq(row.id!!).exists())
+                result.add(briefUserInfo)
+        }
+        return result
+    }
+
+    suspend fun getBriefServerInfo(groupId: Long): List<BriefServerInfo> {
+        val result: MutableList<BriefServerInfo> = mutableListOf()
+        QGroupServer(db).groupId.eq(groupId).findList().forEach {
+            for (row in QServer(db).id.eq(it.serverId).findList()) {
+                val briefServerInfo = BriefServerInfo(
+                    row.id!!,
+                    row.name,
+                    row.abbr
+                )
+                result.add(briefServerInfo)
+            }
+        }
+        return result
     }
 
     suspend fun getBriefGroupInfo(): List<BriefGroupInfo> {
@@ -68,6 +121,11 @@ class PermissionService
         }
         return result
     }
+
+    suspend fun getPermittedLocation(groupId: Long): List<String> {
+        return QPermissionGroup(db).id.eq(groupId).findOne()!!.permittedLocation
+    }
+
 
     suspend fun getGroupInfo(): List<PermissionGroupVO> {
         val result: MutableList<PermissionGroupVO> = mutableListOf()
@@ -127,6 +185,18 @@ class PermissionService
             .userId.eq(userId)
             .groupId.eq(groupId)
             .delete()
+    }
+
+    suspend fun addPermittedLocation(groupId: Long, location: String) {
+        val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
+        group.permittedLocation += location
+        group.update()
+    }
+
+    suspend fun removePermittedLocation(groupId: Long, location: String) {
+        val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
+        group.permittedLocation -= location
+        group.update()
     }
 
     suspend fun modifyUserPermission(groupId: Long, userId: Long, newLevel: Int) {
