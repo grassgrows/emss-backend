@@ -3,9 +3,13 @@ package top.warmthdawn.emss.database.default
 import io.ebean.Database
 import io.ktor.application.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.*
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.login.LoginService
+import java.awt.desktop.AppEvent
+import java.security.AuthProvider
 
 /**
  *
@@ -15,8 +19,8 @@ import top.warmthdawn.emss.features.file.FileService
 
 fun Application.tryInitDefault() {
     val db by inject<Database>()
-    val fileService by inject<FileService>()
-
+    val loginService by inject<LoginService>()
+    
     //Image初始值
     if (!db.find(Image::class.java).exists()) {
         Image(
@@ -57,8 +61,7 @@ fun Application.tryInitDefault() {
     if (!db.find(User::class.java).exists()) {
         User(
             username = "admin",
-            password = "123456",
-            // TODO: 2021/7/21 换成加密后的密码
+            password = loginService.sha256Encoder("123456"),
             permissionLevel = 0
         ).insert()
     }
