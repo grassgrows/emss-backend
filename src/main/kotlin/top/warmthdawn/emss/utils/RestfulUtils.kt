@@ -214,6 +214,18 @@ enum class Code(
      */
     UserNameOrPasswordWrong("E101"),
     /**
+     * 注册时用户名不合法
+     */
+    UserNameIllegal("E111"),
+    /**
+     * 注册时密码不合法
+     */
+    PasswordIllegal("E112"),
+    /**
+     * 用户名已被使用
+     */
+    UserNameHaveBeenUsed("E113"),
+    /**
      * JWT证书验证错误
      */
     CredentialWrong("E201"),

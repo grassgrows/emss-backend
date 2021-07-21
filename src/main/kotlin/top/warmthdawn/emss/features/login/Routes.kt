@@ -47,12 +47,13 @@ fun Route.loginEndpoint() {
 
     route("/user")
     {
-        post("/create") {
-            val user = call.receive<UserDTO>()
-            loginService.createUser(user.username, user.password)
-            R.ok()
+        authenticate("auth-jwt") {
+            post("/create") {
+                val user = call.receive<UserDTO>()
+                loginService.createUser(user.username, user.password)
+                R.ok()
+            }
         }
     }
-
-
 }
+

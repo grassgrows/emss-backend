@@ -1,12 +1,9 @@
 package top.warmthdawn.emss.features.login
 
 import io.ebean.Database
-import top.warmthdawn.emss.database.entity.PermissionGroup
 import top.warmthdawn.emss.database.entity.User
-import top.warmthdawn.emss.database.entity.query.QPermissionGroup
 import top.warmthdawn.emss.database.entity.query.QUser
-import top.warmthdawn.emss.database.entity.query.QUserGroup
-import top.warmthdawn.emss.features.login.vo.UserInfoVO
+import java.security.MessageDigest
 
 
 /**
@@ -48,20 +45,40 @@ class LoginService(
             return false
 
         val user = QUser(db).username.eq(username).findOne()!!
-        return password == user.password
+        return sha256Encoder(password) == user.password
     }
 
     // 创建用户
     fun createUser(username: String, password: String)
     {
-        //TODO 合法性判断
+        // 用户名只能为大小写字母、数字或下划线，且长度为3~20个字符
+        val nameRegex = Regex("^[a-zA-Z0-9_]{3,20}$")
+        // 密码只能为大小写字母或数字，且长度为8~20个字符
+        val passwordRegex = Regex("^[a-zA-Z0-9]{8,20}$")
+        if(!nameRegex.matches(username))
+        {
+            throw LoginException(LoginExceptionMsg.USERNAME_ILLEGAL)
+        }
+        if(QUser(db).username.eq(username).exists())
+        {
+            throw LoginException(LoginExceptionMsg.USERNAME_HAVE_BEEN_USED)
+        }
+        if(!passwordRegex.matches(password))
+        {
+            throw LoginException(LoginExceptionMsg.PASSWORD_ILLEGAL)
+        }
 
         User(
             username,
-            password, //TODO 密码加密
+            sha256Encoder(password),
             1
         ).insert()
     }
 
+    fun sha256Encoder(password: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val result = digest.digest(password.toByteArray())
+        return result.joinToString("") { "%02x".format(it) }
+    }
 }
 

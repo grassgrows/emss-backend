@@ -164,6 +164,15 @@ fun Application.configureStatusPages() {
                 LoginExceptionMsg.USERNAME_OR_PASSWORD_WRONG -> {
                     R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误！", HttpStatusCode.Unauthorized)
                 }
+                LoginExceptionMsg.USERNAME_ILLEGAL -> {
+                    R.error(Code.UserNameIllegal, "用户名不合法！用户名只能为大小写字母、数字或下划线，且长度为3~20个字符！", HttpStatusCode.Forbidden)
+                }
+                LoginExceptionMsg.PASSWORD_ILLEGAL -> {
+                    R.error(Code.PasswordIllegal, "密码不合法！密码只能为大小写字母或数字，且长度为8~20个字符！", HttpStatusCode.Forbidden)
+                }
+                LoginExceptionMsg.USERNAME_HAVE_BEEN_USED -> {
+                    R.error(Code.UserNameHaveBeenUsed, "用户名已被使用！", HttpStatusCode.Forbidden)
+                }
             }
         }
 

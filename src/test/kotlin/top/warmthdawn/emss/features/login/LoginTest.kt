@@ -5,11 +5,14 @@ import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.*
+import org.bouncycastle.util.encoders.Hex
+import org.junit.Ignore
 import org.junit.Test
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.utils.withTestServer
+import java.security.MessageDigest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -18,10 +21,11 @@ internal class LoginTest {
     fun loginTest() {
         withTestServer {
             val db by application.inject<Database>()
+            val loginService by application.inject<LoginService>()
             db.insert(
                 User(
                     "takanashi",
-                    "123456789",
+                    loginService.sha256Encoder("123456789"),
                     1
                 )
             )
@@ -98,4 +102,22 @@ internal class LoginTest {
         }
     }
 
+}
+
+fun main()
+{
+    val strs = arrayOf("4sj293jd","Asjkfdskfj_sdfjdkfj239", "AsdjAdj五d","Bsdfd?dj","Asdj203_dj","aaa","aa","_dsffez")
+
+
+    val regex = Regex("^[a-zA-Z0-9_]{3,20}$")
+    for(item in strs)
+    {
+        if (regex.matches(item))
+            print("*****************$item\n")
+    }
+
+    val password = "12345678"
+    val digest = MessageDigest.getInstance("SHA-256")
+    val result = digest.digest(password.toByteArray())
+    print(result.joinToString("") { "%02x".format(it) })
 }
