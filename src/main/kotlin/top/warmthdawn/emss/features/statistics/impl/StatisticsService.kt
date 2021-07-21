@@ -5,9 +5,10 @@ import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.entity.StatisticsType
-import top.warmthdawn.emss.features.statistics.api.StatisticsProvider
 import top.warmthdawn.emss.features.server.entity.contains
+import top.warmthdawn.emss.features.statistics.api.StatisticsProvider
 import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
+import top.warmthdawn.emss.features.statistics.impl.statistics.active
 import top.warmthdawn.emss.features.statistics.impl.statistics.passive
 import java.io.Closeable
 
@@ -32,13 +33,13 @@ class StatisticsService(
     }
 
     suspend fun addServer(id: Long, abbr: String) {
-        providers[id] = factory.createService(abbr)
+        providers[id] = factory.createService(id, abbr)
     }
 
     suspend fun init() {
         val servers = QServer(db).findList()
         servers.forEach {
-            addServer(it.id!!, factory.createService(it.abbr))
+            addServer(it.id!!, it.abbr)
         }
 
     }
@@ -99,15 +100,20 @@ class StatisticsService(
                 networkUpload.passive.onResult(netWorksOut)
 
             })
-
+            addMonitor({
+                this.players.active.enabled = false
+                this.tps.active.enabled = false
+            }) {
+                this.players.active.enabled = true
+                this.tps.active.enabled = true
+            }
         }
+
+        fun stopMonitoring(id: Long) {
+            getProvider(id).clearMonitor()
+        }
+
     }
-
-    fun stopMonitoring(id: Long) {
-        getProvider(id).clearMonitor()
-    }
-
-
 }
 
 class ServerNotFoundException(message: String) : RuntimeException(message)
@@ -136,14 +142,20 @@ class ServerStatistics(
             it.type in flags
         }
     }
+
     fun getByType(statisticsType: StatisticsType): StatisticsProvider {
-        return all.filter {
+        return all.first {
             it.type == statisticsType
-        }.first()
+        }
     }
 
     fun addMonitor(closeable: Closeable) {
         monitors.add(closeable)
+    }
+
+    fun addMonitor(onStop: () -> Unit = {}, onStart: () -> Unit) {
+        onStart()
+        monitors.add(onStop)
     }
 
     fun clearMonitor() {
@@ -159,3 +171,4 @@ class ServerStatistics(
         all.forEach { it.close() }
     }
 }
+

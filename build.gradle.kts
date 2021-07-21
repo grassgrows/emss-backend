@@ -34,6 +34,8 @@ tasks.named<ShadowJar>("shadowJar") {
 }
 
 repositories {
+    maven("https://maven.blackyin.xyz:8015/repository/maven-public/")
+    maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
 }
 
@@ -67,6 +69,8 @@ dependencies {
     // JWT
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
+    //doctor
+    implementation("top.limbang.doctor:doctor-client:1.2.7")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")
