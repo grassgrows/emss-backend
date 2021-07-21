@@ -90,7 +90,7 @@ val appTestModule = module {
     single { StatisticsService(get(), get(), get()) }
     single { ServerStatisticsFactory() }
     //file
-    single { FileService() }
+    single { FileService(get()) }
     //command
     single { CommandService(get()) }
 

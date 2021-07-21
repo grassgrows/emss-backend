@@ -8,6 +8,8 @@ import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.login.dto.UserDTO
+import top.warmthdawn.emss.features.login.dto.UserModifyNameDTO
+import top.warmthdawn.emss.features.login.dto.UserModifyPasswordDTO
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
 
@@ -45,13 +47,24 @@ fun Route.loginEndpoint() {
 
     }
 
-    route("/user")
-    {
+    route("/user") {
         authenticate("auth-jwt") {
             post("/create") {
                 val user = call.receive<UserDTO>()
                 loginService.createUser(user.username, user.password)
                 R.ok()
+            }
+            route("/modify") {
+                post("/username") {
+                    val user = call.receive<UserModifyNameDTO>()
+                    loginService.modifyUserName(user.username, user.newUsername)
+                    R.ok()
+                }
+                post("/password") {
+                    val user = call.receive<UserModifyPasswordDTO>()
+                    loginService.modifyPassword(user.username, user.password, user.newPassword)
+                    R.ok()
+                }
             }
         }
     }

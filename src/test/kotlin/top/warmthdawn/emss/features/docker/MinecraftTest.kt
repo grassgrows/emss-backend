@@ -36,7 +36,7 @@ fun mmain() {
 }
 
 fun main()
-{
+{/*
     val path = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
     print(path.toString()+"\n")
     val path2 = Path("/asdad")
@@ -53,4 +53,5 @@ fun main()
 //    print(fileService.processPath("root\\qwert\\").toString()+"\n")
 //    print(fileService.processPath("\\root\\qwert").toString()+"\n")
 //    print(fileService.processPath("root\\qwert").toString()+"\n")
+*/
 }

@@ -214,6 +214,14 @@ enum class Code(
      */
     UserNameOrPasswordWrong("E101"),
     /**
+     * 用户未找到
+     */
+    UserNotFound("E102"),
+    /**
+     * 密码错误
+     */
+    PasswordWrong("E103"),
+    /**
      * 注册时用户名不合法
      */
     UserNameIllegal("E111"),

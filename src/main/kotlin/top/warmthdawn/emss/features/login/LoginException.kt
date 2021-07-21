@@ -11,6 +11,8 @@ class LoginException(
 
 enum class LoginExceptionMsg {
     USERNAME_OR_PASSWORD_WRONG,
+    USER_NOT_FOUND,
+    PASSWORD_WRONG,
     USERNAME_ILLEGAL,
     PASSWORD_ILLEGAL,
     USERNAME_HAVE_BEEN_USED,
