@@ -154,7 +154,7 @@ object DockerManager {
                     }
                     onStateUpdate(execStatus, status, averageSpeed)
                 }
-            });
+            })
 
     }
 

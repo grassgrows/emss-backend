@@ -27,7 +27,7 @@ fun Route.statisticsEndpoint() {
             val typeParam = call.parameters["type"]!!
             val flag = typeParam.toIntOrNull()
             if (flag != null) {
-                val result = statisticsService.getProvider(id).getByFlag(flag!!)
+                val result = statisticsService.getProvider(id).getByFlag(flag)
                     .map { provider ->
                         val history = provider.getHistory()
                         ServerStatisticsVO(provider.type ,history.timestamps, provider.getCurrent().value, history.values)

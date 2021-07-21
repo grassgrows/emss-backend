@@ -20,6 +20,7 @@ import top.warmthdawn.emss.utils.*
 fun Route.loginEndpoint() {
 
     val loginService by inject<LoginService>()
+    val config by inject<AppConfig>()
 
     route("/login") {
 
@@ -30,10 +31,11 @@ fun Route.loginEndpoint() {
         }
 
         // TODO 测试，不留
-        authenticate("auth-jwt") {
-            get("/validate") {
-                val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
-                val issuedTime = (call.authentication.principal as JWTPrincipal).payload.issuedAt
+        if (!config.testing) {
+            authenticate("auth-jwt") {
+                get("/validate") {
+                    val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
+                    val issuedTime = (call.authentication.principal as JWTPrincipal).payload.issuedAt
 
                 print("---------------------------- $name\n")
                 val nameS = name.toString()

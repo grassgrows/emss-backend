@@ -61,7 +61,7 @@ fun Route.fileEndpoint() {
                 R.ok(fileService.getFileList(filePath))
             }
         }
-        route("/create") {
+        route("/newFolder") {
             post {
                 val dirsPath = call.request.queryParameters["path"]!!
                 try {

@@ -109,10 +109,10 @@ class StatisticsService(
             }
         }
 
-        fun stopMonitoring(id: Long) {
-            getProvider(id).clearMonitor()
-        }
+    }
 
+    fun stopMonitoring(id: Long) {
+        getProvider(id).clearMonitor()
     }
 }
 

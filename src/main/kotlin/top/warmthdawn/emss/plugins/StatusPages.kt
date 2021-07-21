@@ -162,7 +162,7 @@ fun Application.configureStatusPages() {
         exception<LoginException> {
             when (it.loginExceptionMsg) {
                 LoginExceptionMsg.USERNAME_OR_PASSWORD_WRONG -> {
-                    R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误！", HttpStatusCode.Unauthorized)
+                    R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误！", HttpStatusCode.Forbidden)
                 }
                 LoginExceptionMsg.USER_NOT_FOUND -> {
                     R.error(Code.UserNotFound, "用户未找到！", HttpStatusCode.NotFound)
@@ -185,6 +185,10 @@ fun Application.configureStatusPages() {
         status(HttpStatusCode.NotFound) {
             R.error(Code.NotFound, "您请求的页面不存在", HttpStatusCode.NotFound)
         }
+        status(HttpStatusCode.Unauthorized) {
+            R.error(Code.CredentialWrong, "JWT证书验证错误！", HttpStatusCode.Unauthorized)
+        }
+
 
         exception<PermissionException> {
             when (it.permissionExceptionMsg) {

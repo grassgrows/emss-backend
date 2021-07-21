@@ -1,8 +1,8 @@
-package top.warmthdawn.emss.features.docker;
+package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
 import org.junit.Ignore
-import org.junit.Test;
+import org.junit.Test
 
 /**
  * @author takanashi

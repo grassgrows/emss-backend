@@ -129,8 +129,8 @@ class ServerService(
 
         serverInfoDTO.permissionGroup.forEach {
             GroupServer(
-                QServer(db).abbr.eq(serverInfoDTO.abbr).findOne()!!.id!!,
-                it
+                it,
+                server.id!!,
             ).insert()
         }
 

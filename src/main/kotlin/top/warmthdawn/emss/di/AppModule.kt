@@ -37,7 +37,7 @@ val appModule = module {
     single { DockerService(get(), get()) }
     //status
     single { StatisticsService(get(), get(), get()) }
-    single { ServerStatisticsFactory() }
+    single { ServerStatisticsFactory(get()) }
     //file
     single { FileService(get()) }
     //command
