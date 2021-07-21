@@ -37,6 +37,11 @@ fun MapApplicationConfig.createConfigForTesting() {
     put("ktor.database.driverClass", "org.h2.Driver")
     put("ktor.database.url", "jdbc:h2:mem:test;DATABASE_TO_UPPER=false;MODE=MYSQL")
     put("ktor.database.maxPoolSize", "1")
+
+    // SecretKey Config
+    put("key.authKey","kU8jCxTW5XI0dlO6VAKo3O9OCpohW3b3")
+    put("key.passwordFrontKey","tYAz3PN1aB4OZ9mS")
+    put("key.passwordBackKey","iB1c0KI2pQldXOZB")
 }
 
 
@@ -91,5 +96,5 @@ val appTestModule = module {
 
     //permission
     single { PermissionService(get()) }
-    single { LoginService(get()) }
+    single { LoginService(get(), get()) }
 }

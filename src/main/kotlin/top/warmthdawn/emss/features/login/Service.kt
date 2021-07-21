@@ -1,9 +1,13 @@
 package top.warmthdawn.emss.features.login
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.ebean.Database
+import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.query.QUser
 import java.security.MessageDigest
+import java.util.*
 
 
 /**
@@ -13,7 +17,8 @@ import java.security.MessageDigest
  */
 
 class LoginService(
-    private val db: Database
+    private val db: Database,
+    private val config: AppConfig
 ) {
     /*
     suspend fun getUserInfo(): List<UserInfoVO> {
@@ -37,6 +42,11 @@ class LoginService(
         return result
     }
     */
+
+    // 签发证书
+    fun sign(username: String): Map<String, String> {
+        return AuthProvider.sign(username,config.secretKeyConfig.authKey)
+    }
 
     // 登陆验证
     fun loginValidate(username: String, password: String): Boolean
@@ -75,9 +85,11 @@ class LoginService(
         ).insert()
     }
 
+    // 加密器
     fun sha256Encoder(password: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
-        val result = digest.digest(password.toByteArray())
+        val encodedPassword = config.secretKeyConfig.passwordFrontKey + password + config.secretKeyConfig.passwordBackKey
+        val result = digest.digest(encodedPassword.toByteArray())
         return result.joinToString("") { "%02x".format(it) }
     }
 }

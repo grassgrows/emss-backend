@@ -45,5 +45,5 @@ val appModule = module {
 
     //permission
     single { PermissionService(get()) }
-    single { LoginService(get()) }
+    single { LoginService(get(), get()) }
 }

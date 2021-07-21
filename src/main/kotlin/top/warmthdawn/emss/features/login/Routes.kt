@@ -25,7 +25,7 @@ fun Route.loginEndpoint() {
         post {
             val user = call.receive<UserDTO>()
             if (loginService.loginValidate(user.username, user.password)) {
-                R.ok(AuthProvider.sign(user.username))
+                R.ok(loginService.sign(user.username))
             } else {
                 R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误!", HttpStatusCode.Unauthorized)
             }

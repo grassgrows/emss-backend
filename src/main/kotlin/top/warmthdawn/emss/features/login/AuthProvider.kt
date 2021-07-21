@@ -1,12 +1,11 @@
 package top.warmthdawn.emss.features.login
 
-import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
+import top.warmthdawn.emss.config.AppConfig
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 /**
  * @author takanashi
@@ -27,14 +26,12 @@ object AuthProvider{
 //        .rateLimited(10, 1, TimeUnit.MINUTES)
 //        .build()
 
-    val SECRET_KEY = "xvO5QYeff6i5Wy8g4oXl"  //TODO 私钥
-    val algorithm = Algorithm.HMAC256(SECRET_KEY)
 
     val map = mapOf("typ" to "JWT", "alg" to "HS256")
 
 
     // 签发证书
-    fun sign(username: String): Map<String, String> {
+    fun sign(username: String,secretKey: String): Map<String, String> {
         return mapOf("token" to
                 JWT.create()
                     .withHeader(map)
@@ -44,7 +41,7 @@ object AuthProvider{
                     .withClaim("username", username)
                     .withIssuedAt(Date())
                     .withExpiresAt(Date(System.currentTimeMillis() + expiresIn))
-                    .sign(algorithm))
+                    .sign(Algorithm.HMAC256(secretKey)))
     }
 
     fun validate(credential: JWTCredential): Principal

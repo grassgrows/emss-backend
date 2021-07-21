@@ -6,17 +6,18 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
+import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.features.login.AuthProvider
 
 fun Application.configureSecurity() {
-
-
+    val cfg by inject<AppConfig>()
     install(Authentication) {
         jwt("auth-jwt") {
             realm = AuthProvider.realm
 //            verifier(AuthProvider.jwkProvider, AuthProvider.jwkIssuer)
             verifier(JWT
-                .require(Algorithm.HMAC256(AuthProvider.SECRET_KEY))
+                .require(Algorithm.HMAC256(cfg.secretKeyConfig.authKey))
                 .withAudience(AuthProvider.audience)
                 .withIssuer(AuthProvider.issuer)
                 .build())
