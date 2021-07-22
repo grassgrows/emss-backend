@@ -18,12 +18,15 @@ class RestApplication(val call: ApplicationCall) {
     suspend fun ok() {
         call.respond(ApiResult(Code.Success, Unit, "请求成功"))
     }
+
     suspend inline fun <reified T : Any> ok(data: T, msg: String = "请求成功") {
         call.respond(ApiResult(Code.Success, data, "请求成功"))
     }
 
-    suspend fun error(code: Code, message: String,
-                      statusCode: HttpStatusCode = HttpStatusCode.InternalServerError) {
+    suspend fun error(
+        code: Code, message: String,
+        statusCode: HttpStatusCode = HttpStatusCode.InternalServerError
+    ) {
         call.respond(statusCode, ApiResult(code, Unit, message))
     }
 
@@ -41,6 +44,7 @@ data class ApiResult<T>(
     val data: T,
     val msg: String?,
 )
+
 /**
  * 错误码
  */
@@ -70,22 +74,27 @@ enum class Code(
      * Image下载失败
      */
     ImageDownloadFailed("B112"),
+
     /**
      * Image未找到
      */
     ImageNotFound("B120"),
+
     /**
      * Image未下载
      */
     ImageNotDownloaded("B122"),
+
     /**
      * Image删除失败
      */
     ImageRemoveFailed("B140"),
+
     /**
      * Image的数据库信息删除失败
      */
     ImageDatabaseRemoveFailed("B142"),
+
     /**
      * Image删除时正在被使用
      */
@@ -100,14 +109,21 @@ enum class Code(
      * 服务器未找到
      */
     ServerNotFound("B320"),
+
     /**
      *  服务器未启动
      */
-    ServerNotRunning("B330"),
+    ServerNotRunning("B331"),
+    /**
+     *  服务器未关闭
+     */
+    ServerNotStopped("B332"),
+
     /**
      * 服务器删除失败
      */
     ServerRemoveFailed("B340"),
+
     /**
      * 服务器的数据库信息删除失败
      */
@@ -126,10 +142,6 @@ enum class Code(
     UnexpectedError("C920"),
 
     //文件相关
-    /**
-     * 当前请求用户权限等级不足
-     */
-    InsufficientPermissionLevel("D111"),
 
     /**
      * 请求文件路径格式不对
@@ -160,6 +172,7 @@ enum class Code(
      * 请求文件已存在
      */
     FileAlreadyExist("D117"),
+
     /**
      * 请求文件已存在
      */
@@ -169,26 +182,74 @@ enum class Code(
      * 上传请求出错
      */
     NonUploaderRequest("D120"),
+
     /**
      * 上传文件出错：文件块数量出错
      */
     InvalidUploaderRequest1("D121"),
+
     /**
      * 上传文件出错：文件块大小超出限制
      */
     InvalidUploaderRequest2("D122"),
+
     /**
      * 上传文件出错：文件块大小出错
      */
     InvalidUploaderRequest3("D123"),
+
     /**
      * 上传文件出错：最后一个文件块出错
      */
     InvalidUploaderRequest4("D124"),
+
     /**
      * 上传文件出错：单文件块文件大小出错
      */
     InvalidUploaderRequest5("D125"),
 
+    //登录相关
+    /**
+     * 用户名或密码错误
+     */
+    UserNameOrPasswordWrong("E101"),
+    /**
+     * 用户未找到
+     */
+    UserNotFound("E102"),
+    /**
+     * 密码错误
+     */
+    PasswordWrong("E103"),
+    /**
+     * 注册时用户名不合法
+     */
+    UserNameIllegal("E111"),
+    /**
+     * 注册时密码不合法
+     */
+    PasswordIllegal("E112"),
+    /**
+     * 用户名已被使用
+     */
+    UserNameHaveBeenUsed("E113"),
+    /**
+     * JWT证书验证错误
+     */
+    CredentialWrong("E201"),
+
+    //权限相关
+    /**
+     * 当前请求用户权限等级不足
+     */
+    InsufficientPermissionLevel("F110"),
+    /**
+     * 当前请求用户权限等级不足
+     */
+    GroupDatabaseRemoveFailed("F111"),
+    /**
+     * 当前请求用户权限等级不足
+     */
+    UserDatabaseRemoveFailed("F112"),
 }
 

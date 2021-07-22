@@ -12,6 +12,7 @@ import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.docker.vo.ImageStatusVO
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.settings.dto.ImageDTO
 
 /**
@@ -23,7 +24,8 @@ import top.warmthdawn.emss.features.settings.dto.ImageDTO
 class SettingService(
     private val db: Database,
     private val config: AppConfig,
-    val fileService: FileService
+    private val fileService: FileService,
+    private val permissionService: PermissionService
 ) {
     suspend fun getBaseSetting(): BaseSetting {
         val result = QSetting(db).findList().associate { it.type to it.value }
@@ -48,17 +50,17 @@ class SettingService(
         if (!baseSetting.serverRootDirectory.isNullOrEmpty()) {
             val setting = Setting(SettingType.SERVER_ROOT_DIRECTORY, baseSetting.serverRootDirectory)
             setting.update()
-            fileService.createDirs(baseSetting.serverRootDirectory, false)
+            fileService.innerCreateDirs(baseSetting.serverRootDirectory)
         }
         if (!baseSetting.serverBackupDirectory.isNullOrEmpty()) {
             val setting = Setting(SettingType.SERVER_BACKUP_DIRECTORY, baseSetting.serverBackupDirectory)
             setting.update()
-            fileService.createDirs(baseSetting.serverBackupDirectory, false)
+            fileService.innerCreateDirs(baseSetting.serverBackupDirectory)
         }
         if (!baseSetting.temporaryFolder.isNullOrEmpty()) {
             val setting = Setting(SettingType.TEMPORARY_FOLDER, baseSetting.temporaryFolder)
             setting.update()
-            fileService.createDirs(baseSetting.temporaryFolder, false)
+            fileService.innerCreateDirs(baseSetting.temporaryFolder)
         }
     }
 
@@ -67,6 +69,7 @@ class SettingService(
     }
 
     suspend fun createImage(imageDTO: ImageDTO) {
+
         val image = Image(
             name = imageDTO.name,
             repository = imageDTO.repository,
@@ -106,7 +109,7 @@ class ImageService(
 
         if (result == null) {
             val image = settingService.getImage(id)
-            val status = DockerManager.inspectImage(image.imageId)
+            val status = DockerManager.inspectImage(image.imageName)
             return ImageStatusVO(
                 if (status == null) ImageStatus.Ready else ImageStatus.Downloaded
             )
@@ -122,7 +125,7 @@ class ImageService(
 
         val image = settingService.getImage(id)
         try {
-            DockerManager.removeImage(image.imageId)
+            DockerManager.removeImage(image.imageName)
         } catch (e: Exception) {
             throw ImageException(ImageExceptionMsg.IMAGE_REMOVE_FAILED)
         }

@@ -5,7 +5,6 @@ import io.ebean.Database
 import io.ebean.annotation.TxIsolation
 import io.ktor.config.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.dsl.module
 import top.warmthdawn.emss.config.AppConfig
@@ -16,13 +15,19 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
 import top.warmthdawn.emss.features.command.CommandService
-import top.warmthdawn.emss.features.docker.ContainerService
+import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
-import top.warmthdawn.emss.features.dockerStats.StatsService
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.login.LoginService
+import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.server.ServerService
+//import top.warmthdawn.emss.features.statistics.impl.ServerObjectFactory
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
+import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
+import top.warmthdawn.emss.utils.server.ServerInstanceFactory
+import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 fun MapApplicationConfig.createConfigForTesting() {
     // Server config
@@ -32,14 +37,20 @@ fun MapApplicationConfig.createConfigForTesting() {
     put("ktor.database.driverClass", "org.h2.Driver")
     put("ktor.database.url", "jdbc:h2:mem:test;DATABASE_TO_UPPER=false;MODE=MYSQL")
     put("ktor.database.maxPoolSize", "1")
+
+    // SecretKey Config
+    put("key.authKey","kU8jCxTW5XI0dlO6VAKo3O9OCpohW3b3")
+    put("key.passwordFrontKey","tYAz3PN1aB4OZ9mS")
+    put("key.passwordBackKey","iB1c0KI2pQldXOZB")
 }
 
 
-fun withTestServer(koinModules: List<Module> = listOf(appTestModule), block: suspend TestApplicationEngine.() -> Unit) {
+fun withTestServer(useMemoryDB: Boolean = true, koinModules: List<Module> = listOf(appTestModule), block: suspend TestApplicationEngine.() -> Unit) {
     withTestApplication(
         {
             (environment.config as MapApplicationConfig).apply {
                 createConfigForTesting()
+                put("test.useMemoryDB", useMemoryDB.toString())
             }
             module(testing = true, koinModules = koinModules)
         }, {
@@ -65,20 +76,25 @@ val appTestModule = module {
     single<DBFactory> { DBFactoryImpl(get()) }
 
     //setting
-    single { SettingService(get(), get(), get()) }
+    single { SettingService(get(), get(), get(), get()) }
     single { ImageDownloadScheduler(get()) }
     single { ImageService(get(), get(), get()) }
 
     //server
-    single { ContainerService(get()) }
-    single { ServerService(get(), get(), get(), get(),get()) }
-
-    //file
-    single { FileService() }
-
+    single { ServerService(get(), get(), get(), get(), get(), get()) }
+    single { ServerInstanceFactory(get(), get(), get(), get()) }
+    single { ServerInstanceHolder(get()) }
+    //docker
+    single { DockerService(get(), get()) }
     //status
-    single { StatsService() }
-
+    single { StatisticsService(get(), get(), get()) }
+    single { ServerStatisticsFactory(get()) }
+    //file
+    single { FileService(get()) }
     //command
-    single { CommandService() }
+    single { CommandService(get()) }
+
+    //permission
+    single { PermissionService(get(), get()) }
+    single { LoginService(get(), get()) }
 }

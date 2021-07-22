@@ -27,7 +27,7 @@ class DBFactoryImpl(
             loadFromProperties()
             isDefaultServer = true
         }
-        if(appConfig.testing) {
+        if(appConfig.testing && appConfig.useMemory) {
             config.dataSourceConfig.url = "jdbc:h2:mem:test;DATABASE_TO_UPPER=false;MODE=MYSQL"
         }
 

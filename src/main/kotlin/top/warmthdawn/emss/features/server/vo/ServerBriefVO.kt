@@ -1,8 +1,5 @@
 package top.warmthdawn.emss.features.server.vo
 
-import com.sun.org.apache.xpath.internal.operations.Bool
-import top.warmthdawn.emss.features.docker.ContainerStatus
-import top.warmthdawn.emss.features.server.ServerStatus
 import java.time.LocalDateTime
 
 /**
@@ -19,4 +16,5 @@ class ServerBriefVO(
     var port: Int?,
     var imageId: Long,    //镜像的数据库ID
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
+    var permissionGroup: List<Long>
 )

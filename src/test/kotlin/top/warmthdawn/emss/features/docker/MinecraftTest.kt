@@ -23,20 +23,20 @@ fun mmain() {
     val exposedPort = ExposedPort(80)
     val binding = Ports.Binding(null, 80.toString())
     val portBinding = mutableListOf(PortBinding(binding, exposedPort))
-    val dockerId = DockerManager.createContainer(containerName, "openjdk:8", portBinding, bind, "/data/", cmd)
+//    val dockerId = DockerManager.createContainer(containerName, "openjdk:8", portBinding, bind, "/data/", cmd)
 
-    if (dockerId == null) {
-        print("*********** failed *************/n")
-        return
-    }
-
-    DockerManager.startContainer(dockerId)
+//    if (dockerId == null) {
+//        print("*********** failed *************/n")
+//        return
+//    }
+//
+//    DockerManager.startContainer(dockerId)
     //DockerManager.attachContainer(dockerId, System.`in`, System.out)
 
 }
 
 fun main()
-{
+{/*
     val path = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
     print(path.toString()+"\n")
     val path2 = Path("/asdad")
@@ -53,4 +53,5 @@ fun main()
 //    print(fileService.processPath("root\\qwert\\").toString()+"\n")
 //    print(fileService.processPath("\\root\\qwert").toString()+"\n")
 //    print(fileService.processPath("root\\qwert").toString()+"\n")
+*/
 }

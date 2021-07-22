@@ -19,7 +19,7 @@ plugins {
 }
 
 group = "top.warmthdawn.emss"
-version = "0.2.6"
+version = "0.3.1"
 application {
     mainClass.set("top.warmthdawn.emss.ApplicationKt")
 }
@@ -34,6 +34,8 @@ tasks.named<ShadowJar>("shadowJar") {
 }
 
 repositories {
+    maven("https://maven.blackyin.xyz:8015/repository/maven-public/")
+    maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
 }
 
@@ -64,6 +66,13 @@ dependencies {
     kapt("io.ebean:kotlin-querybean-generator:$ebean_version")
     implementation("com.h2database:h2:$h2_version")
     implementation("io.ebean:ebean-migration:12.4.0")
+    // JWT
+    implementation("io.ktor:ktor-auth:$ktor_version")
+    implementation("io.ktor:ktor-auth-jwt:$ktor_version")
+    //doctor
+    implementation("top.limbang.doctor:doctor-client:1.2.7")
+    //oshi
+    implementation("com.github.oshi:oshi-core:5.8.0")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")

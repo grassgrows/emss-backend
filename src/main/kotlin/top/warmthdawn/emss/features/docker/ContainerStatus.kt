@@ -9,6 +9,7 @@ enum class ContainerStatus {
     Running,
     Stopped,
     Unknown,
+    Removed,
     /*
     Created,
     Running,

@@ -1,20 +1,51 @@
 package top.warmthdawn.emss.plugins
 
-import io.ktor.auth.*
-import io.ktor.util.*
-import io.ktor.auth.jwt.*
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.application.*
-import io.ktor.response.*
-import io.ktor.request.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
+import io.ktor.http.auth.*
+import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.config.AppConfig
+import top.warmthdawn.emss.features.login.AuthProvider
 
 fun Application.configureSecurity() {
-
-//    val jwtIssuer = environment.config.property("jwt.domain").getString()
-//    val jwtAudience = environment.config.property("jwt.audience").getString()
-//    val jwtRealm = environment.config.property("jwt.realm").getString()
+    val cfg by inject<AppConfig>()
+    install(Authentication) {
+        jwt("auth-jwt") {
+            realm = AuthProvider.realm
+//            verifier(AuthProvider.jwkProvider, AuthProvider.jwkIssuer)
+            verifier(
+                JWT
+                    .require(Algorithm.HMAC256(cfg.secretKeyConfig.authKey))
+                    .withAudience(AuthProvider.audience)
+                    .withIssuer(AuthProvider.issuer)
+                    .build()
+            )
+            authHeader { call ->
+                val result = try {
+                    call.request.parseAuthorizationHeader()
+                } catch (ex: IllegalArgumentException) {
+                    null
+                }
+                if (result == null) {
+                    val param = call.request.queryParameters["token"]
+                    if (!param.isNullOrEmpty()) {
+                        HttpAuthHeader.Single("Bearer", param)
+                    } else {
+                        null
+                    }
+                } else {
+                    result
+                }
+            }
+            validate {
+                AuthProvider.validate(it)
+            }
+        }
+    }
 //    authentication {
 //        jwt {
 //            realm = jwtRealm

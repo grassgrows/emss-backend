@@ -1,9 +1,5 @@
 package top.warmthdawn.emss.features.server.vo
 
-import top.warmthdawn.emss.features.docker.ContainerStatus
-import top.warmthdawn.emss.features.server.ServerStatus
-import java.time.LocalDateTime
-
 /**
  *
  * @author sunday7994
@@ -21,5 +17,6 @@ data class ServerVO(
     var workingDir: String,    //工作目录
     var portBindings: Map<Int,Int>,  //端口映射
     var volumeBind: Map<String,String>, //目录映射
+    var permissionGroup: List<Long>
 
 )
