@@ -44,6 +44,6 @@ val appModule = module {
     single { CommandService(get()) }
 
     //permission
-    single { PermissionService(get()) }
+    single { PermissionService(get(), get()) }
     single { LoginService(get(), get()) }
 }

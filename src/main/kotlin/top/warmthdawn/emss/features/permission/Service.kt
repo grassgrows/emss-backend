@@ -231,6 +231,12 @@ class PermissionService
                 user.update()
             }
         }
+        if (!briefUserInfoDTO.username.isNullOrEmpty()){
+            loginService.modifyUserName(briefUserInfoDTO.id, briefUserInfoDTO.username!!)
+        }
+        if(!briefUserInfoDTO.password.isNullOrEmpty()){
+            loginService.modifyPasswordAdmin(briefUserInfoDTO.id, briefUserInfoDTO.password!!)
+        }
 
     }
 
