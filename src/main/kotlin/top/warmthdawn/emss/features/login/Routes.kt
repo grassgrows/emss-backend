@@ -7,11 +7,13 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.login.dto.UserCreateDTO
 import top.warmthdawn.emss.features.login.dto.UserDTO
 import top.warmthdawn.emss.features.login.dto.UserModifyNameDTO
 import top.warmthdawn.emss.features.login.dto.UserModifyPasswordDTO
 import top.warmthdawn.emss.utils.Code
 import top.warmthdawn.emss.utils.R
+import top.warmthdawn.emss.utils.checkPermission
 
 /**
  * @author takanashi
@@ -50,8 +52,9 @@ fun Route.loginEndpoint() {
     route("/user") {
         authenticate("auth-jwt") {
             post("/create") {
-                val user = call.receive<UserDTO>()
-                loginService.createUser(user.username, user.password)
+                val user = call.receive<UserCreateDTO>()
+                checkPermission(0)
+                loginService.createUser(user.username, user.password, user.permissionLevel)
                 R.ok()
             }
             route("/modify") {

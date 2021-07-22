@@ -60,7 +60,7 @@ class LoginService(
     }
 
     // 创建用户
-    fun createUser(username: String, password: String)
+    fun createUser(username: String, password: String, permissionLevel: Int)
     {
         // 用户名只能为大小写字母、数字或下划线，且长度为3~20个字符
         val nameRegex = Regex("^[a-zA-Z0-9_]{3,20}$")
@@ -82,7 +82,7 @@ class LoginService(
         User(
             username,
             sha256Encoder(password),
-            1
+            permissionLevel
         ).insert()
     }
 
