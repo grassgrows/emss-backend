@@ -126,9 +126,9 @@ fun Route.permissionEndpoint() {
         post("/update") {
             checkPermission(1)
             val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            val userDTO = call.receive<List<BriefUserInfoDTO>>()
+            val userList = call.receive<List<Long>>()
             checkGroupPermission(groupId, 2)
-            permissionService.updatePermissionUG(groupId, userDTO)
+            permissionService.updatePermissionUG(groupId, userList)
             R.ok()
         }
     }

@@ -175,25 +175,16 @@ class PermissionService
             .delete()
     }
 
-    suspend fun updatePermissionUG(groupId: Long, userList: List<BriefUserInfoDTO>) {
-//        val userGroup = QUserGroup(db).groupId.eq(groupId)
-//        userIdList.forEach{
-//            if (userGroup.userId.eq(it).exists()) {
-//                val row = userGroup.userId.eq(it).findOne()!!
-//                row.groupPermissionLevel = newLevel
-//                row.update()
-//            } else {
-//                UserGroup(it, groupId, newLevel).insert()
-//            }
-//        }
-//        userGroup.findList().forEach {
-//
-//        }
-        QUserGroup(db).groupId.eq(groupId).delete()
+    suspend fun updatePermissionUG(groupId: Long, userList: List<Long>) {
+        val userGroup = QUserGroup(db).groupId.eq(groupId)
         userList.forEach {
-            UserGroup(it.id, groupId, it.groupPermissionLevel!!).insert()
+            if (!userGroup.userId.eq(it).exists())
+                UserGroup(it, groupId, 1).insert()
         }
-
+        userGroup.findList().forEach {
+            if (!userList.contains(it.userId))
+                it.delete()
+        }
     }
 
 
@@ -231,10 +222,10 @@ class PermissionService
                 user.update()
             }
         }
-        if (!briefUserInfoDTO.username.isNullOrEmpty()){
+        if (!briefUserInfoDTO.username.isNullOrEmpty()) {
             loginService.modifyUserName(briefUserInfoDTO.id, briefUserInfoDTO.username!!)
         }
-        if(!briefUserInfoDTO.password.isNullOrEmpty()){
+        if (!briefUserInfoDTO.password.isNullOrEmpty()) {
             loginService.modifyPasswordAdmin(briefUserInfoDTO.id, briefUserInfoDTO.password!!)
         }
 
