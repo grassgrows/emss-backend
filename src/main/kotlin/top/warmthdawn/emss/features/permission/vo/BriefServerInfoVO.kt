@@ -6,8 +6,8 @@ package top.warmthdawn.emss.features.permission.vo
  * @date 2021/7/21
  */
 
-data class BriefUserInfo(
+data class BriefServerInfoVO(
     var id: Long,
-    var username: String,
-    var groupPermissionLevel: Int? = null
+    var name: String,
+    var abbr: String,
 )

@@ -3,12 +3,15 @@ package top.warmthdawn.emss.features.permission
 import io.ebean.Database
 import top.warmthdawn.emss.database.entity.GroupServer
 import top.warmthdawn.emss.database.entity.PermissionGroup
-import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.UserGroup
 import top.warmthdawn.emss.database.entity.query.*
-import top.warmthdawn.emss.features.permission.vo.BriefGroupInfo
-import top.warmthdawn.emss.features.permission.vo.BriefServerInfo
-import top.warmthdawn.emss.features.permission.vo.BriefUserInfo
+import top.warmthdawn.emss.features.login.LoginException
+import top.warmthdawn.emss.features.login.LoginExceptionMsg
+import top.warmthdawn.emss.features.login.LoginService
+import top.warmthdawn.emss.features.permission.dto.BriefUserInfoDTO
+import top.warmthdawn.emss.features.permission.vo.BriefGroupInfoVO
+import top.warmthdawn.emss.features.permission.vo.BriefServerInfoVO
+import top.warmthdawn.emss.features.permission.vo.BriefUserInfoVO
 import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
 
@@ -20,7 +23,8 @@ import top.warmthdawn.emss.features.permission.vo.PermissionGroupVO
 
 class PermissionService
     (
-    private val db: Database
+    private val db: Database,
+    val loginService: LoginService
 ) {
     suspend fun createPermissionGroup(groupName: String, maxPermissionLevel: Int) {
         PermissionGroup(
@@ -47,10 +51,10 @@ class PermissionService
         }
     }
 
-    suspend fun getAllUserInfo(): List<BriefUserInfo> {
-        val result: MutableList<BriefUserInfo> = mutableListOf()
+    suspend fun getAllUserInfo(): List<BriefUserInfoVO> {
+        val result: MutableList<BriefUserInfoVO> = mutableListOf()
         for (row in QUser(db).findList()) {
-            val briefUserInfo = BriefUserInfo(
+            val briefUserInfo = BriefUserInfoVO(
                 row.id!!,
                 row.username,
             )
@@ -67,11 +71,11 @@ class PermissionService
         }
     }
 
-    private suspend fun usersInGroup(groupId: Long): List<BriefUserInfo> {
-        val result: MutableList<BriefUserInfo> = mutableListOf()
+    private suspend fun usersInGroup(groupId: Long): List<BriefUserInfoVO> {
+        val result: MutableList<BriefUserInfoVO> = mutableListOf()
         QUserGroup(db).groupId.eq(groupId).findList().forEach {
             for (row in QUser(db).id.eq(it.userId).findList()) {
-                val briefUserInfo = BriefUserInfo(
+                val briefUserInfo = BriefUserInfoVO(
                     row.id!!,
                     row.username,
                     it.groupPermissionLevel
@@ -82,11 +86,11 @@ class PermissionService
         return result
     }
 
-    private suspend fun serversOfGroup(groupId: Long): List<BriefServerInfo> {
-        val result: MutableList<BriefServerInfo> = mutableListOf()
+    private suspend fun serversOfGroup(groupId: Long): List<BriefServerInfoVO> {
+        val result: MutableList<BriefServerInfoVO> = mutableListOf()
         QGroupServer(db).groupId.eq(groupId).findList().forEach {
             for (row in QServer(db).id.eq(it.serverId).findList()) {
-                val briefServerInfo = BriefServerInfo(
+                val briefServerInfo = BriefServerInfoVO(
                     row.id!!,
                     row.name,
                     row.abbr
@@ -97,10 +101,10 @@ class PermissionService
         return result
     }
 
-    suspend fun getBriefGroupInfo(): List<BriefGroupInfo> {
-        val result: MutableList<BriefGroupInfo> = mutableListOf()
+    suspend fun getBriefGroupInfo(): List<BriefGroupInfoVO> {
+        val result: MutableList<BriefGroupInfoVO> = mutableListOf()
         for (row in QPermissionGroup(db).findList()) {
-            val briefGroupInfo = BriefGroupInfo(
+            val briefGroupInfo = BriefGroupInfoVO(
                 row.id!!,
                 row.groupName,
             )
@@ -128,6 +132,18 @@ class PermissionService
             result.add(permissionGroupVO)
         }
         return result
+    }
+
+    suspend fun getGroupInfo(groupId: Long): PermissionGroupVO {
+        val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
+        return PermissionGroupVO(
+            group.id!!,
+            group.groupName,
+            group.maxPermissionLevel,
+            usersInGroup(group.id!!),
+            serversOfGroup(group.id!!),
+            getPermittedLocation(group.id!!)
+        )
     }
 
     suspend fun addPermissionGS(groupId: Long, serverId: Long) {
@@ -159,9 +175,37 @@ class PermissionService
             .delete()
     }
 
+    suspend fun updatePermissionUG(groupId: Long, userList: List<BriefUserInfoDTO>) {
+//        val userGroup = QUserGroup(db).groupId.eq(groupId)
+//        userIdList.forEach{
+//            if (userGroup.userId.eq(it).exists()) {
+//                val row = userGroup.userId.eq(it).findOne()!!
+//                row.groupPermissionLevel = newLevel
+//                row.update()
+//            } else {
+//                UserGroup(it, groupId, newLevel).insert()
+//            }
+//        }
+//        userGroup.findList().forEach {
+//
+//        }
+        QUserGroup(db).groupId.eq(groupId).delete()
+        userList.forEach {
+            UserGroup(it.id, groupId, it.groupPermissionLevel!!).insert()
+        }
+
+    }
+
+
     suspend fun addPermittedLocation(groupId: Long, location: String) {
         val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
         group.permittedLocation += location
+        group.update()
+    }
+
+    suspend fun updatePermittedLocation(groupId: Long, location: List<String>) {
+        val group = QPermissionGroup(db).id.eq(groupId).findOne()!!
+        group.permittedLocation = location
         group.update()
     }
 
@@ -171,19 +215,21 @@ class PermissionService
         group.update()
     }
 
-    suspend fun modifyUserPermission(groupId: Long, userId: Long, newLevel: Int) {
+    suspend fun modifyUserPermission(groupId: Long, briefUserInfoDTO: BriefUserInfoDTO) {
         val userGroup = QUserGroup(db)
-            .userId.eq(userId)
+            .userId.eq(briefUserInfoDTO.id)
             .groupId.eq(groupId)
             .findOne()!!
-        userGroup.groupPermissionLevel = newLevel
-        userGroup.update()
-        if (newLevel == 0) {
-            val user = QUser(db)
-                .id.eq(userId)
-                .findOne()!!
-            user.permissionLevel = 0
-            user.update()
+        if (briefUserInfoDTO.groupPermissionLevel != null) {
+            userGroup.groupPermissionLevel = briefUserInfoDTO.groupPermissionLevel!!
+            userGroup.update()
+            if (briefUserInfoDTO.groupPermissionLevel!! < 2) {
+                val user = QUser(db)
+                    .id.eq(briefUserInfoDTO.id)
+                    .findOne()!!
+                user.permissionLevel = briefUserInfoDTO.groupPermissionLevel!!
+                user.update()
+            }
         }
 
     }
