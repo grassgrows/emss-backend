@@ -6,7 +6,6 @@ package top.warmthdawn.emss.features.login.dto
  */
 
 data class UserModifyPasswordDTO(
-    var username: String,
     var password: String,
     var newPassword: String
 )

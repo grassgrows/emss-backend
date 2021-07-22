@@ -81,7 +81,7 @@ internal class LoginTest {
 
     }
 
-    @Ignore
+    //@Ignore
     @Test
     fun validateTest(){
         withTestServer {
@@ -97,7 +97,7 @@ internal class LoginTest {
             handleRequest(HttpMethod.Get, "/login/validate") {
                 addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 addHeader(HttpHeaders.Authorization,
-                    "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImF1ZCI6ImVtc3Mtand0LWF1ZGllbmNlIiwiaXNzIjoiaHR0cHM6Ly9lbXNzLndhcm10aGRhd24udG9wIiwiZXhwIjoxNjI2ODUzNTk1LCJpYXQiOjE2MjY3NjcxOTUsInVzZXJuYW1lIjoidGFrYW5hc2hpIn0.HPu2oSuvHaoqOroqBIErVdhE8HiVLzBzxXT8JrqzqvY")
+                    "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBdXRoZW50aWNhdGlvbiIsImF1ZCI6ImVtc3Mtand0LWF1ZGllbmNlIiwiaXNzIjoiaHR0cHM6Ly9lbXNzLndhcm10aGRhd24udG9wIiwiZXhwIjoxNjI3MDEyMDE0LCJpYXQiOjE2MjY5MjU2MTQsInVzZXJuYW1lIjoidGFrYW5hc2hpIn0.A0XAKMnwG7pUkVMqrNrV9SWmy6BQ77W3J6S_b5Wmt8E")
             }.apply {
                 assertEquals(HttpStatusCode.OK, response.status())
             }
