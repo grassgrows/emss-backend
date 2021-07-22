@@ -49,25 +49,6 @@ fun Route.permissionEndpoint() {
                 permissionService.removePermissionGroup(groupId)
                 R.ok()
             }
-
-            route("/location"){
-                get {
-                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                    R.ok(permissionService.getPermittedLocation(groupId))
-                }
-                post("/add"){
-                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                    val location = call.request.queryParameters["location"]!!
-                    checkGroupPermission(groupId, 2)
-                    permissionService.addPermittedLocation(groupId, location)
-                }
-                post("/remove"){
-                    val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                    val location = call.request.queryParameters["location"]!!
-                    checkGroupPermission(groupId, 2)
-                    permissionService.removePermittedLocation(groupId, location)
-                }
-            }
         }
 
         route("/user") {
@@ -92,10 +73,6 @@ fun Route.permissionEndpoint() {
         }
 
         route("/GS") {
-            get {
-                val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                R.ok(permissionService.getBriefServerInfo(groupId))
-            }
             post("/add") {
                 checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
@@ -116,14 +93,6 @@ fun Route.permissionEndpoint() {
     }
 
     route("/UG") {
-        get {
-            val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            R.ok(permissionService.getBriefUserInfo(groupId))
-        }
-        get("/otherUser") {
-            val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            R.ok(permissionService.getOtherUserInfo(groupId))
-        }
         post("/add") {
             checkPermission(1)
             val groupId = call.request.queryParameters["groupId"]!!.toLong()
@@ -141,6 +110,21 @@ fun Route.permissionEndpoint() {
             checkGroupPermission(groupId, 2)
             permissionService.removePermissionUG(groupId, userId)
             R.ok()
+        }
+    }
+
+    route("/location"){
+        post("/add"){
+            val groupId = call.request.queryParameters["groupId"]!!.toLong()
+            val location = call.request.queryParameters["location"]!!
+            checkGroupPermission(groupId, 2)
+            permissionService.addPermittedLocation(groupId, location)
+        }
+        post("/remove"){
+            val groupId = call.request.queryParameters["groupId"]!!.toLong()
+            val location = call.request.queryParameters["location"]!!
+            checkGroupPermission(groupId, 2)
+            permissionService.removePermittedLocation(groupId, location)
         }
     }
 
