@@ -133,6 +133,24 @@ class LoginService(
         user.update()
     }
 
+    // 管理员修改密码（无需原密码）
+    fun modifyPasswordAdmin(userId: Long, newPassword: String)
+    {
+        if(!QUser(db).id.eq(userId).exists()) {
+            throw LoginException(LoginExceptionMsg.USER_NOT_FOUND)
+        }
+        // 密码只能为大小写字母或数字，且长度为6~20个字符
+        val passwordRegex = Regex("^[a-zA-Z0-9]{6,20}$")
+        if(!passwordRegex.matches(newPassword))
+        {
+            throw LoginException(LoginExceptionMsg.PASSWORD_ILLEGAL)
+        }
+
+        val user = QUser(db).id.eq(userId).findOne()!!
+        user.password = sha256Encoder(newPassword)
+        user.update()
+    }
+
     // 加密器
     fun sha256Encoder(password: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
