@@ -3,14 +3,12 @@ package top.warmthdawn.emss.features.permission
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.routing.*
-import io.ktor.utils.io.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.permission.dto.BriefUserInfoDTO
 import top.warmthdawn.emss.features.permission.dto.PermissionDTO
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkGroupPermission
 import top.warmthdawn.emss.utils.checkPermission
-import java.awt.AWTEventMulticaster.remove
 
 
 /**
@@ -33,7 +31,7 @@ fun Route.permissionEndpoint() {
                 }
             }
 
-            post{
+            post {
                 checkPermission(0)
                 val name = call.request.queryParameters["name"]!!
                 val maxPermissionLevel = call.request.queryParameters["maxLevel"]!!.toInt()
@@ -43,8 +41,7 @@ fun Route.permissionEndpoint() {
 
             get("/{id}") {
                 val groupId = call.parameters["id"]!!.toLong()
-                permissionService.getGroupInfo(groupId)
-                R.ok()
+                R.ok(permissionService.getGroupInfo(groupId))
             }
             post("/{id}") {
                 checkPermission(0)
@@ -60,6 +57,45 @@ fun Route.permissionEndpoint() {
                 permissionService.removePermissionGroup(groupId)
                 R.ok()
             }
+
+            route("/{groupId}") {
+                route("/server") {
+                    post("/{serverId}") {
+                        checkPermission(1)
+                        val groupId = call.parameters["groupId"]!!.toLong()
+                        val serverId = call.parameters["serverId"]!!.toLong()
+                        checkGroupPermission(groupId, 2)
+                        permissionService.addPermissionGS(groupId, serverId)
+                        R.ok()
+                    }
+                    delete("/{serverId}") {
+                        checkPermission(1)
+                        val groupId = call.parameters["groupId"]!!.toLong()
+                        val serverId = call.parameters["serverId"]!!.toLong()
+                        checkGroupPermission(groupId, 2)
+                        permissionService.removePermissionGS(groupId, serverId)
+                        R.ok()
+                    }
+                }
+
+                route("/location") {
+                    delete {
+                        val groupId = call.parameters["groupId"]!!.toLong()
+                        val location = call.request.queryParameters["location"]!!
+                        checkGroupPermission(groupId, 2)
+                        permissionService.removePermittedLocation(groupId, location)
+                        R.ok()
+                    }
+                    post {
+                        checkPermission(1)
+                        val groupId = call.parameters["groupId"]!!.toLong()
+                        val location = call.receive<List<String>>()
+                        checkGroupPermission(groupId, 2)
+                        permissionService.updatePermittedLocation(groupId, location)
+                        R.ok()
+                    }
+                }
+            }
         }
 
         route("/user") {
@@ -69,42 +105,24 @@ fun Route.permissionEndpoint() {
             post {
                 checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                val userId = call.request.queryParameters["userId"]!!.toLong()
-                val level = call.request.queryParameters["newLevel"]!!.toInt()
+//                val userId = call.request.queryParameters["userId"]!!.toLong()
+//                val level = call.request.queryParameters["newLevel"]!!.toInt()
                 val userDTO = call.receive<BriefUserInfoDTO>()
                 checkGroupPermission(groupId, 2)
                 permissionService.modifyUserPermission(groupId, userDTO)
                 R.ok()
             }
-            delete {
+            delete("/{id}") {
                 checkPermission(0)
-                val userId = call.request.queryParameters["userId"]!!.toLong()
+                val userId = call.parameters["id"]!!.toLong()
                 permissionService.removeUser(userId)
                 R.ok()
             }
         }
 
-        route("/GS") {
-            post {
-                checkPermission(1)
-                val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                val serverId = call.request.queryParameters["serverId"]!!.toLong()
-                checkGroupPermission(groupId, 2)
-                permissionService.addPermissionGS(groupId, serverId)
-                R.ok()
-            }
-            delete {
-                checkPermission(1)
-                val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                val serverId = call.request.queryParameters["serverId"]!!.toLong()
-                checkGroupPermission(groupId, 2)
-                permissionService.removePermissionGS(groupId, serverId)
-                R.ok()
-            }
-        }
     }
 
-    route("/UG") {
+    route("/user-group") {
         post("/add") {
             checkPermission(1)
             val groupId = call.request.queryParameters["groupId"]!!.toLong()
@@ -133,27 +151,5 @@ fun Route.permissionEndpoint() {
         }
     }
 
-    route("/location") {
-        post("/add") {
-            val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            val location = call.request.queryParameters["location"]!!
-            checkGroupPermission(groupId, 2)
-            permissionService.addPermittedLocation(groupId, location)
-        }
-        delete {
-            val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            val location = call.request.queryParameters["location"]!!
-            checkGroupPermission(groupId, 2)
-            permissionService.removePermittedLocation(groupId, location)
-        }
-        post("/update") {
-            checkPermission(1)
-            val groupId = call.request.queryParameters["groupId"]!!.toLong()
-            val location = call.receive<List<String>>()
-            checkGroupPermission(groupId, 2)
-            permissionService.updatePermittedLocation(groupId, location)
-            R.ok()
-        }
-    }
 
 }

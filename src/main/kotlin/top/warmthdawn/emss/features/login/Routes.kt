@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.features.login.dto.UserCreateDTO
 import top.warmthdawn.emss.features.login.dto.UserDTO
 import top.warmthdawn.emss.features.login.dto.UserModifyPasswordDTO
@@ -37,34 +38,35 @@ fun Route.loginEndpoint() {
                     val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username")
                     val issuedTime = (call.authentication.principal as JWTPrincipal).payload.issuedAt
 
-                print("---------------------------- $name\n")
-                val nameS = name.toString()
-                print("---------------------------- $nameS\n")
-                print("---------------------------- $issuedTime\n")
-                R.ok()
-            }
-        }
-
-    }
-
-    route("/user") {
-        authenticate("auth-jwt") {
-            post("/create") {
-                val user = call.receive<UserCreateDTO>()
-                checkPermission(0)
-                loginService.createUser(user.username, user.password, user.permissionLevel)
-                R.ok()
-            }
-            route("/modify") {
-                post("/username") {
-                    val newName = call.request.queryParameters["newname"].toString()
-                    loginService.modifyUserName(userId, newName)
+                    print("---------------------------- $name\n")
+                    val nameS = name.toString()
+                    print("---------------------------- $nameS\n")
+                    print("---------------------------- $issuedTime\n")
                     R.ok()
                 }
-                post("/password") {
-                    val user = call.receive<UserModifyPasswordDTO>()
-                    loginService.modifyPassword(userId, user.password, user.newPassword)
+            }
+
+        }
+
+        route("/user") {
+            authenticate("auth-jwt") {
+                post("/create") {
+                    val user = call.receive<UserCreateDTO>()
+                    checkPermission(0)
+                    loginService.createUser(user.username, user.password, user.permissionLevel)
                     R.ok()
+                }
+                route("/modify") {
+                    post("/username") {
+                        val newName = call.request.queryParameters["newname"].toString()
+                        loginService.modifyUserName(userId, newName)
+                        R.ok()
+                    }
+                    post("/password") {
+                        val user = call.receive<UserModifyPasswordDTO>()
+                        loginService.modifyPassword(userId, user.password, user.newPassword)
+                        R.ok()
+                    }
                 }
             }
         }
