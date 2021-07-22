@@ -188,14 +188,13 @@ class PermissionService
 
     }
 
-    suspend fun checkUserPermission(username: String, requiredLevel: Int) {
-        if (QUser(db).username.eq(username).findOne()!!.permissionLevel > requiredLevel) {
+    suspend fun checkUserPermission(userId: Long, requiredLevel: Int) {
+        if (QUser(db).id.eq(userId).findOne()!!.permissionLevel > requiredLevel) {
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
         }
     }
 
-    suspend fun checkGroupPermission(username: String, requiredLevel: Int, groupId: Long) {
-        val userId = QUser(db).username.eq(username).findOne()!!.id!!
+    suspend fun checkGroupPermission(userId: Long, requiredLevel: Int, groupId: Long) {
         if (QUserGroup(db)
                 .userId.eq(userId)
                 .groupId.eq(groupId)
@@ -206,16 +205,15 @@ class PermissionService
         }
     }
 
-    suspend fun checkServerPermission(username: String, requiredLevel: Int, serverId: Long) {
+    suspend fun checkServerPermission(userId: Long, requiredLevel: Int, serverId: Long) {
         val sql =
             "SELECT MIN(GROUP_PERMISSION_LEVEL) as RESULT FROM USER_GROUP\n" +
                     "LEFT JOIN GROUP_SERVER on USER_GROUP.GROUP_ID = GROUP_SERVER.GROUP_ID\n" +
-                    "LEFT JOIN USER ON USER_ID = USER.ID\n" +
-                    "WHERE GROUP_SERVER.SERVER_ID = :server_id AND USER.USERNAME = :username"
+                    "WHERE GROUP_SERVER.SERVER_ID = :server_id AND USER_GROUP.USER_ID = :user_id"
 
         val permissionLevel = db.sqlQuery(sql)
             .setParameter("server_id", serverId)
-            .setParameter("username", username)
+            .setParameter("user_id", userId)
             .findOne()!!
             .getInteger("RESULT")
         if (permissionLevel > requiredLevel

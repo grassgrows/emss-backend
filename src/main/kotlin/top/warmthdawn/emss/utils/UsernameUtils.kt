@@ -18,21 +18,21 @@ import top.warmthdawn.emss.features.permission.PermissionService
  * @date 2021/7/20
  */
 
-val PipelineContext<*, ApplicationCall>.username
+val PipelineContext<*, ApplicationCall>.userId
     get() =
-        (this.call.authentication.principal as JWTPrincipal).payload.getClaim("username").asString()
+        (this.call.authentication.principal as JWTPrincipal).payload.getClaim("userId").asLong()
 
 suspend fun PipelineContext<*, ApplicationCall>.checkPermission(requiredLevel: Int) {
     val permissionService by application.inject<PermissionService>()
-    permissionService.checkUserPermission(username = username, requiredLevel)
+    permissionService.checkUserPermission(userId = userId, requiredLevel)
 }
 
 suspend fun PipelineContext<*, ApplicationCall>.checkGroupPermission(groupId: Long, requiredLevel: Int) {
     val permissionService by application.inject<PermissionService>()
-    permissionService.checkGroupPermission(username = username, requiredLevel, groupId)
+    permissionService.checkGroupPermission(userId = userId, requiredLevel, groupId)
 }
 
 suspend fun PipelineContext<*, ApplicationCall>.checkServerPermission(serverId: Long, requiredLevel: Int) {
     val permissionService by application.inject<PermissionService>()
-    permissionService.checkServerPermission(username = username, requiredLevel, serverId)
+    permissionService.checkServerPermission(userId = userId, requiredLevel, serverId)
 }

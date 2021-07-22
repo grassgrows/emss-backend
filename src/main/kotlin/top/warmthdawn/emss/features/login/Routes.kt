@@ -10,9 +10,7 @@ import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.login.dto.UserCreateDTO
 import top.warmthdawn.emss.features.login.dto.UserDTO
 import top.warmthdawn.emss.features.login.dto.UserModifyPasswordDTO
-import top.warmthdawn.emss.utils.Code
-import top.warmthdawn.emss.utils.R
-import top.warmthdawn.emss.utils.checkPermission
+import top.warmthdawn.emss.utils.*
 
 /**
  * @author takanashi
@@ -27,11 +25,8 @@ fun Route.loginEndpoint() {
 
         post {
             val user = call.receive<UserDTO>()
-            if (loginService.loginValidate(user.username, user.password)) {
-                R.ok(loginService.sign(user.username))
-            } else {
-                R.error(Code.UserNameOrPasswordWrong, "用户名或密码错误!", HttpStatusCode.Unauthorized)
-            }
+            val userId = loginService.loginValidate(user.username, user.password)
+            R.ok(loginService.sign(userId))
         }
 
         // TODO 测试，不留
@@ -60,15 +55,13 @@ fun Route.loginEndpoint() {
             }
             route("/modify") {
                 post("/username") {
-                    val newName = call.receive<String>()
-                    val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username").toString()
-                    loginService.modifyUserName(name, newName)
+                    val newName = call.request.queryParameters["newname"].toString()
+                    loginService.modifyUserName(userId, newName)
                     R.ok()
                 }
                 post("/password") {
                     val user = call.receive<UserModifyPasswordDTO>()
-                    val name = (call.authentication.principal as JWTPrincipal).payload.getClaim("username").toString()
-                    loginService.modifyPassword(name, user.password, user.newPassword)
+                    loginService.modifyPassword(userId, user.password, user.newPassword)
                     R.ok()
                 }
             }

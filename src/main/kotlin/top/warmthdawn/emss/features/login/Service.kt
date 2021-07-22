@@ -45,18 +45,21 @@ class LoginService(
     */
 
     // 签发证书
-    fun sign(username: String): Map<String, String> {
-        return AuthProvider.sign(username,config.secretKeyConfig.authKey)
+    fun sign(userId: Long): Map<String, String> {
+        return AuthProvider.sign(userId, config.secretKeyConfig.authKey)
     }
 
     // 登陆验证
-    fun loginValidate(username: String, password: String): Boolean
+    fun loginValidate(username: String, password: String): Long
     {
         if(!QUser(db).username.eq(username).exists())
-            return false
+            throw LoginException(LoginExceptionMsg.USER_NOT_FOUND)
 
         val user = QUser(db).username.eq(username).findOne()!!
-        return sha256Encoder(password) == user.password
+        if(sha256Encoder(password) != user.password)
+            throw LoginException(LoginExceptionMsg.PASSWORD_WRONG)
+
+        return user.id!!
     }
 
     // 创建用户
@@ -87,9 +90,9 @@ class LoginService(
     }
 
     // 修改用户名
-    fun modifyUserName(username: String, newUsername: String)
+    fun modifyUserName(userId: Long, newUsername: String)
     {
-        if(!QUser(db).username.eq(username).exists()) {
+        if(!QUser(db).id.eq(userId).exists()) {
             throw LoginException(LoginExceptionMsg.USER_NOT_FOUND)
         }
         // 用户名只能为大小写字母、数字或下划线，且长度为3~20个字符
@@ -103,18 +106,18 @@ class LoginService(
             throw LoginException(LoginExceptionMsg.USERNAME_HAVE_BEEN_USED)
         }
 
-        val user = QUser(db).username.eq(username).findOne()!!
+        val user = QUser(db).id.eq(userId).findOne()!!
         user.username = newUsername
         user.update()
     }
 
     // 修改密码
-    fun modifyPassword(username: String, password: String, newPassword: String)
+    fun modifyPassword(userId: Long, password: String, newPassword: String)
     {
-        if(!QUser(db).username.eq(username).exists()) {
+        if(!QUser(db).id.eq(userId).exists()) {
             throw LoginException(LoginExceptionMsg.USER_NOT_FOUND)
         }
-        val user = QUser(db).username.eq(username).findOne()!!
+        val user = QUser(db).id.eq(userId).findOne()!!
         if(sha256Encoder(password) != user.password)
         {
             throw LoginException(LoginExceptionMsg.PASSWORD_WRONG)

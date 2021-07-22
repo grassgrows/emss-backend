@@ -31,14 +31,14 @@ object AuthProvider{
 
 
     // 签发证书
-    fun sign(username: String,secretKey: String): Map<String, String> {
+    fun sign(userId: Long,secretKey: String): Map<String, String> {
         return mapOf("token" to
                 JWT.create()
                     .withHeader(map)
                     .withIssuer(issuer)
                     .withSubject(subject)
                     .withAudience(audience)
-                    .withClaim("username", username)
+                    .withClaim("userId", userId)
                     .withIssuedAt(Date())
                     .withExpiresAt(Date(System.currentTimeMillis() + expiresIn))
                     .sign(Algorithm.HMAC256(secretKey)))
@@ -59,4 +59,4 @@ object AuthProvider{
 
 }
 
-val JWTPrincipal.userId get() = this.payload.getClaim("username")
+//val JWTPrincipal.userId get() = this.payload.getClaim("userId")

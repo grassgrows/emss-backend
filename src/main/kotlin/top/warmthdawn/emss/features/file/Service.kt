@@ -95,7 +95,7 @@ class FileService(
         return filePathChunk.exists()
     }
 
-    fun ensureHasAuthority(input: String, username: String): List<String> {
+    fun ensureHasAuthority(input: String, userId: Long): List<String> {
         var uri = Path(input).normalize().invariantSeparatorsPathString
 
         if (uri == "/" || uri == "") {
@@ -108,10 +108,9 @@ class FileService(
             "SELECT DISTINCT(LOCATION) as RESULT FROM SERVER\n" +
                     "INNER JOIN GROUP_SERVER GS ON SERVER.ID = GS.SERVER_ID\n" +
                     "INNER JOIN USER_GROUP UG ON GS.GROUP_ID = UG.GROUP_ID\n" +
-                    "INNER JOIN USER ON UG.USER_ID = USER.ID\n" +
-                    "WHERE USERNAME=:username"
+                    "WHERE USER_ID=:user_id"
         )
-            .setParameter("username", username)
+            .setParameter("user_id", userId)
             .findList()
             .map { it.getString("RESULT") }
 
@@ -120,10 +119,9 @@ class FileService(
         val other = db.sqlQuery(
             "SELECT DISTINCT(PERMITTED_LOCATION) as RESULT FROM PERMISSION_GROUP\n" +
                     "INNER JOIN USER_GROUP UG on PERMISSION_GROUP.ID = UG.GROUP_ID\n" +
-                    "INNER JOIN USER ON UG.USER_ID = USER.ID\n" +
-                    "WHERE USERNAME=:username"
+                    "WHERE USER_ID=:user_id"
         )
-            .setParameter("username", username)
+            .setParameter("user_id", userId)
             .findList()
             .map { it.getString("RESULT") }
 
