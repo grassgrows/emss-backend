@@ -14,6 +14,7 @@ import top.warmthdawn.emss.features.login.loginEndpoint
 import top.warmthdawn.emss.features.server.serverEndpoint
 import top.warmthdawn.emss.features.settings.settingEndpoint
 import top.warmthdawn.emss.features.statistics.statisticsEndpoint
+import top.warmthdawn.emss.features.system.systemEndpoint
 
 fun Application.configureRouting() {
     val routing = routing {
@@ -26,6 +27,7 @@ fun Application.configureRouting() {
             commandEndpoint()
             permissionEndpoint()
             statisticsEndpoint()
+            systemEndpoint()
         }
         loginEndpoint()
     }

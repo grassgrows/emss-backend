@@ -71,6 +71,8 @@ dependencies {
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     //doctor
     implementation("top.limbang.doctor:doctor-client:1.2.7")
+    //oshi
+    implementation("com.github.oshi:oshi-core:5.8.0")
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("io.ktor:ktor-server-tests:$ktor_version")

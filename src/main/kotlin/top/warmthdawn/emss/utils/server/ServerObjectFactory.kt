@@ -4,6 +4,7 @@ import io.ebean.Database
 import top.warmthdawn.emss.features.command.CommandService
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.statistics.impl.StatisticsService
+import top.warmthdawn.emss.features.system.NotificationService
 import top.warmthdawn.emss.utils.server.api.ServerInstance
 import top.warmthdawn.emss.utils.server.impl.ServerInstanceImpl
 
@@ -17,6 +18,7 @@ class ServerInstanceFactory(
     private val dockerService: DockerService,
     private val commandService: CommandService,
     private val statisticsService: StatisticsService,
+    private val notificationService: NotificationService,
 ) {
     suspend fun create(id: Long): ServerInstance {
         return ServerInstanceImpl(
@@ -25,6 +27,7 @@ class ServerInstanceFactory(
             dockerService,
             commandService,
             statisticsService,
+            notificationService,
         ).apply {
             init()
         }

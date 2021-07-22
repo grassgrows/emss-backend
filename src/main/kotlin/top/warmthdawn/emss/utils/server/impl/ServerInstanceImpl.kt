@@ -2,6 +2,7 @@ package top.warmthdawn.emss.utils.server.impl
 
 import io.ebean.Database
 import kotlinx.coroutines.*
+import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.database.entity.ServerRealTime
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.command.CommandService
@@ -11,6 +12,8 @@ import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import top.warmthdawn.emss.features.server.entity.ServerState
 import top.warmthdawn.emss.features.statistics.impl.StatisticsService
+import top.warmthdawn.emss.features.system.NotificationObj
+import top.warmthdawn.emss.features.system.NotificationService
 import top.warmthdawn.emss.utils.event.api.EventEmitter
 import top.warmthdawn.emss.utils.event.impl.DefaultEventEmitter
 import top.warmthdawn.emss.utils.server.api.*
@@ -27,7 +30,8 @@ class ServerInstanceImpl(
     private val db: Database,
     private val dockerService: DockerService,
     private val commandService: CommandService,
-    private val statisticsService: StatisticsService
+    private val statisticsService: StatisticsService,
+    private val notificationService: NotificationService,
 ) : ServerInstance,
     EventEmitter by DefaultEventEmitter() {
     override var scope: CoroutineScope? = null
@@ -36,16 +40,19 @@ class ServerInstanceImpl(
         //服务器事件
         on(ServerRunningEvent.START) {
             updateRunning(lastStartDate = LocalDateTime.now())
+            notificationService.notify("服务器 $id 启动了", NotificationObj.Level.INFO)
             commandService.sendMessage(id, "------------------------")
             commandService.sendMessage(id, "---------服务器开启-------")
             commandService.sendMessage(id, "------------------------")
         }
         on(ServerRunningEvent.STOP) {
+            notificationService.notify("服务器 $id 关闭了", NotificationObj.Level.INFO)
             commandService.sendMessage(id, "------------------------")
             commandService.sendMessage(id, "---------服务器关闭-------")
             commandService.sendMessage(id, "------------------------")
         }
         on(ServerRunningEvent.CRASH) {
+            notificationService.notify("哦不！服务器 $id 崩溃了", NotificationObj.Level.ERROR)
             updateRunning(lastCrashDate = LocalDateTime.now())
             commandService.sendMessage(id, "------------------------")
             commandService.sendMessage(id, "---------服务器崩溃-------")

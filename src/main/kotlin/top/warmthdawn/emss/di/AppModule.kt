@@ -16,6 +16,8 @@ import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
+import top.warmthdawn.emss.features.system.NotificationService
+import top.warmthdawn.emss.features.system.SystemService
 import top.warmthdawn.emss.utils.server.ServerInstanceFactory
 import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
@@ -31,7 +33,7 @@ val appModule = module {
 
     //server
     single { ServerService(get(), get(), get(), get(), get(), get()) }
-    single { ServerInstanceFactory(get(), get(), get(), get()) }
+    single { ServerInstanceFactory(get(), get(), get(), get(), get()) }
     single { ServerInstanceHolder(get()) }
     //docker
     single { DockerService(get(), get()) }
@@ -42,6 +44,9 @@ val appModule = module {
     single { FileService(get()) }
     //command
     single { CommandService(get()) }
+    //system
+    single { SystemService() }
+    single { NotificationService() }
 
     //permission
     single { PermissionService(get(), get()) }

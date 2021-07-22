@@ -252,8 +252,8 @@ class PermissionService
         if (QUserGroup(db)
                 .userId.eq(userId)
                 .groupId.eq(groupId)
-                .findOne()!!
-                .groupPermissionLevel > requiredLevel
+                .findOne()
+                ?.groupPermissionLevel ?: 4 > requiredLevel
         ) {
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
         }
@@ -269,7 +269,7 @@ class PermissionService
             .setParameter("server_id", serverId)
             .setParameter("user_id", userId)
             .findOne()!!
-            .getInteger("RESULT")
+            .getInteger("RESULT") ?: 4
         if (permissionLevel > requiredLevel
         ) {
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
