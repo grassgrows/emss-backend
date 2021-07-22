@@ -57,6 +57,7 @@ class PermissionService
             val briefUserInfo = BriefUserInfoVO(
                 row.id!!,
                 row.username,
+                row.permissionLevel
             )
             result.add(briefUserInfo)
         }
