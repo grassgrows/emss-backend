@@ -154,8 +154,8 @@ class ServerInstanceImpl(
     }
 
     private suspend fun resetServer() {
-        currentAction = ServerAction.RESET
         emit(ServerContainerEvent.REMOVED, this)
+        currentAction = ServerAction.RESET
     }
 
     override suspend fun reset() {
@@ -216,7 +216,7 @@ class ServerInstanceImpl(
             }
         }
 
-        if (dockerState == ContainerStatus.Removed) {
+        if (dockerState == ContainerStatus.Removed && currentAction != ServerAction.RESET) {
             try {
                 resetServer()
             } catch (e: ServerException) {

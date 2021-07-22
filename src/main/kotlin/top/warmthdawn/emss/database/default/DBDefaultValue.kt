@@ -38,13 +38,13 @@ fun Application.tryInitDefault() {
         Setting(SettingType.NAME, "EMSS").save()
     }
     if (!QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).exists()) {
-        Setting(SettingType.SERVER_ROOT_DIRECTORY, "~/emss/").save()
+        Setting(SettingType.SERVER_ROOT_DIRECTORY, "emss/").save()
     }
     if (!QSetting().type.eq(SettingType.SERVER_BACKUP_DIRECTORY).exists()) {
-        Setting(SettingType.SERVER_BACKUP_DIRECTORY, "~/emss/backup/").save()
+        Setting(SettingType.SERVER_BACKUP_DIRECTORY, "emss/backup/").save()
     }
     if (!QSetting().type.eq(SettingType.TEMPORARY_FOLDER).exists()) {
-        Setting(SettingType.TEMPORARY_FOLDER, "~/emss/temp/").save()
+        Setting(SettingType.TEMPORARY_FOLDER, "emss/temp/").save()
     }
 
     if (!db.find(PermissionGroup::class.java).exists()) {
