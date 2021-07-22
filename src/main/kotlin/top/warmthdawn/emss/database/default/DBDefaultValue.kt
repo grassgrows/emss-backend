@@ -3,13 +3,9 @@ package top.warmthdawn.emss.database.default
 import io.ebean.Database
 import io.ktor.application.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.*
 import top.warmthdawn.emss.database.entity.query.QSetting
-import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.login.LoginService
-import java.awt.desktop.AppEvent
-import java.security.AuthProvider
 
 /**
  *

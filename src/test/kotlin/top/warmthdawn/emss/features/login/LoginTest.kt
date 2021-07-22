@@ -1,15 +1,12 @@
 package top.warmthdawn.emss.features.login
 
 import io.ebean.Database
-import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.*
-import org.bouncycastle.util.encoders.Hex
 import org.junit.Ignore
 import org.junit.Test
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.utils.withTestServer
 import java.security.MessageDigest

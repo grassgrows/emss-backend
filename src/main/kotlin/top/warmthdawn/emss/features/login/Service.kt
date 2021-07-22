@@ -1,14 +1,10 @@
 package top.warmthdawn.emss.features.login
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
 import io.ebean.Database
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.User
 import top.warmthdawn.emss.database.entity.query.QUser
-import top.warmthdawn.emss.database.entity.query.QUserGroup
 import java.security.MessageDigest
-import java.util.*
 
 
 /**

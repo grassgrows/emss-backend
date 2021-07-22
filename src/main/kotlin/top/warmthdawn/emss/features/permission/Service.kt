@@ -178,14 +178,24 @@ class PermissionService
 
     suspend fun updatePermissionUG(groupId: Long, userList: List<Long>) {
         val userGroup = QUserGroup(db).groupId.eq(groupId)
-        userList.forEach {
-            if (!userGroup.userId.eq(it).exists())
-                UserGroup(it, groupId, 1).insert()
-        }
-        userGroup.findList().forEach {
-            if (!userList.contains(it.userId))
-                it.delete()
-        }
+
+        QUserGroup(db)
+            .groupId.eq(groupId)
+            .userId.notIn(userList)
+            .delete()
+
+        val existing = QUserGroup(db)
+            .groupId.eq(groupId)
+            .userId.isIn(userList)
+            .findIds<Long>()
+
+        val toAdd = userList - existing
+        val userGroups = QUser(db)
+            .id.isIn(toAdd)
+            .findList()
+            .map { UserGroup(it.id!!, groupId, it.permissionLevel) }
+        db.insertAll(userGroups)
+
     }
 
 
