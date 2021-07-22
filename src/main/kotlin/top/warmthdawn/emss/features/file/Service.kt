@@ -316,6 +316,12 @@ class FileService(
         if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
+        if(pageNum < 0) {
+            if(file.length() > 1024 * 1024){
+                throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)
+            }
+            return file.readText()
+        }
         return withContext(Dispatchers.IO) {
             BufferedReader(InputStreamReader(file.inputStream())).use {
                 runCatching {
@@ -336,7 +342,12 @@ class FileService(
     }
 
     suspend fun saveTextFile(path: String, text: String) {
-        File(path).writeText(text)
+        val file = processPath(path).toFile()
+        if (!file.exists()) {
+            throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
+        }
+
+        file.writeText(text)
         //TODO: 有机会改成服务器设置
         if (File(path).length() > 1024 * 1024)
             throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)

@@ -1,8 +1,6 @@
 package top.warmthdawn.emss.features.file
 
 import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.auth.jwt.*
 import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.request.*
@@ -13,7 +11,6 @@ import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkPermission
-import top.warmthdawn.emss.utils.checkServerPermission
 import top.warmthdawn.emss.utils.userId
 import kotlin.io.path.Path
 import io.ktor.locations.get as getL
@@ -179,29 +176,28 @@ fun Route.fileEndpoint() {
                 R.ok(fileService.searchFile(filePath, keyword))
             }
         }
-        route("/read") {
-            get {
-                val filePath = call.request.queryParameters["path"]!!
-                val pageNum = call.request.queryParameters["pageNum"]!!
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    fileService.ensureHasAuthority(filePath, userId)
-                }
-                call.respondText(fileService.readTextFile(filePath, pageNum.toInt()))
+        get("/read") {
+            val filePath = call.request.queryParameters["path"]!!
+            val pageNum = call.request.queryParameters["pageNum"]!!
+            try {
+                checkPermission(0)
+            } catch (e: PermissionException) {
+                fileService.ensureHasAuthority(filePath, userId)
             }
-            post("/save") {
-                val filePath = call.request.queryParameters["path"]!!
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    fileService.ensureHasAuthority(filePath, userId)
-                }
-                val text = call.receiveText()
-                fileService.saveTextFile(filePath, text)
-                R.ok()
-            }
+            call.respondText(fileService.readTextFile(filePath, pageNum.toInt()))
         }
+        post("/save") {
+            val filePath = call.request.queryParameters["path"]!!
+            try {
+                checkPermission(0)
+            } catch (e: PermissionException) {
+                fileService.ensureHasAuthority(filePath, userId)
+            }
+            val text = call.receiveText()
+            fileService.saveTextFile(filePath, text)
+            R.ok()
+        }
+
 
     }
 }
