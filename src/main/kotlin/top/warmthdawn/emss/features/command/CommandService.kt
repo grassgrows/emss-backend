@@ -4,11 +4,9 @@ import com.github.dockerjava.api.async.ResultCallback
 import io.ebean.Database
 import kotlinx.coroutines.*
 import top.warmthdawn.emss.database.entity.query.QServer
-import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
-import top.warmthdawn.emss.features.server.entity.ServerState
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.*
@@ -29,14 +27,10 @@ class CommandService(
 
     suspend fun createAttach(serverId: Long, detach: () -> Unit = {}) {
         coroutineScope {
-            val server = QServer().id.eq(serverId).findOne()
-            val serverRealTime = QServerRealTime().serverId.eq(serverId).findOne()
-            if (server == null || serverRealTime == null)
-                throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+            val server = QServer().id.eq(serverId).findOne() ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
             val attachProxy = getAttachProxy(serverId)
-            if (serverRealTime.serverState == ServerState.RUNNING) {
-                attachProxy.attach(server.containerId!!, detach)
-            }
+            attachProxy.attach(server.containerId!!, detach)
+
             attaches.put(serverId, attachProxy)
         }
     }
@@ -50,20 +44,24 @@ class CommandService(
         getAttachProxy(serverId).detach()
     }
 
-    suspend fun getAttachProxy(serverId: Long): AttachProxy {
+    private val _lock = ReentrantLock()
 
-        if (!attaches.containsKey(serverId)) {
-            attaches[serverId] = AttachProxy()
-            createAttach(serverId)
-
+    fun getAttachProxy(serverId: Long): AttachProxy {
+        _lock.lock()
+        try {
+            if (!attaches.containsKey(serverId)) {
+                attaches[serverId] = AttachProxy()
+            }
+            return attaches[serverId]!!
+        }finally {
+            _lock.unlock()
         }
-        return attaches[serverId]!!
     }
 }
 
 class AttachProxy(
     pipeBufferSize: Int = 1024 * 32,
-    private val historySize: Int = 10,
+    private val historySize: Int = 20,
     context: CoroutineContext? = null
 ) : CoroutineScope {
     private val RETURN = '\r'.code.toByte()
@@ -81,7 +79,7 @@ class AttachProxy(
 
     private val history = LinkedList<ByteArray>()
 
-    private suspend fun dispachMessage(msg: ByteArray) {
+    private suspend fun dispatchMessage(msg: ByteArray) {
         msgListeners.forEach {
             kotlin.runCatching {
                 it(msg)
@@ -91,12 +89,15 @@ class AttachProxy(
 
     suspend fun onMessage(msg: ByteArray) {
         lock.lock()
-        if (history.size > historySize) {
-            history.poll()
+        try {
+            if (history.size > historySize) {
+                history.poll()
+            }
+            history.offer(msg)
+        } finally {
+            lock.unlock()
         }
-        history.offer(msg)
-        lock.unlock()
-        dispachMessage(msg)
+        dispatchMessage(msg)
     }
 
     fun attach(containerId: String, onComplete: () -> Unit = {}) {
@@ -114,27 +115,37 @@ class AttachProxy(
 
     suspend fun addListener(listener: ReceiveMessage): ReceiveMessage {
         lock.lock()
-        msgListeners.add(listener)
-        history.forEach { onMessage(it) }
-        lock.unlock()
+        try {
+            msgListeners.add(listener)
+            history.forEach { dispatchMessage(it) }
+        } finally {
+            lock.unlock()
+        }
+        dispatchMessage("成功连接终端，以上为历史消息\n".toByteArray())
         return listener
     }
 
     fun removeListener(listener: ReceiveMessage) {
         lock.lock()
-        msgListeners.remove(listener)
-        lock.unlock()
+        try {
+            msgListeners.remove(listener)
+        } finally {
+            lock.unlock()
+        }
     }
 
     suspend fun sendMessage(msg: ByteArray) {
         withContext(Dispatchers.IO) {
             runCatching {
                 lock.lock()
-                output.write(msg)
-                if (msg.lastOrNull() == RETURN) {
-                    output.flush()
+                try {
+                    output.write(msg)
+                    if (msg.lastOrNull() == RETURN) {
+                        output.flush()
+                    }
+                } finally {
+                    lock.unlock()
                 }
-                lock.unlock()
             }
         }
     }

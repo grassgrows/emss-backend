@@ -176,9 +176,8 @@ class PermissionService
             .delete()
     }
 
-    suspend fun updatePermissionUG(groupId: Long, userList: List<Long>) {
-        val userGroup = QUserGroup(db).groupId.eq(groupId)
-
+    suspend fun updatePermissionUG(groupId: Long, users: LongArray) {
+        val userList = users.asList()
         QUserGroup(db)
             .groupId.eq(groupId)
             .userId.notIn(userList)
@@ -187,9 +186,12 @@ class PermissionService
         val existing = QUserGroup(db)
             .groupId.eq(groupId)
             .userId.isIn(userList)
-            .findIds<Long>()
+            .select(QUserGroup._alias.userId)
+            .findSingleAttributeList<Long>()
+            .toLongArray()
 
-        val toAdd = userList - existing
+
+        val toAdd = userList - existing.asList()
         val userGroups = QUser(db)
             .id.isIn(toAdd)
             .findList()

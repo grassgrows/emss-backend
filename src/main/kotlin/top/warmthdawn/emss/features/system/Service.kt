@@ -62,20 +62,26 @@ class SystemService {
     fun init() {
         lastCpu = processor.systemCpuLoadTicks
         totalMemory = memory.total
+        val cpuPeriod = DoubleArray(10)
+        val memoryPeriod = LongArray(10)
         coroutineScope.launch {
             while(true) {
-                timestamps.offer(System.currentTimeMillis() / 100)
-                currentCpu = processor.getSystemCpuLoadBetweenTicks(lastCpu)
-                cpus.offer(currentCpu)
-                lastCpu = processor.systemCpuLoadTicks
-                currentMemory = totalMemory - memory.available
-                memorys.offer(currentMemory)
-                if (timestamps.size > 120) {
-                    timestamps.poll()
-                    cpus.poll()
-                    memorys.poll()
+                for(i in 0..9) {
+                    currentCpu = processor.getSystemCpuLoadBetweenTicks(lastCpu)
+                    lastCpu = processor.systemCpuLoadTicks
+                    currentMemory = totalMemory - memory.available
+                    cpuPeriod[i] = currentCpu
+                    memoryPeriod[i] = currentMemory
+                    if (timestamps.size > 120) {
+                        timestamps.poll()
+                        cpus.poll()
+                        memorys.poll()
+                    }
+                    delay(1000)
                 }
-                delay(1000)
+                timestamps.offer(System.currentTimeMillis() / 1000)
+                cpus.offer(cpuPeriod.average())
+                memorys.offer(memoryPeriod.average().toLong())
             }
         }
     }

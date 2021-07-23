@@ -35,7 +35,7 @@ abstract class AbstractStatisticsProvider(
     private val historyQueue = LinkedList<Pair<Long, Double>>()
     val histories get() = historyQueue.toList()
     protected fun offerHistory(value: Double) {
-        offerHistory(System.currentTimeMillis() / 100, value)
+        offerHistory(System.currentTimeMillis() / 1000, value)
     }
 
     fun extendForm(old: List<Pair<Long, Double>>) {

@@ -166,7 +166,7 @@ fun Route.permissionEndpoint() {
             }
             post("/update") {
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                val userList = call.receive<List<Long>>()
+                val userList = call.receive<LongArray>()
                 try {
                     checkPermission(0)
                 } catch (e: PermissionException) {
