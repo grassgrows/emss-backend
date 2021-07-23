@@ -14,6 +14,8 @@ import javax.persistence.Entity
 class ServerRealTime (
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
     var lastStartDate: LocalDateTime? = null, //最后启动时间
-    var serverState: ServerState,   //服务器状态
+    var serverMaxPlayer: Int = 0,   //服务器最大玩家
+    var serverPlayerNumber: Int = 0,   //服务器当前玩家
+    var serverTps: Double = 20.0,   //服务器Tps
     var serverId: Long,
 ): BaseEntity()
