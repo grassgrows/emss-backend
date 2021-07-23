@@ -236,9 +236,8 @@ class FileService(
         return result
     }
 
-    fun createDirs(path: String, process: Boolean = true) {
-
-        val dirsPath = if (process) processPath(path) else Path(path)
+    fun createDirs(path: String) {
+        val dirsPath = processPath(path)
         var file = dirsPath.toFile()
         if (!file.isFile && !file.isDirectory) {
             file.mkdirs()
@@ -257,7 +256,7 @@ class FileService(
     suspend fun renameFile(path: String, name: String) {
         val filePath = processPath(path)
         val file = filePath.toFile()
-        if (!file.isFile)
+        if (!file.exists())
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         name.trim()
         if ("" == name)
