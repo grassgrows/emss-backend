@@ -82,7 +82,7 @@ val appTestModule = module {
 
     //server
     single { ServerService(get(), get(), get(), get(), get(), get()) }
-    single { ServerInstanceFactory(get(), get(), get(), get()) }
+    single { ServerInstanceFactory(get(), get(), get(), get(), get()) }
     single { ServerInstanceHolder(get()) }
     //docker
     single { DockerService(get(), get()) }

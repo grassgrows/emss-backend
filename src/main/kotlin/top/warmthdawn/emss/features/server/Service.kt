@@ -40,6 +40,7 @@ class ServerService(
         val list: MutableList<ServerBriefVO> = mutableListOf()
         for (server in QServer(db).findList()) {
             val obj = serverInstanceHolder.getOrCreate(server.id!!)
+            val running = obj.getRunningInfo()
             val result = ServerBriefVO(
                 server.id!!,
                 server.name,
@@ -50,6 +51,9 @@ class ServerService(
                 server.imageId,
                 obj.getRunningInfo().lastCrashDate,
                 groupsOfServer(server.id!!),
+                running.serverPlayerNumber,
+                running.serverMaxPlayer,
+                running.serverTps,
             )
             list.add(result)
         }
@@ -124,7 +128,7 @@ class ServerService(
         )
         server.insert()
 
-        val realTime = ServerRealTime(serverState = ServerState.INITIALIZE, serverId = server.id!!)
+        val realTime = ServerRealTime(serverId = server.id!!)
         realTime.insert()
 
         statisticsService.addServer(server.id!!, server.abbr)

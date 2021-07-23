@@ -3,6 +3,7 @@ package top.warmthdawn.emss.features.statistics.impl.statistics
 import io.ebean.Database
 import kotlinx.coroutines.coroutineScope
 import top.warmthdawn.emss.database.entity.query.QServer
+import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import top.warmthdawn.emss.features.statistics.impl.ServerStatistics
 import top.warmthdawn.emss.features.statistics.minecraft.ping.MinecraftTools
@@ -35,7 +36,8 @@ class ServerStatisticsFactory(
             coroutineContext,
             type,
             abbr,
-            delay
+            delay,
+            func,
         ).also {
             it.start()
         }
@@ -50,9 +52,19 @@ class ServerStatisticsFactory(
             networkUpload = createPassiveProvider(abbr, StatisticsType.NETWORK_UPLOAD),
             diskRead = createPassiveProvider(abbr, StatisticsType.DISK_READ),
             diskWrite = createPassiveProvider(abbr, StatisticsType.DISK_WRITE),
-            tps = createActiveProvider(abbr, StatisticsType.TPS) { 20.0 },
+            tps = createActiveProvider(abbr, StatisticsType.TPS) {
+                QServerRealTime(db).id.eq(id).findOne()?.apply {
+                    serverTps = 20.0
+                }?.update()
+                20.0
+            },
             players = createActiveProvider(abbr, StatisticsType.ONLINE_PLAYER) {
-                MinecraftTools.ping(QServer(db).id.eq(id).findOne()!!.portBindings.keys.first()).toDouble()
+                val ping = MinecraftTools.ping(QServer(db).id.eq(id).findOne()!!.portBindings.keys.first())
+                QServerRealTime(db).id.eq(id).findOne()?.apply {
+                    serverMaxPlayer = ping?.playerMax ?: 0
+                    serverPlayerNumber = ping?.playerOnline ?: 0
+                }?.update()
+                ping?.playerOnline?.toDouble() ?: 0.0
             },
         )
     }

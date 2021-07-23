@@ -12,7 +12,6 @@ object MinecraftTools{
     val timeout = 10L
     fun ping(port: Int) = kotlin.runCatching {
         MinecraftClient.ping("localhost", port, timeout,  TimeUnit.SECONDS)
-            ?.playerOnline
-    }.getOrNull() ?: 0
+    }.getOrNull()
 }
 

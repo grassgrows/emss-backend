@@ -66,12 +66,12 @@ internal class PermissionTest {
             User("44444444", "11111111", 1).insert()
             User("55555555", "11111111", 0).insert()
 
-            val list = listOf<Long>(4,5,6)
+            val list = listOf<Long>(4,5,6).toLongArray()
             val permissionService by application.inject<PermissionService>()
             permissionService.updatePermissionUG(1,list)
             print(QUserGroup().findList().map { it.userId })
             assertContentEquals(
-                list,
+                list.asList(),
                 QUserGroup().findList().map { it.userId }
             )
 //            assertEquals(3, QUserGroup().findCount())
