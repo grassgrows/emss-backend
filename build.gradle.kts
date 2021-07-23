@@ -19,7 +19,7 @@ plugins {
 }
 
 group = "top.warmthdawn.emss"
-version = "0.3.2"
+version = "0.3.3"
 application {
     mainClass.set("top.warmthdawn.emss.ApplicationKt")
 }

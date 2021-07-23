@@ -9,6 +9,7 @@ import top.warmthdawn.emss.features.permission.dto.PermissionDTO
 import top.warmthdawn.emss.utils.R
 import top.warmthdawn.emss.utils.checkGroupPermission
 import top.warmthdawn.emss.utils.checkPermission
+import top.warmthdawn.emss.utils.userId
 
 
 /**
@@ -61,18 +62,24 @@ fun Route.permissionEndpoint() {
             route("/{groupId}") {
                 route("/server") {
                     post("/{serverId}") {
-                        checkPermission(1)
                         val groupId = call.parameters["groupId"]!!.toLong()
                         val serverId = call.parameters["serverId"]!!.toLong()
-                        checkGroupPermission(groupId, 2)
+                        try {
+                            checkPermission(0)
+                        } catch (e: PermissionException) {
+                            checkGroupPermission(groupId, 2)
+                        }
                         permissionService.addPermissionGS(groupId, serverId)
                         R.ok()
                     }
                     delete("/{serverId}") {
-                        checkPermission(1)
                         val groupId = call.parameters["groupId"]!!.toLong()
                         val serverId = call.parameters["serverId"]!!.toLong()
-                        checkGroupPermission(groupId, 2)
+                        try {
+                            checkPermission(0)
+                        } catch (e: PermissionException) {
+                            checkGroupPermission(groupId, 2)
+                        }
                         permissionService.removePermissionGS(groupId, serverId)
                         R.ok()
                     }
@@ -82,15 +89,22 @@ fun Route.permissionEndpoint() {
                     delete {
                         val groupId = call.parameters["groupId"]!!.toLong()
                         val location = call.request.queryParameters["location"]!!
-                        checkGroupPermission(groupId, 2)
+                        try {
+                            checkPermission(0)
+                        } catch (e: PermissionException) {
+                            checkGroupPermission(groupId, 2)
+                        }
                         permissionService.removePermittedLocation(groupId, location)
                         R.ok()
                     }
                     post {
-                        checkPermission(1)
                         val groupId = call.parameters["groupId"]!!.toLong()
                         val location = call.receive<List<String>>()
-                        checkGroupPermission(groupId, 2)
+                        try {
+                            checkPermission(0)
+                        } catch (e: PermissionException) {
+                            checkGroupPermission(groupId, 2)
+                        }
                         permissionService.updatePermittedLocation(groupId, location)
                         R.ok()
                     }
@@ -103,12 +117,15 @@ fun Route.permissionEndpoint() {
                 R.ok(permissionService.getAllUserInfo())
             }
             post {
-                checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
 //                val userId = call.request.queryParameters["userId"]!!.toLong()
 //                val level = call.request.queryParameters["newLevel"]!!.toInt()
                 val userDTO = call.receive<BriefUserInfoDTO>()
-                checkGroupPermission(groupId, 2)
+                try {
+                    checkPermission(0)
+                } catch (e: PermissionException) {
+                    checkGroupPermission(groupId, 2)
+                }
                 permissionService.modifyUserPermission(groupId, userDTO)
                 R.ok()
             }
@@ -124,9 +141,12 @@ fun Route.permissionEndpoint() {
 
         route("/user-group") {
             post("/add") {
-                checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                checkGroupPermission(groupId, 2)
+                try {
+                    checkPermission(0)
+                } catch (e: PermissionException) {
+                    checkGroupPermission(groupId, 2)
+                }
                 val permissionDTO = call.receive<PermissionDTO>()
                 permissionDTO.addedUG.forEach {
                     permissionService.addPermissionUG(groupId, it)
@@ -134,18 +154,24 @@ fun Route.permissionEndpoint() {
                 R.ok()
             }
             delete {
-                checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
                 val userId = call.request.queryParameters["userId"]!!.toLong()
-                checkGroupPermission(groupId, 2)
+                try {
+                    checkPermission(0)
+                } catch (e: PermissionException) {
+                    checkGroupPermission(groupId, 2)
+                }
                 permissionService.removePermissionUG(groupId, userId)
                 R.ok()
             }
             post("/update") {
-                checkPermission(1)
                 val groupId = call.request.queryParameters["groupId"]!!.toLong()
-                val userList = call.receive<List<Long>>()
-                checkGroupPermission(groupId, 2)
+                val userList = call.receive<LongArray>()
+                try {
+                    checkPermission(0)
+                } catch (e: PermissionException) {
+                    checkGroupPermission(groupId, 2)
+                }
                 permissionService.updatePermissionUG(groupId, userList)
                 R.ok()
             }

@@ -246,7 +246,7 @@ class ServerInstanceImpl(
         }
         scope.launch {
             while (isActive) {
-                delay(10 * 1000L)
+                delay(20 * 1000L)
                 syncState()
             }
         }

@@ -8,6 +8,7 @@ import top.warmthdawn.emss.features.server.entity.StatisticsType
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.sign
 
 /**
  *
@@ -40,10 +41,15 @@ class PassiveStatisticsProviderImpl(
                 if (results.isEmpty()) {
                     offerHistory(0.0)
                 } else {
+                    var result: Double
                     lock.lock()
-                    val result = results.reduce { a, b -> a + b }
-                    results.clear()
-                    lock.unlock()
+                    try {
+                        result = results.reduce { a, b -> a + b }
+                        result /= results.size
+                        results.clear()
+                    }finally {
+                        lock.unlock()
+                    }
                     offerHistory(result)
                 }
                 delay(delay)

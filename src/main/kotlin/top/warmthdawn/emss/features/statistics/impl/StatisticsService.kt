@@ -59,7 +59,11 @@ class StatisticsService(
                 val systemCpuDelta = (it.cpuStats.systemCpuUsage ?: 0) - (it.preCpuStats.systemCpuUsage ?: 0)
                 val numberCpus = it.cpuStats.onlineCpus ?: it.cpuStats.cpuUsage?.percpuUsage?.size ?: 0
                 val cpuPercent = (cpuDelta * 1.0 / systemCpuDelta) * numberCpus.toDouble() * 100.0
-                cpu.passive.onResult(cpuPercent)
+                if (cpuPercent > 100) {
+                    cpu.passive.onResult(100.0)
+                } else {
+                    cpu.passive.onResult(cpuPercent)
+                }
 
                 //内存
                 val memoryUsage =

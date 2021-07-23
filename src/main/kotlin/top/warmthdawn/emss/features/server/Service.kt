@@ -5,21 +5,20 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.GroupServer
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.ServerRealTime
+import top.warmthdawn.emss.database.entity.query.QGroupServer
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.docker.ImageException
 import top.warmthdawn.emss.features.docker.ImageExceptionMsg
-import top.warmthdawn.emss.database.entity.query.*
-import top.warmthdawn.emss.features.docker.*
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
 import top.warmthdawn.emss.features.server.entity.ServerState
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
+import top.warmthdawn.emss.features.statistics.impl.StatisticsService
 import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 /**
@@ -102,6 +101,7 @@ class ServerService(
         server.portBindings = serverInfoDTO.portBindings
         server.volumeBind = serverInfoDTO.volumeBind
         server.update()
+        serverInstanceHolder.getOrCreate(server.id!!).reset()
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -127,13 +127,14 @@ class ServerService(
         val realTime = ServerRealTime(serverState = ServerState.INITIALIZE, serverId = server.id!!)
         realTime.insert()
 
+        statisticsService.addServer(server.id!!, server.abbr)
+
         serverInfoDTO.permissionGroup.forEach {
             GroupServer(
                 it,
                 server.id!!,
             ).insert()
         }
-
 
 
     }
