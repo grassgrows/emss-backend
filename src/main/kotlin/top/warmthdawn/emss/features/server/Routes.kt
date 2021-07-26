@@ -6,10 +6,8 @@ import io.ktor.routing.*
 import org.koin.ktor.ext.inject
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
-import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
+import top.warmthdawn.emss.features.statistics.StatisticsService
 import top.warmthdawn.emss.utils.R
-import top.warmthdawn.emss.utils.checkGroupPermission
 import top.warmthdawn.emss.utils.checkPermission
 import top.warmthdawn.emss.utils.checkServerPermission
 
@@ -22,7 +20,6 @@ import top.warmthdawn.emss.utils.checkServerPermission
 fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
-    val statisticsService by inject<StatisticsService>()
     route("/servers") {
         get {
             R.ok(serverService.getServersBriefInfo())

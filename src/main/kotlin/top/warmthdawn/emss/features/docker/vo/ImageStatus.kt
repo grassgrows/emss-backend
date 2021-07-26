@@ -12,5 +12,4 @@ enum class ImageStatus {
     Downloading,
     Downloaded,
     Failed,
-    Unknown
 }

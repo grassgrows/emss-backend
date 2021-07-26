@@ -23,6 +23,7 @@ class ContainerException(
 
 enum class ContainerExceptionMsg {
     CONTAINER_GET_INFO_FAILED,
+    CONTAINER_NOT_FOUND,
 }
 
 

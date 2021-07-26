@@ -60,6 +60,7 @@ dependencies {
     implementation("com.github.docker-java:docker-java-core:$docker_java_version")
 //    implementation("com.github.docker-java:docker-java-transport-httpclient5:$docker_java_version")
     implementation("com.github.docker-java:docker-java-transport-zerodep:$docker_java_version")
+    implementation("com.spotify:docker-client:8.16.0")
     // Ktorm
 //    implementation("org.ktorm:ktorm-core:$ktorm_version")
     implementation("io.ebean:ebean:$ebean_version")

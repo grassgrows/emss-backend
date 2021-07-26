@@ -36,7 +36,10 @@ enum class StatisticsType(
         }
 
         fun containsAll(types: Int): List<StatisticsType> {
-            return values().filter { (it.flag and types) == it.flag }
+            return this.types.filter { (it.flag and types) == it.flag }
+        }
+        fun getByName(type: String): StatisticsType? {
+            return types.firstOrNull() { it.name == type.uppercase() }
         }
     }
 

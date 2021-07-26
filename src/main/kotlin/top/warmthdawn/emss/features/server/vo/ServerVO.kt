@@ -1,5 +1,8 @@
 package top.warmthdawn.emss.features.server.vo
 
+import top.warmthdawn.emss.features.server.dto.PortBindingDTO
+import top.warmthdawn.emss.features.server.dto.VolumeBindingDTO
+
 /**
  *
  * @author sunday7994
@@ -15,8 +18,8 @@ data class ServerVO(
     var startCommand: String, //服务器启动命令
     var imageId: Long,    //镜像的数据库ID
     var workingDir: String,    //工作目录
-    var portBindings: Map<Int,Int>,  //端口映射
-    var volumeBind: Map<String,String>, //目录映射
+    var portBindings: List<PortBindingDTO>,  //端口映射
+    var volumeBind: List<VolumeBindingDTO>, //目录映射
     var permissionGroup: List<Long>
 
 )

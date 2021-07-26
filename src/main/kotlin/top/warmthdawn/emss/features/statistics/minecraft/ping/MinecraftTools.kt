@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
  * @since 2021-07-21
  */
 object MinecraftTools{
-    val timeout = 10L
+    val timeout = 5 * 1000L
     fun ping(port: Int) = kotlin.runCatching {
         MinecraftClient.ping("localhost", port, timeout,  TimeUnit.SECONDS)
     }.getOrNull()

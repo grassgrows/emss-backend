@@ -3,10 +3,13 @@ package top.warmthdawn.emss.features.docker
 import com.github.dockerjava.api.model.*
 import io.ebean.Database
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.file.FileService
+import top.warmthdawn.emss.features.server.ServerException
+import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import kotlin.coroutines.resume
 
 /**
@@ -18,6 +21,16 @@ class DockerService(
     private val db: Database,
     private val fileService: FileService,
 ) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(DockerService::class.java)
+    }
+    fun init() {
+        try {
+            DockerManager.ping()
+        }catch (e: Exception) {
+            logger.error("无法连接docker， 请检查你的docker并尝试重启服务器")
+        }
+    }
     fun createContainer(serverId: Long) {
         val server = QServer(db).id.eq(serverId).findOne()!!
         val rootPath = fileService.processPath("/root/${server.location}").toString()
@@ -52,17 +65,36 @@ class DockerService(
     fun startContainer(serverId: Long) {
         DockerManager.startContainer(getContainerId(serverId))
     }
+    fun startContainer(containerId: String) {
+        DockerManager.startContainer(containerId)
+    }
 
     fun stopContainer(serverId: Long) {
         DockerManager.stopContainer(getContainerId(serverId))
     }
 
-    fun removeContainer(serverId: Long) {
-        DockerManager.removeContainer(getContainerId(serverId))
+    fun tryRemoveContainer(serverId: Long) {
+
+        val server = QServer(db).id.eq(serverId).findOne()!!
+        try {
+            val status = DockerManager.inspectContainer(server.containerId)
+            if(status.status == ContainerStatus.Running) {
+                throw ServerException(ServerExceptionMsg.SERVER_NOT_STOPPED)
+            }
+            DockerManager.removeContainer(getContainerId(serverId))
+        }catch (e: ContainerException) {
+            if(e.containerExceptionMsg != ContainerExceptionMsg.CONTAINER_NOT_FOUND) {
+                throw e
+            }
+        }
     }
 
     fun terminateContainer(serverId: Long) {
         DockerManager.terminateContainer(getContainerId(serverId))
+    }
+
+    fun isRunning(serverId: Long): Boolean {
+        return inspectContainer(serverId) == ContainerStatus.Running
     }
 
     suspend fun waitContainer(serverId: Long) {

@@ -19,8 +19,8 @@ data class ServerInfoDTO(
     var location: String, //服务器位置
     var startCommand: String, //服务器启动命令
     var workingDir: String,  //工作目录
-    var portBindings: Map<Int,Int> = emptyMap(),  //端口映射
-    var volumeBind: Map<String,String> = emptyMap(), //目录映射
+    var portBindings: List<PortBindingDTO> = emptyList(),  //端口映射
+    var volumeBind: List<VolumeBindingDTO> = emptyList(), //目录映射
     var imageId: Long, //镜像的数据库Id
     var permissionGroup: List<Long>
 
@@ -28,7 +28,12 @@ data class ServerInfoDTO(
 //    var hostPort: Int,
 )
 
-//data class ServerAttachDTO(
-//    var inputStream: InputStream, //输入流
-//    var outputStream: OutputStream //输出流
-//)
+data class PortBindingDTO(
+    var containerPort: Int,
+    var hostPort: Int,
+)
+
+data class VolumeBindingDTO(
+    var containerVolume: String,
+    var hostVolume: String,
+)

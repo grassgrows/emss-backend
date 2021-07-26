@@ -3,6 +3,7 @@ package top.warmthdawn.emss.features.docker
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.PullImageResultCallback
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
@@ -12,11 +13,14 @@ import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.statistics.ContainerStatistics
+import top.warmthdawn.emss.utils.event.impl.newConcurrentHashSet
 import java.io.Closeable
 import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -51,11 +55,15 @@ object DockerManager {
             .dockerHost(clientConfig.dockerHost)
             .sslConfig(clientConfig.sslConfig)
             .maxConnections(4)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
+            .connectionTimeout(Duration.ofSeconds(3))
+            .responseTimeout(Duration.ofSeconds(10))
             .build()
 
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
+    }
+
+    fun ping() {
+        dockerClient.pingCmd()
     }
 
     // 拉取镜像
@@ -257,24 +265,77 @@ object DockerManager {
                     else -> ContainerStatus.Unknown
                 }
             )
-        } catch (e: Exception) {
+        } catch (e: NotFoundException) {
+            throw ContainerException(ContainerExceptionMsg.CONTAINER_NOT_FOUND)
+        }
+        catch (e: Exception) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
     }
 
     // 监控状态
-    fun statsContainer(containerId: String, callback: (Statistics) -> Unit): AsyncResultCallback<Statistics> {
+    fun statsContainer(containerId: String): ContainerStatistics {
 
-        return dockerClient
+        val callback = dockerClient
             .statsCmd(containerId)
-            .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
-                override fun onNext(statistics: Statistics?) {
-                    if (statistics != null) {
-                        callback(statistics)
-                    }
-                }
+            .withNoStream(true)
+            .exec(AsyncResultCallback())
+        val result  = callback.awaitResult()!!
 
-            })
+        //CPU
+        val cpuDelta = (result.cpuStats.cpuUsage?.totalUsage ?: 0) - (result.preCpuStats.cpuUsage?.totalUsage ?: 0)
+        val systemCpuDelta = (result.cpuStats.systemCpuUsage ?: 0) - (result.preCpuStats.systemCpuUsage ?: 0)
+        val numberCpus = result.cpuStats.onlineCpus ?: result.cpuStats.cpuUsage?.percpuUsage?.size ?: 0
+        var cpuPercent = (cpuDelta * 1.0 / systemCpuDelta) * numberCpus.toDouble() * 100.0
+        if (cpuPercent > 100) {
+            cpuPercent = 100.0
+        }
+
+        //内存
+        val totalMemory = result.memoryStats.limit ?: 0
+        val memoryUsage =
+            (result.memoryStats.usage ?: 0) - (result.memoryStats.stats?.cache ?: 0)
+
+
+
+        //磁盘
+        var diskWriteValue = 0L
+        var diskReadValue = 0L
+        result.blkioStats?.ioServiceBytesRecursive?.forEach { entry ->
+            when (entry.op.lowercase()) {
+                "read" -> {
+                    diskReadValue += entry.value
+                }
+                "write" -> {
+                    diskWriteValue += entry.value
+                }
+            }
+        }
+
+        //网络
+        val networksIn = result.networks?.values?.asSequence()
+            ?.map { net -> net.rxBytes }
+            ?.filterNotNull()
+            ?.reduce { a, b -> a + b }
+            ?: 0
+
+
+        val netWorksOut = result.networks?.values?.asSequence()
+            ?.map { net -> net.txBytes }
+            ?.filterNotNull()
+            ?.reduce { a, b -> a + b }
+            ?: 0
+
+        callback.close()
+        return ContainerStatistics(
+            cpuPercent,
+            memoryUsage,
+            totalMemory,
+            netWorksOut,
+            networksIn,
+            diskReadValue,
+            diskWriteValue,
+        )
     }
 
 

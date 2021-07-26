@@ -16,7 +16,6 @@ class ServerBriefVO(
     var port: Int?,
     var imageId: Long,    //镜像的数据库ID
     var lastCrashDate: LocalDateTime? = null, //最后崩溃时间
-    var permissionGroup: List<Long>,
 
     var onlinePlayer: Int = 0,
     var maxPlayer: Int = 20,
