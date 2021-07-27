@@ -7,6 +7,7 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.compressed.CompressService
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.utils.R
@@ -27,6 +28,7 @@ import io.ktor.locations.post as postL
 @OptIn(KtorExperimentalLocationsAPI::class)
 fun Route.fileEndpoint() {
     val fileService by inject<FileService>()
+    val compressService by inject<CompressService>()
 
     postL<FileChunkInfoDTO> { info ->
         val stream = call.receiveStream()
@@ -197,6 +199,31 @@ fun Route.fileEndpoint() {
             fileService.saveTextFile(filePath, text)
             R.ok()
         }
+
+        post("/compress") {
+            val filePaths = call.receive<Array<String>>()
+            try {
+                checkPermission(0)
+            } catch (e: PermissionException) {
+                filePaths.forEach {
+                    fileService.ensureHasAuthority(it, userId)
+                }
+            }
+            compressService.compressFile(filePaths)
+            R.ok()
+        }
+
+        post("/uncompress") {
+            val filePath = call.request.queryParameters["path"]!!
+            try {
+                checkPermission(0)
+            } catch (e: PermissionException) {
+                fileService.ensureHasAuthority(filePath, userId)
+            }
+            compressService.uncompressFile(filePath)
+            R.ok()
+        }
+
 
 
     }

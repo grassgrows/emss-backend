@@ -7,6 +7,7 @@ import io.ktor.auth.*
 import io.ktor.response.*
 import io.ktor.request.*
 import top.warmthdawn.emss.features.command.commandEndpoint
+import top.warmthdawn.emss.features.compressed.compressedEndpoint
 import top.warmthdawn.emss.features.docker.dockerEndpoint
 import top.warmthdawn.emss.features.file.fileEndpoint
 import top.warmthdawn.emss.features.permission.permissionEndpoint
@@ -28,6 +29,7 @@ fun Application.configureRouting() {
             permissionEndpoint()
             statisticsEndpoint()
             systemEndpoint()
+            compressedEndpoint()
         }
         loginEndpoint()
     }

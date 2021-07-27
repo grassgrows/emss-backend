@@ -6,6 +6,7 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
 import top.warmthdawn.emss.features.command.CommandService
+import top.warmthdawn.emss.features.compressed.CompressService
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.file.FileService
@@ -38,6 +39,7 @@ val appModule = module {
     single { StatisticsService(get(), get()) }
     //file
     single { FileService(get()) }
+    single { CompressService(get()) }
     //command
     single { CommandService(get()) }
     //system
