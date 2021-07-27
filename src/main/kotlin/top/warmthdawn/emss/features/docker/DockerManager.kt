@@ -359,10 +359,8 @@ object DockerManager {
     fun attachContainer(
         containerId: String,
         inputStream: InputStream,
-        complete: () -> Unit = {},
         callback: (Frame) -> Unit,
     ): ResultCallback.Adapter<Frame> {
-
         return dockerClient
             .attachContainerCmd(containerId)
             .withStdOut(true)
@@ -374,12 +372,23 @@ object DockerManager {
                     super.onNext(frame)
                     frame?.let(callback)
                 }
+            })
+    }
 
-                override fun onComplete() {
-                    super.onComplete()
-                    complete()
+    fun logContainer(containerId: String,
+                     callback: (Frame) -> Unit,) {
+        dockerClient
+            .logContainerCmd(containerId)
+            .withTail(100)
+            .withStdErr(true)
+            .withStdOut(true)
+            .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
+                override fun onNext(frame: Frame?) {
+                    super.onNext(frame)
+                    frame?.let(callback)
                 }
             })
+            .awaitCompletion()
     }
 
     fun waitContainer(containerId: String): ResultCallback<WaitResponse> {

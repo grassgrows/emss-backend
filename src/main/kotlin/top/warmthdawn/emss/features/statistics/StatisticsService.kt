@@ -7,7 +7,6 @@ import top.warmthdawn.emss.database.entity.ServerStatistics
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
 import top.warmthdawn.emss.database.entity.query.QServerStatistics
-import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.entity.StatisticsType
@@ -64,7 +63,7 @@ class StatisticsService(
         if (ping != null) {
             val time = System.currentTimeMillis() / 1000
             ServerStatistics(serverId, StatisticsType.ONLINE_PLAYER, time, ping.playerOnline)
-                .update()
+                .insert()
             QServerRealTime().id.eq(serverId).findOne()?.apply {
                 serverMaxPlayer = ping.playerMax
                 serverPlayerNumber = ping.playerOnline
@@ -82,12 +81,7 @@ class StatisticsService(
             return
         }
 
-        try {
-            val status = DockerManager.inspectContainer(server.containerId)
-            if (status.status != ContainerStatus.Running) {
-                return
-            }
-        } catch (e: Exception) {
+        if (!dockerService.isRunning(server.id!!)) {
             return
         }
 
@@ -98,7 +92,8 @@ class StatisticsService(
 
 
     fun removeStatistics() {
-
+        val begin = System.currentTimeMillis() / 1000 - 60 * 61
+        QServerStatistics().time.lt(begin).delete()
     }
 
     fun getStatistics(statisticsType: StatisticsType): ServerStatisticsVO {
@@ -107,12 +102,37 @@ class StatisticsService(
             .orderBy().time.asc()
             .findList()
 
+
+        val (timestamps, values) = processStatistics(statistics)
         return ServerStatisticsVO(
             statisticsType,
-            statistics.map { it.time },
+            timestamps,
             statistics.lastOrNull()?.value ?: 0.0,
-            statistics.map { it.value },
+            values,
         )
+    }
+
+    private fun processStatistics(statistics: List<ServerStatistics>): Pair<MutableList<Long>, MutableList<Double>> {
+        val timestamps = mutableListOf<Long>()
+        val values = mutableListOf<Double>()
+        var i = 0
+        val now = System.currentTimeMillis() / 1000
+        for (t in 3600 downTo 0 step 60) {
+            val time = now - t
+            var count = 0
+            var avg = 0.0
+            while (i < statistics.size && statistics[i].time <= time) {
+                count++
+                avg += statistics[i].value
+                i++
+            }
+            if(count > 0) {
+                avg /= count
+            }
+            timestamps.add(time)
+            values.add(avg)
+        }
+        return Pair(timestamps, values)
     }
 
     fun getStatistics(statisticsTypes: List<StatisticsType>): List<ServerStatisticsVO> {
@@ -122,11 +142,13 @@ class StatisticsService(
             .groupBy { it.type }
             .map { (statisticsType, statistics) ->
                 val sorted = statistics.sortedBy { it.time }
+
+                val (timestamps, values) = processStatistics(sorted)
                 ServerStatisticsVO(
                     statisticsType,
-                    sorted.map { it.time },
+                    timestamps,
                     sorted.lastOrNull()?.value ?: 0.0,
-                    sorted.map { it.value },
+                    values,
                 )
             }
 
