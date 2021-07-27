@@ -11,6 +11,7 @@ import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.login.LoginService
+import top.warmthdawn.emss.features.server.ServerAutoRestartHandler
 import top.warmthdawn.emss.features.server.ServerService
 import top.warmthdawn.emss.features.statistics.StatisticsService
 import top.warmthdawn.emss.features.settings.ImageService
@@ -29,7 +30,8 @@ val appModule = module {
     single { ImageService(get(), get(), get()) }
 
     //server
-    single { ServerService(get(), get(), get(), get()) }
+    single { ServerService(get(), get(), get(), get(), get()) }
+    single { ServerAutoRestartHandler(get(), get()) }
     //docker
     single { DockerService(get(), get()) }
     //status

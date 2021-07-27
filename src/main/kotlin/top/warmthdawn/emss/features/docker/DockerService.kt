@@ -39,7 +39,8 @@ class DockerService(
             server.portBindings.map { PortBinding(Ports.Binding(null, it.key.toString()), ExposedPort(it.value)) }
         val volumeBindList = server.volumeBind.map { Bind(it.key, Volume(it.value)) } +
                 Bind(rootPath, Volume(server.workingDir))
-        val cmd = mutableListOf("/bin/sh", "-c", server.startCommand)
+//        val cmd = mutableListOf("/bin/sh", "-c", server.startCommand)
+        val cmd = server.startCommand.split(' ')
         val exposedPort = server.portBindings.keys.map { ExposedPort(it) }
         val containerId = DockerManager
             .createContainer(
@@ -97,13 +98,19 @@ class DockerService(
         return inspectContainer(serverId) == ContainerStatus.Running
     }
 
-    suspend fun waitContainer(serverId: Long) {
-        suspendCancellableCoroutine<Unit> {
-            DockerManager.waitContainer(getContainerId(serverId))
-            it.resume(Unit)
+    suspend fun waitContainer(serverId: Long): Long {
+        return suspendCancellableCoroutine<Long> {
+            val containerId = getContainerId(serverId)
+
+            val inspect = DockerManager.inspectContainer(containerId)
+            if(inspect.status == ContainerStatus.Stopped) {
+                it.resume(inspect.exitCode ?: 0)
+            }
             it.invokeOnCancellation {
                 stopContainer(serverId)
             }
+            val result = DockerManager.waitContainer(containerId)
+            it.resume(result.statusCode?.toLong() ?: 0L)
         }
     }
 

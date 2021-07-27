@@ -34,10 +34,20 @@ class AttachProxy(
     pipeBufferSize: Int = 1024 * 32,
 ) : CoroutineScope by CoroutineScope(Dispatchers.IO) {
     private val RETURN = '\r'.code.toByte()
+    private val LINE_BREAK = "\n".toByteArray()
     private val input = PipedInputStream(pipeBufferSize)
     private val output = PipedOutputStream(input)
 
     private var callback: suspend (ByteArray) -> Unit = {}
+    fun setCallback(callback: suspend (ByteArray) -> Unit = {}) {
+        this.callback = callback
+    }
+
+    private var close: suspend () -> Unit = {}
+    fun setClose(close: suspend () -> Unit = {}) {
+        this.close = close
+    }
+
     fun receiveMessage(byteArray: ByteArray) {
         output.write(byteArray)
         if (byteArray.lastOrNull() == RETURN) {
@@ -45,9 +55,6 @@ class AttachProxy(
         }
     }
 
-    fun setCallback(callback: suspend (ByteArray) -> Unit = {}) {
-        this.callback = callback
-    }
 
     fun detach() {
         cancel()
@@ -56,6 +63,7 @@ class AttachProxy(
     private fun sendToClient(msg: String) {
         launch {
             callback(msg.toByteArray())
+            callback(LINE_BREAK)
         }
     }
 
@@ -84,6 +92,7 @@ class AttachProxy(
                 sendToClient("-----断开终端连接-----")
                 cont.resume(Unit)
             }
+            close()
         }
     }
 

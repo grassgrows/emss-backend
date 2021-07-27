@@ -20,4 +20,5 @@ class ServerBriefVO(
     var onlinePlayer: Int = 0,
     var maxPlayer: Int = 20,
     var tps: Double = 20.0,
+    var autoRestart: Boolean = false,
 )

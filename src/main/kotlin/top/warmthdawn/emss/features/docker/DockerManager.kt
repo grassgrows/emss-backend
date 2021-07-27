@@ -14,6 +14,7 @@ import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
 import top.warmthdawn.emss.features.statistics.ContainerStatistics
+import top.warmthdawn.emss.features.statistics.DockerStatsHelper
 import top.warmthdawn.emss.utils.event.impl.newConcurrentHashSet
 import java.io.Closeable
 import java.io.InputStream
@@ -36,7 +37,7 @@ data class DownloadingStatus(
 
 object DockerManager {
     private const val registryUrl = "https://index.docker.io/v1/"
-    private val dockerClient: DockerClient
+    val dockerClient: DockerClient
     private val log = LoggerFactory.getLogger(DockerManager::class.java)
 
     // 初始化并连接Docker
@@ -58,6 +59,7 @@ object DockerManager {
             .connectionTimeout(Duration.ofSeconds(3))
             .responseTimeout(Duration.ofSeconds(10))
             .build()
+
 
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
     }
@@ -172,7 +174,7 @@ object DockerManager {
         portBinding: List<PortBinding>,
         volumeBind: List<Bind>,
         workingDir: String,
-        cmd: MutableList<String>,
+        cmd: List<String>,
         exposedPorts: List<ExposedPort>,
     ): String? {
 
@@ -205,6 +207,7 @@ object DockerManager {
     fun stopContainer(containerId: String) {
         dockerClient
             .stopContainerCmd(containerId)
+            .withTimeout(1000 * 20)
             .exec()
     }
 
@@ -263,7 +266,8 @@ object DockerManager {
                     "dead",
                     -> ContainerStatus.Removed
                     else -> ContainerStatus.Unknown
-                }
+                },
+                container.state.exitCodeLong
             )
         } catch (e: NotFoundException) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_NOT_FOUND)
@@ -272,6 +276,7 @@ object DockerManager {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
     }
+
 
     // 监控状态
     fun statsContainer(containerId: String): ContainerStatistics {
@@ -296,41 +301,17 @@ object DockerManager {
         val memoryUsage =
             (result.memoryStats.usage ?: 0) - (result.memoryStats.stats?.cache ?: 0)
 
-
-
         //磁盘
-        var diskWriteValue = 0L
-        var diskReadValue = 0L
-        result.blkioStats?.ioServiceBytesRecursive?.forEach { entry ->
-            when (entry.op.lowercase()) {
-                "read" -> {
-                    diskReadValue += entry.value
-                }
-                "write" -> {
-                    diskWriteValue += entry.value
-                }
-            }
-        }
+        val (diskWriteValue, diskReadValue) = DockerStatsHelper.calculateBlockIO(result.blkioStats!!)
 
         //网络
-        val networksIn = result.networks?.values?.asSequence()
-            ?.map { net -> net.rxBytes }
-            ?.filterNotNull()
-            ?.reduce { a, b -> a + b }
-            ?: 0
-
-
-        val netWorksOut = result.networks?.values?.asSequence()
-            ?.map { net -> net.txBytes }
-            ?.filterNotNull()
-            ?.reduce { a, b -> a + b }
-            ?: 0
+        val (networksIn, netWorksOut) = DockerStatsHelper.calculateNetwork(result.networks!!)
 
         callback.close()
         return ContainerStatistics(
             cpuPercent,
-            memoryUsage,
             totalMemory,
+            memoryUsage,
             netWorksOut,
             networksIn,
             diskReadValue,
@@ -391,14 +372,16 @@ object DockerManager {
             .awaitCompletion()
     }
 
-    fun waitContainer(containerId: String): ResultCallback<WaitResponse> {
+    fun waitContainer(containerId: String): WaitResponse {
         return dockerClient
             .waitContainerCmd(containerId)
-            .exec(ResultCallback.Adapter())
-            .awaitCompletion()
+            .exec(AsyncResultCallback())
+            .awaitResult()
     }
 
 
+
 }
+
 
 

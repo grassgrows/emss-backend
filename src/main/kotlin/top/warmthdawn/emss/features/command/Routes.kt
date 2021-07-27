@@ -21,6 +21,9 @@ fun Route.commandEndpoint() {
                 setCallback {
                     outgoing.send(Frame.Text(true, it))
                 }
+                setClose {
+                    close(CloseReason(CloseReason.Codes.NORMAL, "断开连接"))
+                }
                 attach()
                 incoming.consumeEach {
                     receiveMessage(it.readBytes())

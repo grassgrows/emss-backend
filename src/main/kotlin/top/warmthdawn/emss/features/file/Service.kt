@@ -2,13 +2,13 @@ package top.warmthdawn.emss.features.file
 
 import io.ebean.Database
 import io.ktor.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.database.entity.query.QPermissionGroup
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
@@ -16,7 +16,8 @@ import top.warmthdawn.emss.features.file.vo.FileListInfoVO
 import top.warmthdawn.emss.features.file.vo.buildVirtualDirectory
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.features.permission.PermissionExceptionMsg
-import top.warmthdawn.emss.features.permission.PermissionService
+import top.warmthdawn.emss.features.server.ServerException
+import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import java.io.*
 import java.nio.file.Path
 import java.time.Instant
@@ -203,6 +204,11 @@ class FileService(
         }
     }
 
+    suspend fun getServerPath(id: Long): String {
+        val server = QServer().id.eq(id).findOne() ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        return "/root/${server.location}"
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     suspend fun getFileList(path: String): List<FileListInfoVO> {
         if (path.isEmpty() || path == "/") {
@@ -265,11 +271,23 @@ class FileService(
     }
 
     suspend fun copyFile(path: String, newPath: String) {
+
         val file = processPath(path).toFile()
+        var newFile = processPath(newPath).toFile()
         if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
-        val newFile = processPath(newPath).toFile()
+        if (file == newFile) {
+            var i = 1
+            val fileName = newFile.nameWithoutExtension
+            val ext = newFile.extension
+            var result = newFile
+            while (result.exists()) {
+                result = newFile.resolveSibling("$fileName ($i).$ext")
+                i++
+            }
+            newFile = result
+        }
         file.copyRecursively(newFile, true)
     }
 
@@ -315,8 +333,8 @@ class FileService(
         if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
-        if(pageNum < 0) {
-            if(file.length() > 1024 * 1024){
+        if (pageNum < 0) {
+            if (file.length() > 1024 * 1024) {
                 throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)
             }
             return file.readText()
@@ -366,6 +384,9 @@ class FileService(
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         val newFile = processPath(newPath).toFile()
+        if(file == newFile){
+            return 0
+        }
         if (newFile.exists()) {
             if (newFile.isDirectory && newFile.length() == 0L) {
                 return 1

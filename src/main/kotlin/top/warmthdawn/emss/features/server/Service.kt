@@ -1,7 +1,6 @@
 package top.warmthdawn.emss.features.server
 
 import io.ebean.Database
-import io.ktor.utils.io.*
 import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.entity.GroupServer
 import top.warmthdawn.emss.database.entity.Server
@@ -21,6 +20,7 @@ import top.warmthdawn.emss.features.server.dto.VolumeBindingDTO
 import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
+import java.time.LocalDateTime
 
 /**
  *
@@ -33,6 +33,7 @@ class ServerService(
     private val config: AppConfig,
     private val imageService: ImageService,
     private val dockerService: DockerService,
+    private val autoRestart: ServerAutoRestartHandler
 ) {
 
     suspend fun getServersBriefInfo(): List<ServerBriefVO> {
@@ -52,6 +53,7 @@ class ServerService(
                 running.serverPlayerNumber,
                 running.serverMaxPlayer,
                 running.serverTps,
+                running.autoRestart,
             )
             list.add(result)
         }
@@ -59,6 +61,15 @@ class ServerService(
         return list
     }
 
+    suspend fun setAutoRestart(serverId: Long, autoRestart: Boolean) {
+        QServerRealTime(db)
+            .serverId.eq(serverId)
+            .findOne()
+            ?.let {
+                it.autoRestart = autoRestart
+                it.update()
+            }
+    }
 
     suspend fun getServerInfo(id: Long): ServerVO {
         val server =
@@ -167,17 +178,24 @@ class ServerService(
             return
         }
 
-        if(dockerService.inspectContainer(id) == ContainerStatus.Removed){
+        if (dockerService.inspectContainer(id) == ContainerStatus.Removed) {
             dockerService.createContainer(id)
         }
-
         dockerService.startContainer(id)
+        QServerRealTime().serverId.eq(id).findOne()?.let {
+            it.lastStartDate = LocalDateTime.now()
+            it.update()
+        }
+        autoRestart.monitoring(id) {
+            start(id)
+        }
     }
 
     suspend fun stop(id: Long) {
         if (config.testing) {
             return
         }
+        setAutoRestart(id, false)
         dockerService.stopContainer(id)
     }
 
@@ -191,6 +209,7 @@ class ServerService(
         if (config.testing) {
             return
         }
+        setAutoRestart(id, false)
         dockerService.terminateContainer(id)
 
     }

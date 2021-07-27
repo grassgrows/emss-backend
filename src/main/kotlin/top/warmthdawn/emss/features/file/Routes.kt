@@ -137,7 +137,7 @@ fun Route.fileEndpoint() {
             }
         }
         route("/copy") {
-            get("/check") {
+            post("/check") {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
                 try {

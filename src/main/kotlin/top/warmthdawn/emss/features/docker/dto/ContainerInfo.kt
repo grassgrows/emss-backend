@@ -13,6 +13,7 @@ data class ContainerInfo(
     val name: String,       // 容器名称
     val createTime: LocalDateTime, // 创建时间
     val imageId: String,    // 创建容器的镜像64位id
-    val status: ContainerStatus     // 容器状态
+    val status: ContainerStatus,     // 容器状态
+    val exitCode: Long?,
 )
 
