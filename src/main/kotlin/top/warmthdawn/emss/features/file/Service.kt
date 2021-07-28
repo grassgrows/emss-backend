@@ -37,9 +37,7 @@ class FileService(
     private val db: Database
 ) {
 
-
-    fun processPath(input: String): Path {
-
+    fun processPathRaw(input: String): String {
         var uri = Path(input).normalize().invariantSeparatorsPathString
 
         if (uri == "/" || uri == "") {
@@ -47,6 +45,12 @@ class FileService(
         }
 
         uri = if (uri.startsWith("/")) uri.substring(1) else uri
+        return uri
+    }
+
+    fun processPath(input: String): Path {
+
+        val uri = processPathRaw(input)
 
         when (uri.substringBefore('/')) {
             "root" -> {
@@ -96,14 +100,7 @@ class FileService(
         return filePathChunk.exists()
     }
 
-    fun ensureHasAuthority(input: String, userId: Long): List<String> {
-        var uri = Path(input).normalize().invariantSeparatorsPathString
-
-        if (uri == "/" || uri == "") {
-            uri = "/root/"
-        }
-
-        uri = if (uri.startsWith("/")) uri.substring(1) else uri
+    fun permittedLocations(userId: Long): List<String> {
 
         val defaultLocations = db.sqlQuery(
             "SELECT DISTINCT(LOCATION) as RESULT FROM SERVER\n" +
@@ -128,12 +125,20 @@ class FileService(
 
 
         val permit = default + other
+        return permit
+    }
 
-
+    fun ensureHasAuthority(input: String, userId: Long) {
+        val uri = processPathRaw(input)
+        val permit = permittedLocations(userId)
         if (!permit.any { uri.startsWith(it) })
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+    }
 
-        return permit
+    fun ensureHasAuthorityAll(userId: Long, vararg paths: String) {
+        val permit = permittedLocations(userId)
+        if (!paths.map { processPathRaw(it) }.all { uri-> permit.any { uri.startsWith(it) } })
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
     }
 
     suspend fun uploadFile(input: InputStream, info: FileChunkInfoDTO) {
@@ -210,7 +215,7 @@ class FileService(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    suspend fun getFileList(path: String): List<FileListInfoVO> {
+    suspend fun getFileListAdmin(path: String): List<FileListInfoVO> {
         if (path.isEmpty() || path == "/") {
             return buildList {
                 buildVirtualDirectory("服务器根目录(root)", "/root")
@@ -221,6 +226,52 @@ class FileService(
             }
 
         }
+
+        return getFileListInternal(path)
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    suspend fun getFileListNormal(path: String, userId: Long): List<FileListInfoVO> {
+        val permitted = permittedLocations(userId)
+        if (path.isEmpty() || path == "/") {
+            return buildList {
+                if(permitted.contains("/root") || permitted.contains("/root/")) {
+                    buildVirtualDirectory("服务器根目录(root)", "/root")
+                }
+                if(permitted.contains("/backup") || permitted.contains("/backup/")) {
+                    buildVirtualDirectory("服务器根目录(backup)", "/backup")
+                }
+                buildVirtualDirectory("其他文件夹", "/permitted")
+                QServer().findList().forEach {
+                    buildVirtualDirectory(it.name, "/root/${it.location}")
+                }
+            }
+        }
+        val pathRaw = processPathRaw(path)
+        if(pathRaw.substringBefore('/') == "permitted") {
+            return buildList {
+
+                permitted.forEach {
+                    if(it.startsWith("/backup/")) {
+                        buildVirtualDirectory("备份: ${it.substringAfter("/backup/")}", it)
+                    }
+
+                    if(it.startsWith("/root/")) {
+                        buildVirtualDirectory("根: ${it.substringAfter("/root/")}", it)
+                    }
+                }
+            }
+        }
+        if (!permitted.any { pathRaw.startsWith(it) })
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+
+        return getFileListInternal(path)
+
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private suspend fun getFileListInternal(path: String): List<FileListInfoVO> {
+
         val filePath = processPath(path)
         fileListCheck(filePath)
         val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)

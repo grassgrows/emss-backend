@@ -11,6 +11,7 @@ import top.warmthdawn.emss.features.compressed.CompressService
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.utils.R
+import top.warmthdawn.emss.utils.checkFilePermission
 import top.warmthdawn.emss.utils.checkPermission
 import top.warmthdawn.emss.utils.userId
 import kotlin.io.path.Path
@@ -32,20 +33,12 @@ fun Route.fileEndpoint() {
 
     postL<FileChunkInfoDTO> { info ->
         val stream = call.receiveStream()
-        try {
-            checkPermission(0)
-        } catch (e: PermissionException) {
-            fileService.ensureHasAuthority(info.destinationPath, userId)
-        }
+        checkFilePermission(0, info.destinationPath)
         fileService.uploadFile(stream, info)
         R.ok()
     }
     getL<FileChunkInfoDTO> { info ->
-        try {
-            checkPermission(0)
-        } catch (e: PermissionException) {
-            fileService.ensureHasAuthority(info.destinationPath, userId)
-        }
+        checkFilePermission(0, info.destinationPath)
         if (fileService.testFile(info)) {
             R.ok()
         } else {
@@ -57,17 +50,18 @@ fun Route.fileEndpoint() {
         route("/list") {
             get {
                 val filePath = call.request.queryParameters["path"]!!
-                R.ok(fileService.getFileList(filePath))
+                try{
+                    checkPermission(0)
+                    R.ok(fileService.getFileListAdmin(filePath))
+                }catch (e: PermissionException) {
+                    R.ok(fileService.getFileListNormal(filePath, userId))
+                }
             }
         }
         route("/newFolder") {
             post {
                 val dirsPath = call.request.queryParameters["path"]!!
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    fileService.ensureHasAuthority(dirsPath, userId)
-                }
+                checkFilePermission(0, dirsPath)
                 fileService.createDirs(dirsPath)
                 R.ok()
             }
@@ -75,11 +69,7 @@ fun Route.fileEndpoint() {
         route("/download") {
             get {
                 val filePath = call.request.queryParameters["path"]!!
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    fileService.ensureHasAuthority(filePath, userId)
-                }
+                checkFilePermission(0, filePath)
                 val file = fileService.processPath(filePath).toFile()
                 if (!file.exists()) {
                     throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
@@ -95,11 +85,7 @@ fun Route.fileEndpoint() {
         route("/rename") {
             post {
                 val filePath = call.request.queryParameters["path"]!!
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    fileService.ensureHasAuthority(filePath, userId)
-                }
+                checkFilePermission(0, filePath)
                 val newName = call.request.queryParameters["newName"]!!
                 fileService.renameFile(filePath, newName)
                 R.ok()
@@ -108,13 +94,7 @@ fun Route.fileEndpoint() {
         route("/delete") {
             post {
                 val filePaths = call.receive<Array<String>>()
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    filePaths.forEach {
-                        fileService.ensureHasAuthority(it, userId)
-                    }
-                }
+                checkFilePermission(0, *filePaths)
                 filePaths.forEach {
                     fileService.deleteFile(it)
                 }
@@ -125,13 +105,7 @@ fun Route.fileEndpoint() {
             post {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    filePaths.forEach {
-                        fileService.ensureHasAuthority(it, userId)
-                    }
-                }
+                checkFilePermission(0, *filePaths)
                 filePaths.forEach {
                     fileService.cutFile(it, target + "/" + Path(it).fileName)
                 }
@@ -142,13 +116,7 @@ fun Route.fileEndpoint() {
             post("/check") {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    filePaths.forEach {
-                        fileService.ensureHasAuthority(it, userId)
-                    }
-                }
+                checkFilePermission(0, *filePaths)
                 var count = 0
                 filePaths.forEach {
                     count += fileService.findDuplicateFiles(it, target + "/" + Path(it).fileName)
@@ -158,13 +126,7 @@ fun Route.fileEndpoint() {
             post {
                 val target = call.request.queryParameters["path"]!!
                 val filePaths = call.receive<Array<String>>()
-                try {
-                    checkPermission(0)
-                } catch (e: PermissionException) {
-                    filePaths.forEach {
-                        fileService.ensureHasAuthority(it, userId)
-                    }
-                }
+                checkFilePermission(0, *filePaths)
                 filePaths.forEach {
                     fileService.copyFile(it, target + "/" + Path(it).fileName)
                 }
@@ -174,6 +136,7 @@ fun Route.fileEndpoint() {
         route("/search") {
             get {
                 val filePath = call.request.queryParameters["path"]!!
+                checkFilePermission(0, filePath)
                 val keyword = call.request.queryParameters["keyword"]!!
                 R.ok(fileService.searchFile(filePath, keyword))
             }
@@ -181,20 +144,12 @@ fun Route.fileEndpoint() {
         get("/read") {
             val filePath = call.request.queryParameters["path"]!!
             val pageNum = call.request.queryParameters["pageNum"]!!
-            try {
-                checkPermission(0)
-            } catch (e: PermissionException) {
-                fileService.ensureHasAuthority(filePath, userId)
-            }
+            checkFilePermission(0, filePath)
             call.respondText(fileService.readTextFile(filePath, pageNum.toInt()))
         }
         post("/save") {
             val filePath = call.request.queryParameters["path"]!!
-            try {
-                checkPermission(0)
-            } catch (e: PermissionException) {
-                fileService.ensureHasAuthority(filePath, userId)
-            }
+            checkFilePermission(0, filePath)
             val text = call.receiveText()
             fileService.saveTextFile(filePath, text)
             R.ok()
@@ -202,24 +157,14 @@ fun Route.fileEndpoint() {
 
         post("/compress") {
             val filePaths = call.receive<Array<String>>()
-            try {
-                checkPermission(0)
-            } catch (e: PermissionException) {
-                filePaths.forEach {
-                    fileService.ensureHasAuthority(it, userId)
-                }
-            }
+            checkFilePermission(0, *filePaths)
             compressService.compressFile(filePaths)
             R.ok()
         }
 
         post("/uncompress") {
             val filePath = call.request.queryParameters["path"]!!
-            try {
-                checkPermission(0)
-            } catch (e: PermissionException) {
-                fileService.ensureHasAuthority(filePath, userId)
-            }
+            checkFilePermission(0, filePath)
             compressService.uncompressFile(filePath)
             R.ok()
         }
