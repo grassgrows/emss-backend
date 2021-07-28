@@ -96,8 +96,9 @@ class StatisticsService(
         QServerStatistics().time.lt(begin).delete()
     }
 
-    fun getStatistics(statisticsType: StatisticsType): ServerStatisticsVO {
+    fun getStatistics(serverId: Long, statisticsType: StatisticsType): ServerStatisticsVO {
         val statistics = QServerStatistics(db)
+            .serverId.eq(serverId)
             .type.eq(statisticsType)
             .orderBy().time.asc()
             .findList()
@@ -135,9 +136,10 @@ class StatisticsService(
         return Pair(timestamps, values)
     }
 
-    fun getStatistics(statisticsTypes: List<StatisticsType>): List<ServerStatisticsVO> {
+    fun getStatistics(serverId: Long, statisticsTypes: List<StatisticsType>): List<ServerStatisticsVO> {
         return QServerStatistics(db)
             .type.isIn(statisticsTypes)
+            .serverId.eq(serverId)
             .findList()
             .groupBy { it.type }
             .map { (statisticsType, statistics) ->

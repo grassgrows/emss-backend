@@ -27,12 +27,12 @@ fun Route.statisticsEndpoint() {
             if (flag != null) {
 
                 val types = StatisticsType.containsAll(flag)
-                val result = statisticsService.getStatistics(types)
+                val result = statisticsService.getStatistics(id, types)
                 R.ok(result)
             } else {
                 val type = StatisticsType.getByName(typeParam)
                 if (type != null) {
-                    val result = statisticsService.getStatistics(type)
+                    val result = statisticsService.getStatistics(id, type)
                     R.ok(result)
                 } else {
                     R.error(Code.BadRequest, "无法找到相应的资源", HttpStatusCode.BadRequest)
