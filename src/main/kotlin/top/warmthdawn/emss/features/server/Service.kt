@@ -123,7 +123,7 @@ class ServerService(
         server.hostPort = mainBind.hostPort
         server.containerPort = mainBind.containerPort
         server.portBindings = serverInfoDTO.portBindings
-            .subList(1, serverInfoDTO.portBindings.size - 1)
+            .subList(1, serverInfoDTO.portBindings.size)
             .associate { it.hostPort to it.containerPort }
         server.volumeBind = serverInfoDTO.volumeBind
             .associate { it.hostVolume to it.containerVolume }
@@ -140,7 +140,7 @@ class ServerService(
         }
         val mainBind = serverInfoDTO.portBindings.first()
         val portBindings = serverInfoDTO.portBindings
-            .subList(1, serverInfoDTO.portBindings.size - 1)
+            .subList(1, serverInfoDTO.portBindings.size)
             .associate { it.hostPort to it.containerPort }
         val volumeBind = serverInfoDTO.volumeBind
             .associate { it.hostVolume to it.containerVolume }
