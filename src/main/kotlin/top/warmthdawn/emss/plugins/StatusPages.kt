@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.request.*
+import io.ktor.response.*
 import top.warmthdawn.emss.features.docker.ContainerException
 import top.warmthdawn.emss.features.docker.ContainerExceptionMsg
 import top.warmthdawn.emss.features.docker.ImageException
@@ -183,7 +186,15 @@ fun Application.configureStatusPages() {
         }
 
         status(HttpStatusCode.NotFound) {
-            R.error(Code.NotFound, "您请求的页面不存在", HttpStatusCode.NotFound)
+            val path = call.request.path()
+            if(!path.startsWith("/api") && !path.startsWith("/socket")) {
+                val content = call.resolveResource("index.html", "frontend")
+                if(content != null){
+                    call.respond(content)
+                }
+            }else{
+                R.error(Code.NotFound, "您请求的页面不存在", HttpStatusCode.NotFound)
+            }
         }
         status(HttpStatusCode.Unauthorized) {
             R.error(Code.CredentialWrong, "JWT证书验证错误！", HttpStatusCode.Unauthorized)
