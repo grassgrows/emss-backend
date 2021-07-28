@@ -10,6 +10,7 @@ import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
+import top.warmthdawn.emss.features.server.dto.PortBindingDTO
 import kotlin.coroutines.resume
 
 /**
@@ -35,13 +36,18 @@ class DockerService(
         val server = QServer(db).id.eq(serverId).findOne()!!
         val rootPath = fileService.processPath("/root/${server.location}").toString()
         val image = QImage(db).id.eq(server.imageId).findOne()!!
-        val portBindingList =
-            server.portBindings.map { PortBinding(Ports.Binding(null, it.key.toString()), ExposedPort(it.value)) }
         val volumeBindList = server.volumeBind.map { Bind(it.key, Volume(it.value)) } +
                 Bind(rootPath, Volume(server.workingDir))
 //        val cmd = mutableListOf("/bin/sh", "-c", server.startCommand)
         val cmd = server.startCommand.split(' ')
-        val exposedPort = server.portBindings.keys.map { ExposedPort(it) }
+
+        val portBinding = mutableListOf(PortBindingDTO(server.containerPort, server.hostPort))
+        server.portBindings.mapTo(portBinding) { PortBindingDTO(it.value, it.key) }
+
+        val exposedPort = portBinding.map { ExposedPort(it.hostPort) }
+        val portBindingList =
+            portBinding.map { PortBinding(Ports.Binding(null, it.hostPort.toString()), ExposedPort(it.containerPort)) }
+
         val containerId = DockerManager
             .createContainer(
                 server.containerName,
