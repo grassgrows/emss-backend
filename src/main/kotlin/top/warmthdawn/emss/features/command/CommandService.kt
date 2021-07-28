@@ -1,6 +1,5 @@
 package top.warmthdawn.emss.features.command
 
-import com.github.dockerjava.api.async.ResultCallback
 import io.ebean.Database
 import kotlinx.coroutines.*
 import top.warmthdawn.emss.database.entity.query.QServer
@@ -9,9 +8,7 @@ import top.warmthdawn.emss.features.server.ServerException
 import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
-import java.util.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 
 /**
  *
@@ -23,141 +20,81 @@ typealias ReceiveMessage = suspend (ByteArray) -> Unit
 class CommandService(
     private val db: Database
 ) {
-    private val attaches: MutableMap<Long, AttachProxy> = mutableMapOf()
-
-    suspend fun createAttach(serverId: Long, detach: () -> Unit = {}) {
-        coroutineScope {
-            val server = QServer().id.eq(serverId).findOne() ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
-            val attachProxy = getAttachProxy(serverId)
-            attachProxy.attach(server.containerId!!, detach)
-
-            attaches.put(serverId, attachProxy)
-        }
-    }
-
-    suspend fun sendMessage(id: Long, msg: String) {
-        getAttachProxy(id).onMessage("$msg\n".toByteArray())
-    }
-
-
-    suspend fun detach(serverId: Long) {
-        getAttachProxy(serverId).detach()
-    }
-
-    private val _lock = ReentrantLock()
-
-    fun getAttachProxy(serverId: Long): AttachProxy {
-        _lock.lock()
-        try {
-            if (!attaches.containsKey(serverId)) {
-                attaches[serverId] = AttachProxy()
-            }
-            return attaches[serverId]!!
-        }finally {
-            _lock.unlock()
-        }
+    suspend fun createAttach(serverId: Long, config: suspend AttachProxy.() -> Unit) {
+        val server =
+            QServer().id.eq(serverId).findOne() ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        val attachProxy = AttachProxy(server.containerId!!)
+        config(attachProxy)
+        attachProxy.detach()
     }
 }
 
 class AttachProxy(
+    private val containerId: String,
     pipeBufferSize: Int = 1024 * 32,
-    private val historySize: Int = 20,
-    context: CoroutineContext? = null
-) : CoroutineScope {
+) : CoroutineScope by CoroutineScope(Dispatchers.IO) {
     private val RETURN = '\r'.code.toByte()
-    private val msgListeners: MutableSet<ReceiveMessage> = mutableSetOf()
+    private val LINE_BREAK = "\n".toByteArray()
     private val input = PipedInputStream(pipeBufferSize)
     private val output = PipedOutputStream(input)
-    private val lock = ReentrantLock()
-    override val coroutineContext: CoroutineContext = if (context != null) {
-        CoroutineName("AttachProxy").plus(Dispatchers.IO).plus(context)
-    } else CoroutineName("AttachProxy").plus(Dispatchers.IO)
 
-    private lateinit var attaching: ResultCallback<*>
-    private var attached = false
+    private var callback: suspend (ByteArray) -> Unit = {}
+    fun setCallback(callback: suspend (ByteArray) -> Unit = {}) {
+        this.callback = callback
+    }
 
+    private var close: suspend () -> Unit = {}
+    fun setClose(close: suspend () -> Unit = {}) {
+        this.close = close
+    }
 
-    private val history = LinkedList<ByteArray>()
-
-    private suspend fun dispatchMessage(msg: ByteArray) {
-        msgListeners.forEach {
-            kotlin.runCatching {
-                it(msg)
-            }
+    fun receiveMessage(byteArray: ByteArray) {
+        output.write(byteArray)
+        if (byteArray.lastOrNull() == RETURN) {
+            output.flush()
         }
     }
 
-    suspend fun onMessage(msg: ByteArray) {
-        lock.lock()
-        try {
-            if (history.size > historySize) {
-                history.poll()
-            }
-            history.offer(msg)
-        } finally {
-            lock.unlock()
-        }
-        dispatchMessage(msg)
-    }
-
-    fun attach(containerId: String, onComplete: () -> Unit = {}) {
-        if (attached) {
-            return
-        }
-        attaching = DockerManager.attachContainer(containerId, input, onComplete) {
-            runBlocking {
-                onMessage(it.payload)
-            }
-        }
-        attached = true
-
-    }
-
-    suspend fun addListener(listener: ReceiveMessage): ReceiveMessage {
-        lock.lock()
-        try {
-            msgListeners.add(listener)
-            history.forEach { dispatchMessage(it) }
-        } finally {
-            lock.unlock()
-        }
-        dispatchMessage("成功连接终端，以上为历史消息\n".toByteArray())
-        return listener
-    }
-
-    fun removeListener(listener: ReceiveMessage) {
-        lock.lock()
-        try {
-            msgListeners.remove(listener)
-        } finally {
-            lock.unlock()
-        }
-    }
-
-    suspend fun sendMessage(msg: ByteArray) {
-        withContext(Dispatchers.IO) {
-            runCatching {
-                lock.lock()
-                try {
-                    output.write(msg)
-                    if (msg.lastOrNull() == RETURN) {
-                        output.flush()
-                    }
-                } finally {
-                    lock.unlock()
-                }
-            }
-        }
-    }
 
     fun detach() {
-        if (!attached) {
-            if (::attaching.isInitialized) {
-                attaching.close()
-            }
-            coroutineContext.cancel()
-        }
-
-        attached = false
+        cancel()
     }
+
+    private fun sendToClient(msg: String) {
+        launch {
+            callback(msg.toByteArray())
+            callback(LINE_BREAK)
+        }
+    }
+
+    private fun sendToClient(msg: ByteArray) {
+        launch {
+            callback(msg)
+        }
+    }
+
+    fun attach() {
+        launch {
+            suspendCancellableCoroutine<Unit> { cont ->
+                sendToClient("-----成功连接服务器终端-----")
+                DockerManager.logContainer(containerId) {
+                    sendToClient(it.payload)
+
+                }
+                sendToClient("------以上为历史消息------")
+                val result = DockerManager.attachContainer(containerId, input) {
+                    sendToClient(it.payload)
+                }
+                cont.invokeOnCancellation {
+                    result.close()
+                }
+                result.awaitCompletion()
+                sendToClient("-----断开终端连接-----")
+                cont.resume(Unit)
+            }
+            close()
+        }
+    }
+
+
 }

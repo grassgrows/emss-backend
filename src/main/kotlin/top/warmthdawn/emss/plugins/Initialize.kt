@@ -3,7 +3,8 @@ package top.warmthdawn.emss.plugins
 import io.ktor.application.*
 import kotlinx.coroutines.runBlocking
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
+import top.warmthdawn.emss.features.server.ServerAutoRestartHandler
+import top.warmthdawn.emss.features.statistics.StatisticsService
 import top.warmthdawn.emss.features.system.SystemService
 
 /**
@@ -14,9 +15,11 @@ import top.warmthdawn.emss.features.system.SystemService
 fun Application.initialize() {
     val statisticsService by inject<StatisticsService>()
     val systemService by inject<SystemService>()
+    val restartHandler by inject<ServerAutoRestartHandler>()
     runBlocking {
         statisticsService.init()
         systemService.init()
+        restartHandler.init()
     }
 
 

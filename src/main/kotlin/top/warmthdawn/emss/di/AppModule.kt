@@ -6,20 +6,19 @@ import top.warmthdawn.emss.config.AppConfig
 import top.warmthdawn.emss.database.DBFactory
 import top.warmthdawn.emss.database.DBFactoryImpl
 import top.warmthdawn.emss.features.command.CommandService
+import top.warmthdawn.emss.features.compressed.CompressService
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.docker.ImageDownloadScheduler
 import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.permission.PermissionService
 import top.warmthdawn.emss.features.login.LoginService
+import top.warmthdawn.emss.features.server.ServerAutoRestartHandler
 import top.warmthdawn.emss.features.server.ServerService
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
-import top.warmthdawn.emss.features.statistics.impl.statistics.ServerStatisticsFactory
+import top.warmthdawn.emss.features.statistics.StatisticsService
 import top.warmthdawn.emss.features.settings.ImageService
 import top.warmthdawn.emss.features.settings.SettingService
 import top.warmthdawn.emss.features.system.NotificationService
 import top.warmthdawn.emss.features.system.SystemService
-import top.warmthdawn.emss.utils.server.ServerInstanceFactory
-import top.warmthdawn.emss.utils.server.ServerInstanceHolder
 
 val appModule = module {
     // Backend Config
@@ -32,16 +31,15 @@ val appModule = module {
     single { ImageService(get(), get(), get()) }
 
     //server
-    single { ServerService(get(), get(), get(), get(), get(), get()) }
-    single { ServerInstanceFactory(get(), get(), get(), get(), get()) }
-    single { ServerInstanceHolder(get()) }
+    single { ServerService(get(), get(), get(), get(), get()) }
+    single { ServerAutoRestartHandler(get(), get()) }
     //docker
     single { DockerService(get(), get()) }
     //status
-    single { StatisticsService(get(), get(), get()) }
-    single { ServerStatisticsFactory(get()) }
+    single { StatisticsService(get(), get()) }
     //file
     single { FileService(get()) }
+    single { CompressService(get()) }
     //command
     single { CommandService(get()) }
     //system

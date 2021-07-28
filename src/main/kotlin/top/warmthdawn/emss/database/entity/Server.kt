@@ -1,5 +1,6 @@
 package top.warmthdawn.emss.database.entity
 
+import io.ebean.annotation.DbDefault
 import io.ebean.annotation.DbJsonB
 import javax.persistence.CascadeType
 import javax.persistence.Entity
@@ -24,7 +25,9 @@ class Server(
     @DbJsonB
     var volumeBind: Map<String, String> = emptyMap(), //目录映射
     var containerId: String? = null, //服务器Docker容器64位ID
-//    var containerPort: Int,
-//    var hostPort: Int,
+    @DbDefault("25565")
+    var containerPort: Int = 25565,
+    @DbDefault("25565")
+    var hostPort: Int = 25565,
 
 ) : BaseEntity()

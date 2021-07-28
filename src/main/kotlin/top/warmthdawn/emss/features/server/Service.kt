@@ -9,17 +9,18 @@ import top.warmthdawn.emss.database.entity.query.QGroupServer
 import top.warmthdawn.emss.database.entity.query.QImage
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QServerRealTime
+import top.warmthdawn.emss.features.docker.ContainerStatus
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.docker.ImageException
 import top.warmthdawn.emss.features.docker.ImageExceptionMsg
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.server.dto.PortBindingDTO
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
-import top.warmthdawn.emss.features.server.entity.ServerState
+import top.warmthdawn.emss.features.server.dto.VolumeBindingDTO
 import top.warmthdawn.emss.features.server.vo.ServerBriefVO
 import top.warmthdawn.emss.features.server.vo.ServerVO
 import top.warmthdawn.emss.features.settings.ImageService
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
-import top.warmthdawn.emss.utils.server.ServerInstanceHolder
+import java.time.LocalDateTime
 
 /**
  *
@@ -32,28 +33,27 @@ class ServerService(
     private val config: AppConfig,
     private val imageService: ImageService,
     private val dockerService: DockerService,
-    private val statisticsService: StatisticsService,
-    private val serverInstanceHolder: ServerInstanceHolder,
+    private val autoRestart: ServerAutoRestartHandler
 ) {
 
     suspend fun getServersBriefInfo(): List<ServerBriefVO> {
         val list: MutableList<ServerBriefVO> = mutableListOf()
         for (server in QServer(db).findList()) {
-            val obj = serverInstanceHolder.getOrCreate(server.id!!)
-            val running = obj.getRunningInfo()
+            val running = QServerRealTime(db).id.eq(server.id).findOne()!!
+            val isRunning = dockerService.isRunning(server.id!!)
             val result = ServerBriefVO(
                 server.id!!,
                 server.name,
                 server.aliasName,
                 server.abbr,
-                obj.isRunning(),
-                server.portBindings.keys.firstOrNull(),
+                isRunning,
+                server.hostPort,
                 server.imageId,
-                obj.getRunningInfo().lastCrashDate,
-                groupsOfServer(server.id!!),
+                running.lastCrashDate,
                 running.serverPlayerNumber,
                 running.serverMaxPlayer,
                 running.serverTps,
+                running.autoRestart,
             )
             list.add(result)
         }
@@ -61,13 +61,34 @@ class ServerService(
         return list
     }
 
-    fun getIdByAbbr(abbr: String): Long? {
-        return QServer(db).abbr.eq(abbr).findIds<Long>().firstOrNull()
+    suspend fun setAutoRestart(serverId: Long, autoRestart: Boolean) {
+        QServerRealTime(db)
+            .serverId.eq(serverId)
+            .findOne()
+            ?.let {
+                it.autoRestart = autoRestart
+                it.update()
+            }
     }
 
     suspend fun getServerInfo(id: Long): ServerVO {
-        val server = QServer(db).id.eq(id).findOne()
-            ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        val server =
+            QServer(db)
+                .id.eq(id)
+                .findOne()
+                ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+
+        val portBinding = mutableListOf(PortBindingDTO(server.containerPort, server.hostPort))
+        server.portBindings.mapTo(portBinding) { PortBindingDTO(it.value, it.key) }
+
+        val volumeBind = server.volumeBind.map { VolumeBindingDTO(it.value, it.key) }
+
+        val permissionGroup =
+            QGroupServer(db)
+                .select(QGroupServer._alias.groupId)
+                .serverId.eq(id)
+                .findSingleAttributeList<Long>()
+
         return ServerVO(
             server.id!!,
             server.name,
@@ -77,24 +98,20 @@ class ServerService(
             server.startCommand,
             server.imageId,
             server.workingDir,
-            server.portBindings,
-            server.volumeBind,
-            groupsOfServer(server.id!!)
+            portBinding,
+            volumeBind,
+            permissionGroup,
         )
     }
 
-    private fun groupsOfServer(id: Long): List<Long> {
-        val result: MutableList<Long> = mutableListOf()
-        for (row in QGroupServer(db).serverId.eq(id).findList()) {
-            result.add(row.groupId)
-        }
-        return result
-    }
 
     suspend fun updateServerInfo(id: Long, serverInfoDTO: ServerInfoDTO) {
 
         val server = QServer(db).id.eq(id).findOne()
             ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+
+        dockerService.tryRemoveContainer(id)
+
         server.name = serverInfoDTO.name
         server.aliasName = serverInfoDTO.aliasName ?: ""
         server.abbr = serverInfoDTO.abbr
@@ -102,10 +119,16 @@ class ServerService(
         server.startCommand = serverInfoDTO.startCommand
         server.imageId = serverInfoDTO.imageId
         server.workingDir = serverInfoDTO.workingDir
+        val mainBind = serverInfoDTO.portBindings.first()
+        server.hostPort = mainBind.hostPort
+        server.containerPort = mainBind.containerPort
         server.portBindings = serverInfoDTO.portBindings
+            .subList(1, serverInfoDTO.portBindings.size - 1)
+            .associate { it.hostPort to it.containerPort }
         server.volumeBind = serverInfoDTO.volumeBind
+            .associate { it.hostVolume to it.containerVolume }
         server.update()
-        serverInstanceHolder.getOrCreate(server.id!!).reset()
+
     }
 
     suspend fun createServerInfo(serverInfoDTO: ServerInfoDTO) {
@@ -115,6 +138,12 @@ class ServerService(
             if (imageService.getImageStatus(serverInfoDTO.imageId).status != ImageStatus.Downloaded)
                 throw ImageException(ImageExceptionMsg.IMAGE_NOT_DOWNLOADED)
         }
+        val mainBind = serverInfoDTO.portBindings.first()
+        val portBindings = serverInfoDTO.portBindings
+            .subList(1, serverInfoDTO.portBindings.size - 1)
+            .associate { it.hostPort to it.containerPort }
+        val volumeBind = serverInfoDTO.volumeBind
+            .associate { it.hostVolume to it.containerVolume }
         val server = Server(
             name = serverInfoDTO.name,
             aliasName = serverInfoDTO.aliasName ?: "",
@@ -123,22 +152,23 @@ class ServerService(
             startCommand = serverInfoDTO.startCommand,
             imageId = serverInfoDTO.imageId,
             workingDir = serverInfoDTO.workingDir,
-            portBindings = serverInfoDTO.portBindings,
-            volumeBind = serverInfoDTO.volumeBind,
+            portBindings = portBindings,
+            volumeBind = volumeBind,
+            containerPort = mainBind.containerPort,
+            hostPort = mainBind.hostPort,
         )
         server.insert()
 
         val realTime = ServerRealTime(serverId = server.id!!)
         realTime.insert()
 
-        statisticsService.addServer(server.id!!, server.abbr)
 
-        serverInfoDTO.permissionGroup.forEach {
+        db.insertAll(serverInfoDTO.permissionGroup.map {
             GroupServer(
                 it,
                 server.id!!,
-            ).insert()
-        }
+            )
+        })
 
 
     }
@@ -147,18 +177,31 @@ class ServerService(
         if (config.testing) {
             return
         }
-        serverInstanceHolder.getOrCreate(id).start()
+
+        if (dockerService.inspectContainer(id) == ContainerStatus.Removed) {
+            dockerService.createContainer(id)
+        }
+        dockerService.startContainer(id)
+        QServerRealTime().serverId.eq(id).findOne()?.let {
+            it.lastStartDate = LocalDateTime.now()
+            it.update()
+        }
+        autoRestart.monitoring(id) {
+            start(id)
+        }
     }
 
     suspend fun stop(id: Long) {
         if (config.testing) {
             return
         }
-        serverInstanceHolder.getOrCreate(id).stop()
+        setAutoRestart(id, false)
+        dockerService.stopContainer(id)
     }
 
     suspend fun restart(id: Long) {
         stop(id)
+        dockerService.waitContainer(id)
         start(id)
     }
 
@@ -166,8 +209,8 @@ class ServerService(
         if (config.testing) {
             return
         }
-
-        serverInstanceHolder.getOrCreate(id).terminate()
+        setAutoRestart(id, false)
+        dockerService.terminateContainer(id)
 
     }
 
@@ -178,18 +221,19 @@ class ServerService(
         if (!QServer().id.eq(id).exists())
             throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
 
+        dockerService.tryRemoveContainer(id)
         val server = QServer().id.eq(id).findOne()!!
         val groupServer = QGroupServer().id.eq(id)
 
-        kotlin.runCatching {
-            dockerService.removeContainer(id)
+        db.beginTransaction()
+        try {
+            val serverRealTime = QServerRealTime().id.eq(id).findOne()
+            if (!server.delete() || !serverRealTime!!.delete() || groupServer.delete() <= 0)
+                throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
+            db.commitTransaction()
+        } finally {
+            db.endTransaction()
         }
-        //删除监控信息
-        statisticsService.delServer(id)
-        serverInstanceHolder.remove(id)
-        val serverRealTime = QServerRealTime().id.eq(id).findOne()
-        if (!server.delete() || !serverRealTime!!.delete() || groupServer.delete() <= 0)
-            throw ServerException(ServerExceptionMsg.SERVER_DATABASE_REMOVE_FAILED)
 
     }
 }

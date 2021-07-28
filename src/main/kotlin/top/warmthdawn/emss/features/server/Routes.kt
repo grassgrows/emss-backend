@@ -4,12 +4,10 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.routing.*
 import org.koin.ktor.ext.inject
+import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.features.server.dto.ServerInfoDTO
-import top.warmthdawn.emss.features.statistics.impl.StatisticsService
-import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
 import top.warmthdawn.emss.utils.R
-import top.warmthdawn.emss.utils.checkGroupPermission
 import top.warmthdawn.emss.utils.checkPermission
 import top.warmthdawn.emss.utils.checkServerPermission
 
@@ -22,7 +20,7 @@ import top.warmthdawn.emss.utils.checkServerPermission
 fun Route.serverEndpoint() {
 
     val serverService by inject<ServerService>()
-    val statisticsService by inject<StatisticsService>()
+    val fileService by inject<FileService>()
     route("/servers") {
         get {
             R.ok(serverService.getServersBriefInfo())
@@ -35,7 +33,7 @@ fun Route.serverEndpoint() {
             R.ok()
         }
 
-        delete("/{id}"){
+        delete("/{id}") {
             val id = call.parameters["id"]!!.toLong()
             try {
                 checkPermission(0)
@@ -49,6 +47,11 @@ fun Route.serverEndpoint() {
             val id = call.parameters["id"]!!.toLong()
             R.ok(serverService.getServerInfo(id))
         }
+        get("/{id}/filePath") {
+            val id = call.parameters["id"]!!.toLong()
+            R.ok(fileService.getServerPath(id))
+        }
+
         post("/{id}") {
             val id = call.parameters["id"]!!.toLong()
             try {
@@ -58,6 +61,17 @@ fun Route.serverEndpoint() {
             }
             val dto = call.receive<ServerInfoDTO>()
             serverService.updateServerInfo(id, dto)
+            R.ok()
+        }
+        post("/{id}/autoRestart") {
+            val id = call.parameters["id"]!!.toLong()
+            val value = call.request.queryParameters["value"].toBoolean()
+            try {
+                checkPermission(0)
+            } catch (e: PermissionException) {
+                checkServerPermission(id, 3)
+            }
+            serverService.setAutoRestart(id, value)
             R.ok()
         }
         post("/{id}/start") {
@@ -80,6 +94,7 @@ fun Route.serverEndpoint() {
             serverService.stop(id)
             R.ok()
         }
+
         post("/{id}/restart") {
             val id = call.parameters["id"]!!.toLong()
             try {

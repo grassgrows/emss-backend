@@ -3,12 +3,10 @@ package top.warmthdawn.emss.utils
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
-import io.ktor.response.*
 import io.ktor.util.pipeline.*
 import org.koin.ktor.ext.inject
-import top.warmthdawn.emss.database.entity.query.QUser
+import top.warmthdawn.emss.features.file.FileService
 import top.warmthdawn.emss.features.permission.PermissionException
-import top.warmthdawn.emss.features.permission.PermissionExceptionMsg
 import top.warmthdawn.emss.features.permission.PermissionService
 
 
@@ -26,6 +24,21 @@ suspend fun PipelineContext<*, ApplicationCall>.checkPermission(requiredLevel: I
     val permissionService by application.inject<PermissionService>()
     permissionService.checkUserPermission(userId = userId, requiredLevel)
 }
+
+suspend fun PipelineContext<*, ApplicationCall>.checkFilePermission(allPassLevel: Int, vararg filePaths: String) {
+    val permissionService by application.inject<PermissionService>()
+    val fileService by application.inject<FileService>()
+    try {
+        permissionService.checkUserPermission(userId = userId, allPassLevel)
+    } catch (e: PermissionException) {
+        if (filePaths.size == 1) {
+            fileService.ensureHasAuthority(filePaths[0], userId)
+        } else {
+            fileService.ensureHasAuthorityAll(userId, *filePaths)
+        }
+    }
+}
+
 
 suspend fun PipelineContext<*, ApplicationCall>.checkGroupPermission(groupId: Long, requiredLevel: Int) {
     val permissionService by application.inject<PermissionService>()

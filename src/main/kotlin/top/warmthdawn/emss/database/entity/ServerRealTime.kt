@@ -18,4 +18,6 @@ class ServerRealTime (
     var serverPlayerNumber: Int = 0,   //服务器当前玩家
     var serverTps: Double = 20.0,   //服务器Tps
     var serverId: Long,
+    @DbDefault("false")
+    var autoRestart: Boolean = false,
 ): BaseEntity()

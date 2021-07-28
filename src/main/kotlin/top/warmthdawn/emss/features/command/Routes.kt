@@ -3,7 +3,7 @@ package top.warmthdawn.emss.features.command
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.channels.consumeEach
 import org.koin.ktor.ext.inject
 
 /**
@@ -17,23 +17,19 @@ fun Route.commandEndpoint() {
     route("/command") {
         webSocket("/attach/{id}") { // websocketSession
             val id = call.parameters["id"]!!.toLong()
-            val proxy = commandService.getAttachProxy(id)
-
-            val listener = proxy.addListener {
-                outgoing.send(Frame.Text(true, it))
-            }
-            while (true) {
-                try {
-                    val frame = incoming.receive()
-                    proxy.sendMessage(frame.readBytes())
-                    yield()
-                } catch (e: Exception) {
-                    break
+            commandService.createAttach(id) {
+                setCallback {
+                    outgoing.send(Frame.Text(true, it))
+                }
+                setClose {
+                    close(CloseReason(CloseReason.Codes.NORMAL, "断开连接"))
+                }
+                attach()
+                incoming.consumeEach {
+                    receiveMessage(it.readBytes())
                 }
             }
-            proxy.removeListener(listener)
-
-            close(CloseReason(CloseReason.Codes.NORMAL, "ConnectClosed"))
+            close(CloseReason(CloseReason.Codes.NORMAL, "断开连接"))
         }
     }
 

@@ -3,6 +3,7 @@ package top.warmthdawn.emss.features.docker
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.PullImageResultCallback
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.*
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
@@ -12,11 +13,15 @@ import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
 import top.warmthdawn.emss.features.docker.vo.ImageStatus
+import top.warmthdawn.emss.features.statistics.ContainerStatistics
+import top.warmthdawn.emss.features.statistics.DockerStatsHelper
+import top.warmthdawn.emss.utils.event.impl.newConcurrentHashSet
 import java.io.Closeable
 import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -32,7 +37,7 @@ data class DownloadingStatus(
 
 object DockerManager {
     private const val registryUrl = "https://index.docker.io/v1/"
-    private val dockerClient: DockerClient
+    val dockerClient: DockerClient
     private val log = LoggerFactory.getLogger(DockerManager::class.java)
 
     // 初始化并连接Docker
@@ -51,11 +56,16 @@ object DockerManager {
             .dockerHost(clientConfig.dockerHost)
             .sslConfig(clientConfig.sslConfig)
             .maxConnections(4)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
+            .connectionTimeout(Duration.ofSeconds(3))
+            .responseTimeout(Duration.ofSeconds(10))
             .build()
 
+
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
+    }
+
+    fun ping() {
+        dockerClient.pingCmd()
     }
 
     // 拉取镜像
@@ -164,7 +174,7 @@ object DockerManager {
         portBinding: List<PortBinding>,
         volumeBind: List<Bind>,
         workingDir: String,
-        cmd: MutableList<String>,
+        cmd: List<String>,
         exposedPorts: List<ExposedPort>,
     ): String? {
 
@@ -197,6 +207,7 @@ object DockerManager {
     fun stopContainer(containerId: String) {
         dockerClient
             .stopContainerCmd(containerId)
+            .withTimeout(1000 * 20)
             .exec()
     }
 
@@ -255,26 +266,57 @@ object DockerManager {
                     "dead",
                     -> ContainerStatus.Removed
                     else -> ContainerStatus.Unknown
-                }
+                },
+                container.state.exitCodeLong
             )
-        } catch (e: Exception) {
+        } catch (e: NotFoundException) {
+            throw ContainerException(ContainerExceptionMsg.CONTAINER_NOT_FOUND)
+        }
+        catch (e: Exception) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
     }
 
+
     // 监控状态
-    fun statsContainer(containerId: String, callback: (Statistics) -> Unit): AsyncResultCallback<Statistics> {
+    fun statsContainer(containerId: String): ContainerStatistics {
 
-        return dockerClient
+        val callback = dockerClient
             .statsCmd(containerId)
-            .exec<AsyncResultCallback<Statistics>>(object : AsyncResultCallback<Statistics>() {
-                override fun onNext(statistics: Statistics?) {
-                    if (statistics != null) {
-                        callback(statistics)
-                    }
-                }
+            .withNoStream(true)
+            .exec(AsyncResultCallback())
+        val result  = callback.awaitResult()!!
 
-            })
+        //CPU
+        val cpuDelta = (result.cpuStats.cpuUsage?.totalUsage ?: 0) - (result.preCpuStats.cpuUsage?.totalUsage ?: 0)
+        val systemCpuDelta = (result.cpuStats.systemCpuUsage ?: 0) - (result.preCpuStats.systemCpuUsage ?: 0)
+        val numberCpus = result.cpuStats.onlineCpus ?: result.cpuStats.cpuUsage?.percpuUsage?.size ?: 0
+        var cpuPercent = (cpuDelta * 1.0 / systemCpuDelta) * numberCpus.toDouble() * 100.0
+        if (cpuPercent > 100) {
+            cpuPercent = 100.0
+        }
+
+        //内存
+        val totalMemory = result.memoryStats.limit ?: 0
+        val memoryUsage =
+            (result.memoryStats.usage ?: 0) - (result.memoryStats.stats?.cache ?: 0)
+
+        //磁盘
+        val (diskWriteValue, diskReadValue) = DockerStatsHelper.calculateBlockIO(result.blkioStats!!)
+
+        //网络
+        val (networksIn, netWorksOut) = DockerStatsHelper.calculateNetwork(result.networks!!)
+
+        callback.close()
+        return ContainerStatistics(
+            cpuPercent,
+            totalMemory,
+            memoryUsage,
+            netWorksOut,
+            networksIn,
+            diskReadValue,
+            diskWriteValue,
+        )
     }
 
 
@@ -298,10 +340,8 @@ object DockerManager {
     fun attachContainer(
         containerId: String,
         inputStream: InputStream,
-        complete: () -> Unit = {},
         callback: (Frame) -> Unit,
     ): ResultCallback.Adapter<Frame> {
-
         return dockerClient
             .attachContainerCmd(containerId)
             .withStdOut(true)
@@ -313,22 +353,35 @@ object DockerManager {
                     super.onNext(frame)
                     frame?.let(callback)
                 }
-
-                override fun onComplete() {
-                    super.onComplete()
-                    complete()
-                }
             })
     }
 
-    fun waitContainer(containerId: String): ResultCallback<WaitResponse> {
-        return dockerClient
-            .waitContainerCmd(containerId)
-            .exec(ResultCallback.Adapter())
+    fun logContainer(containerId: String,
+                     callback: (Frame) -> Unit,) {
+        dockerClient
+            .logContainerCmd(containerId)
+            .withTail(100)
+            .withStdErr(true)
+            .withStdOut(true)
+            .exec<ResultCallback.Adapter<Frame>>(object : ResultCallback.Adapter<Frame>() {
+                override fun onNext(frame: Frame?) {
+                    super.onNext(frame)
+                    frame?.let(callback)
+                }
+            })
             .awaitCompletion()
     }
 
+    fun waitContainer(containerId: String): WaitResponse {
+        return dockerClient
+            .waitContainerCmd(containerId)
+            .exec(AsyncResultCallback())
+            .awaitResult()
+    }
+
+
 
 }
+
 
 

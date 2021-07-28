@@ -2,13 +2,13 @@ package top.warmthdawn.emss.features.file
 
 import io.ebean.Database
 import io.ktor.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import top.warmthdawn.emss.database.entity.SettingType
-import top.warmthdawn.emss.database.entity.query.QPermissionGroup
 import top.warmthdawn.emss.database.entity.query.QServer
 import top.warmthdawn.emss.database.entity.query.QSetting
 import top.warmthdawn.emss.features.file.dto.FileChunkInfoDTO
@@ -16,7 +16,8 @@ import top.warmthdawn.emss.features.file.vo.FileListInfoVO
 import top.warmthdawn.emss.features.file.vo.buildVirtualDirectory
 import top.warmthdawn.emss.features.permission.PermissionException
 import top.warmthdawn.emss.features.permission.PermissionExceptionMsg
-import top.warmthdawn.emss.features.permission.PermissionService
+import top.warmthdawn.emss.features.server.ServerException
+import top.warmthdawn.emss.features.server.ServerExceptionMsg
 import java.io.*
 import java.nio.file.Path
 import java.time.Instant
@@ -36,9 +37,7 @@ class FileService(
     private val db: Database
 ) {
 
-
-    fun processPath(input: String): Path {
-
+    fun processPathRaw(input: String): String {
         var uri = Path(input).normalize().invariantSeparatorsPathString
 
         if (uri == "/" || uri == "") {
@@ -46,6 +45,12 @@ class FileService(
         }
 
         uri = if (uri.startsWith("/")) uri.substring(1) else uri
+        return uri
+    }
+
+    fun processPath(input: String): Path {
+
+        val uri = processPathRaw(input)
 
         when (uri.substringBefore('/')) {
             "root" -> {
@@ -95,14 +100,7 @@ class FileService(
         return filePathChunk.exists()
     }
 
-    fun ensureHasAuthority(input: String, userId: Long): List<String> {
-        var uri = Path(input).normalize().invariantSeparatorsPathString
-
-        if (uri == "/" || uri == "") {
-            uri = "/root/"
-        }
-
-        uri = if (uri.startsWith("/")) uri.substring(1) else uri
+    fun permittedLocations(userId: Long): List<String> {
 
         val defaultLocations = db.sqlQuery(
             "SELECT DISTINCT(LOCATION) as RESULT FROM SERVER\n" +
@@ -127,12 +125,20 @@ class FileService(
 
 
         val permit = default + other
+        return permit
+    }
 
-
+    fun ensureHasAuthority(input: String, userId: Long) {
+        val uri = processPathRaw(input)
+        val permit = permittedLocations(userId)
         if (!permit.any { uri.startsWith(it) })
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+    }
 
-        return permit
+    fun ensureHasAuthorityAll(userId: Long, vararg paths: String) {
+        val permit = permittedLocations(userId)
+        if (!paths.map { processPathRaw(it) }.all { uri-> permit.any { uri.startsWith(it) } })
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
     }
 
     suspend fun uploadFile(input: InputStream, info: FileChunkInfoDTO) {
@@ -203,8 +209,13 @@ class FileService(
         }
     }
 
+    suspend fun getServerPath(id: Long): String {
+        val server = QServer().id.eq(id).findOne() ?: throw ServerException(ServerExceptionMsg.SERVER_NOT_FOUND)
+        return "/root/${server.location}"
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
-    suspend fun getFileList(path: String): List<FileListInfoVO> {
+    suspend fun getFileListAdmin(path: String): List<FileListInfoVO> {
         if (path.isEmpty() || path == "/") {
             return buildList {
                 buildVirtualDirectory("服务器根目录(root)", "/root")
@@ -215,6 +226,52 @@ class FileService(
             }
 
         }
+
+        return getFileListInternal(path)
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    suspend fun getFileListNormal(path: String, userId: Long): List<FileListInfoVO> {
+        val permitted = permittedLocations(userId)
+        if (path.isEmpty() || path == "/") {
+            return buildList {
+                if(permitted.contains("/root") || permitted.contains("/root/")) {
+                    buildVirtualDirectory("服务器根目录(root)", "/root")
+                }
+                if(permitted.contains("/backup") || permitted.contains("/backup/")) {
+                    buildVirtualDirectory("服务器根目录(backup)", "/backup")
+                }
+                buildVirtualDirectory("其他文件夹", "/permitted")
+                QServer().findList().forEach {
+                    buildVirtualDirectory(it.name, "/root/${it.location}")
+                }
+            }
+        }
+        val pathRaw = processPathRaw(path)
+        if(pathRaw.substringBefore('/') == "permitted") {
+            return buildList {
+
+                permitted.forEach {
+                    if(it.startsWith("/backup/")) {
+                        buildVirtualDirectory("备份: ${it.substringAfter("/backup/")}", it)
+                    }
+
+                    if(it.startsWith("/root/")) {
+                        buildVirtualDirectory("根: ${it.substringAfter("/root/")}", it)
+                    }
+                }
+            }
+        }
+        if (!permitted.any { pathRaw.startsWith(it) })
+            throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
+
+        return getFileListInternal(path)
+
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private suspend fun getFileListInternal(path: String): List<FileListInfoVO> {
+
         val filePath = processPath(path)
         fileListCheck(filePath)
         val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
@@ -265,11 +322,23 @@ class FileService(
     }
 
     suspend fun copyFile(path: String, newPath: String) {
+
         val file = processPath(path).toFile()
+        var newFile = processPath(newPath).toFile()
         if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
-        val newFile = processPath(newPath).toFile()
+        if (file == newFile) {
+            var i = 1
+            val fileName = newFile.nameWithoutExtension
+            val ext = newFile.extension
+            var result = newFile
+            while (result.exists()) {
+                result = newFile.resolveSibling("$fileName ($i).$ext")
+                i++
+            }
+            newFile = result
+        }
         file.copyRecursively(newFile, true)
     }
 
@@ -315,8 +384,8 @@ class FileService(
         if (!file.exists()) {
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
-        if(pageNum < 0) {
-            if(file.length() > 1024 * 1024){
+        if (pageNum < 0) {
+            if (file.length() > 1024 * 1024) {
                 throw FileException(FileExceptionMsg.FILE_SIZE_TOO_LARGE)
             }
             return file.readText()
@@ -366,6 +435,9 @@ class FileService(
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         val newFile = processPath(newPath).toFile()
+        if(file == newFile){
+            return 0
+        }
         if (newFile.exists()) {
             if (newFile.isDirectory && newFile.length() == 0L) {
                 return 1
