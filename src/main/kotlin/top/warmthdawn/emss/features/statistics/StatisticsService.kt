@@ -1,7 +1,14 @@
 package top.warmthdawn.emss.features.statistics
 
 import io.ebean.Database
+import org.bouncycastle.crypto.tls.ConnectionEnd.client
 import org.slf4j.LoggerFactory
+import top.limbang.doctor.allLoginPlugin.enableAllLoginPlugin
+import top.limbang.doctor.client.MinecraftClient
+import top.limbang.doctor.client.MinecraftClientBuilder
+import top.limbang.doctor.client.running.AutoVersionForgePlugin
+import top.limbang.doctor.client.running.TpsPlugin
+import top.limbang.doctor.network.event.ConnectionEvent
 import top.warmthdawn.emss.database.entity.Server
 import top.warmthdawn.emss.database.entity.ServerStatistics
 import top.warmthdawn.emss.database.entity.query.QServer
@@ -11,7 +18,9 @@ import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
+import top.warmthdawn.emss.features.statistics.StatisticsService.Companion.mcBotList
 import top.warmthdawn.emss.features.statistics.minecraft.ping.MinecraftTools
+import java.time.Clock.tick
 import kotlin.concurrent.fixedRateTimer
 
 /**
@@ -25,14 +34,55 @@ class StatisticsService(
 ) {
 
     companion object {
+        val mcBotList = mutableMapOf<Long, MinecraftClient>()
         private val logger = LoggerFactory.getLogger(StatisticsService::class.java)
+        private fun mcBotBuilder(port: Int): MinecraftClient? {
+            val client = MinecraftClient.builder()
+                .user("1304793916@qq.com", "1234567890")
+                .authServerUrl("https://skin.blackyin.xyz/api/yggdrasil/authserver")
+                .sessionServerUrl("https://skin.blackyin.xyz/api/yggdrasil/sessionserver")
+                .plugin(TpsPlugin())
+                .plugin(AutoVersionForgePlugin())
+                .enableAllLoginPlugin()
+                .build()
+            if (!client.start("localhost", port)) return null
+            return client
+        }
     }
 
     fun init() {
-        fixedRateTimer("statistics_timer", true, 0, 60 * 1000L) {
-            QServer().findList().forEach {
-                tick(it)
+        mcBotList.forEach { (_, client) ->
+            client.on(ConnectionEvent.Disconnect) {
+                Thread.sleep(1000L)
+                client.reconnect()
             }
+        }
+        var time = 0
+        fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
+            if (time != 0) {
+                Thread.sleep(5000L)
+                mcBotList.forEach { (_, client) ->
+                    client.stop()
+                }
+                mcBotList.clear()
+                QServer().findList().forEach {
+                    if (dockerService.isRunning(it.id!!)) {
+                        val client = mcBotBuilder(it.hostPort)
+                        if (client != null) mcBotList[it.id!!] = client
+                    }
+                }
+            } else time = 1
+        }
+        fixedRateTimer("statistics_timer", true, 0, 10 * 1000L) {
+            val serverList = QServer().findList()
+            serverList.forEach {
+                tick(it)
+                if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null) {
+                    val client = mcBotBuilder(it.hostPort)
+                    if (client != null) mcBotList[it.id!!] = client
+                }
+            }
+
         }
     }
 
@@ -69,10 +119,18 @@ class StatisticsService(
                 serverPlayerNumber = ping.playerOnline
                 update()
             }
+        } else {
+            mcBotList[serverId]?.stop()
+            mcBotList.remove(serverId)
         }
         val timeTps = System.currentTimeMillis() / 1000
         //TODO: TPS
-        ServerStatistics(serverId, StatisticsType.TPS, timeTps, 20).insert()
+        val client = mcBotList[serverId]
+        val tps: Double = if (client != null) {
+            MinecraftTools.tps(client) ?: 0.0
+        } else 0.0
+
+        ServerStatistics(serverId, StatisticsType.TPS, timeTps, tps).insert()
 
     }
 
@@ -127,7 +185,7 @@ class StatisticsService(
                 avg += statistics[i].value
                 i++
             }
-            if(count > 0) {
+            if (count > 0) {
                 avg /= count
             }
             timestamps.add(time)
