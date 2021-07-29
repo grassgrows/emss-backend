@@ -58,6 +58,7 @@ class StatisticsService(
         }
         var time = 0
         fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
+            Thread.sleep(5000L)
             mcBotList.forEach { (_, client) ->
                 client.stop()
             }
