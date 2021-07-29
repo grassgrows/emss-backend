@@ -34,6 +34,10 @@ class StatisticsService(
 ) {
 
     companion object {
+        private var oldDiskWrite = 0L
+        private var oldDiskRead = 0L
+        private var oldUploadBytes = 0L
+        private var oldDownloadBytes = 0L
         private val mcBotList = mutableMapOf<Long, MinecraftClient>()
         private val unSupportList = mutableListOf<Long>()
         private val logger = LoggerFactory.getLogger(StatisticsService::class.java)
@@ -92,14 +96,34 @@ class StatisticsService(
             val result = DockerManager.statsContainer(containerId)
             val time = System.currentTimeMillis() / 1000
 
+            val newDiskWrite = result.diskWrite
+            var diskWrite = oldDiskWrite - newDiskWrite
+            if (diskWrite < 0) diskWrite = 0L
+            oldDiskWrite = newDiskWrite
+
+            val newDiskRead = result.diskRead
+            var diskRead = oldDiskRead - newDiskRead
+            if (diskRead < 0) diskRead = 0L
+            oldDiskRead = newDiskRead
+
+            val newUploadBytes = result.uploadBytes
+            var uploadBytes = oldUploadBytes - newUploadBytes
+            if (uploadBytes < 0) uploadBytes = 0L
+            oldUploadBytes = newUploadBytes
+
+            val newDownloadBytes = result.downloadBytes
+            var downloadBytes = oldDownloadBytes - newDownloadBytes
+            if (downloadBytes < 0) downloadBytes = 0L
+            oldDownloadBytes = newDownloadBytes
+
             db.insertAll(
                 listOf(
                     ServerStatistics(serverId, StatisticsType.CPU, time, result.cpuPercent),
                     ServerStatistics(serverId, StatisticsType.MEMORY, time, result.currentMemory),
-                    ServerStatistics(serverId, StatisticsType.DISK_WRITE, time, result.diskWrite),
-                    ServerStatistics(serverId, StatisticsType.DISK_READ, time, result.diskRead),
-                    ServerStatistics(serverId, StatisticsType.NETWORK_UPLOAD, time, result.uploadBytes),
-                    ServerStatistics(serverId, StatisticsType.NETWORK_DOWNLOAD, time, result.downloadBytes),
+                    ServerStatistics(serverId, StatisticsType.DISK_WRITE, time, diskWrite),
+                    ServerStatistics(serverId, StatisticsType.DISK_READ, time, diskRead),
+                    ServerStatistics(serverId, StatisticsType.NETWORK_UPLOAD, time, uploadBytes),
+                    ServerStatistics(serverId, StatisticsType.NETWORK_DOWNLOAD, time, downloadBytes),
                 )
             )
         } catch (e: Exception) {
