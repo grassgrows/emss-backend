@@ -34,7 +34,8 @@ class StatisticsService(
 ) {
 
     companion object {
-        val mcBotList = mutableMapOf<Long, MinecraftClient>()
+        private val mcBotList = mutableMapOf<Long, MinecraftClient>()
+        private val unSupportList = mutableListOf<Long>()
         private val logger = LoggerFactory.getLogger(StatisticsService::class.java)
         private fun mcBotBuilder(port: Int): MinecraftClient? {
             val client = MinecraftClient.builder()
@@ -66,7 +67,7 @@ class StatisticsService(
                 }
                 mcBotList.clear()
                 QServer().findList().forEach {
-                    if (dockerService.isRunning(it.id!!)) {
+                    if (dockerService.isRunning(it.id!!) && !unSupportList.contains(it.id)) {
                         val client = mcBotBuilder(it.hostPort)
                         if (client != null) mcBotList[it.id!!] = client
                     }
@@ -77,7 +78,7 @@ class StatisticsService(
             val serverList = QServer().findList()
             serverList.forEach {
                 tick(it)
-                if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null) {
+                if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
                     val client = mcBotBuilder(it.hostPort)
                     if (client != null) mcBotList[it.id!!] = client
                 }
@@ -118,6 +119,10 @@ class StatisticsService(
                 serverMaxPlayer = ping.playerMax
                 serverPlayerNumber = ping.playerOnline
                 update()
+            }
+            if (ping.versionNumber != 340) {
+                unSupportList.removeAll(listOf(serverId))
+                unSupportList.add(serverId)
             }
         } else {
             mcBotList[serverId]?.stop()
