@@ -38,6 +38,7 @@ class StatisticsService(
         private var oldDiskRead = 0L
         private var oldUploadBytes = 0L
         private var oldDownloadBytes = 0L
+        private var oldTime = System.currentTimeMillis() / 1000
         private val mcBotList = mutableMapOf<Long, MinecraftClient>()
         private val unSupportList = mutableListOf<Long>()
         private val logger = LoggerFactory.getLogger(StatisticsService::class.java)
@@ -95,27 +96,33 @@ class StatisticsService(
         try {
             val result = DockerManager.statsContainer(containerId)
             val time = System.currentTimeMillis() / 1000
+            val newTime = time - oldTime
 
             val newDiskWrite = result.diskWrite
-            var diskWrite = oldDiskWrite - newDiskWrite
-            if (diskWrite < 0) diskWrite = 0L
+            var diskWrite = newDiskWrite - oldDiskWrite
+            diskWrite = if (diskWrite < 0) 0L
+            else diskWrite / newTime
             oldDiskWrite = newDiskWrite
 
             val newDiskRead = result.diskRead
-            var diskRead = oldDiskRead - newDiskRead
-            if (diskRead < 0) diskRead = 0L
+            var diskRead = newDiskRead - oldDiskRead
+            diskRead = if (diskRead < 0) 0L
+            else diskRead / newTime
             oldDiskRead = newDiskRead
 
             val newUploadBytes = result.uploadBytes
-            var uploadBytes = oldUploadBytes - newUploadBytes
-            if (uploadBytes < 0) uploadBytes = 0L
+            var uploadBytes = newUploadBytes - oldUploadBytes
+            uploadBytes = if (uploadBytes < 0) 0L
+            else uploadBytes / newTime
             oldUploadBytes = newUploadBytes
 
             val newDownloadBytes = result.downloadBytes
-            var downloadBytes = oldDownloadBytes - newDownloadBytes
-            if (downloadBytes < 0) downloadBytes = 0L
+            var downloadBytes = newDownloadBytes - oldDownloadBytes
+            downloadBytes = if (downloadBytes < 0) 0L
+            else downloadBytes / newTime
             oldDownloadBytes = newDownloadBytes
 
+            oldTime = time
             db.insertAll(
                 listOf(
                     ServerStatistics(serverId, StatisticsType.CPU, time, result.cpuPercent),
