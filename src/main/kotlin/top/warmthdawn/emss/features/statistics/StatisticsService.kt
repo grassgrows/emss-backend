@@ -121,8 +121,7 @@ class StatisticsService(
                 update()
             }
             if (ping.versionNumber != 340) {
-                unSupportList.removeAll(listOf(serverId))
-                unSupportList.add(serverId)
+                if (!unSupportList.contains(serverId)) unSupportList.add(serverId)
             }
         } else {
             mcBotList[serverId]?.stop()

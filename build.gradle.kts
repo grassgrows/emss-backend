@@ -71,8 +71,8 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktor_version")
     implementation("io.ktor:ktor-auth-jwt:$ktor_version")
     //doctor
-    implementation("top.limbang.doctor:doctor-client:1.3.1")
-    implementation("top.limbang.doctor:doctor-plugin-forge-allLoginPlugin:1.3.1")
+    implementation("top.limbang.doctor:doctor-client:1.3.2")
+    implementation("top.limbang.doctor:doctor-plugin-forge-allLoginPlugin:1.3.2")
     //oshi
     implementation("com.github.oshi:oshi-core:5.8.0")
     // Testing
