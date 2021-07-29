@@ -18,6 +18,7 @@ import top.warmthdawn.emss.features.docker.DockerManager
 import top.warmthdawn.emss.features.docker.DockerService
 import top.warmthdawn.emss.features.server.entity.StatisticsType
 import top.warmthdawn.emss.features.server.vo.ServerStatisticsVO
+import top.warmthdawn.emss.features.statistics.StatisticsService.Companion.mcBotList
 import top.warmthdawn.emss.features.statistics.minecraft.ping.MinecraftTools
 import java.time.Clock.tick
 import kotlin.concurrent.fixedRateTimer
@@ -58,12 +59,12 @@ class StatisticsService(
         }
         var time = 0
         fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
-            Thread.sleep(5000L)
-            mcBotList.forEach { (_, client) ->
-                client.stop()
-            }
-            mcBotList.clear()
             if (time != 0) {
+                Thread.sleep(5000L)
+                mcBotList.forEach { (_, client) ->
+                    client.stop()
+                }
+                mcBotList.clear()
                 QServer().findList().forEach {
                     if (dockerService.isRunning(it.id!!)) {
                         val client = mcBotBuilder(it.hostPort)
