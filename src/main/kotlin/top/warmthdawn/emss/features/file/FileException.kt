@@ -20,6 +20,7 @@ enum class FileExceptionMsg {
     FILE_SIZE_TOO_LARGE,
     WRONG_PATH_FORMAT,
     PARSE_SAME_FILE,
+    FILE_TYPE_UN_SUPPORT,
 }
 
 class FileChunkException(
