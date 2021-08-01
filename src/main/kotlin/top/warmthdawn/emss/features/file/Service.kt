@@ -137,7 +137,7 @@ class FileService(
 
     fun ensureHasAuthorityAll(userId: Long, vararg paths: String) {
         val permit = permittedLocations(userId)
-        if (!paths.map { processPathRaw(it) }.all { uri-> permit.any { uri.startsWith(it) } })
+        if (!paths.map { processPathRaw(it) }.all { uri -> permit.any { uri.startsWith(it) } })
             throw PermissionException(PermissionExceptionMsg.INSUFFICIENT_PERMISSION_LEVEL)
     }
 
@@ -235,10 +235,10 @@ class FileService(
         val permitted = permittedLocations(userId)
         if (path.isEmpty() || path == "/") {
             return buildList {
-                if(permitted.contains("/root") || permitted.contains("/root/")) {
+                if (permitted.contains("/root") || permitted.contains("/root/")) {
                     buildVirtualDirectory("服务器根目录(root)", "/root")
                 }
-                if(permitted.contains("/backup") || permitted.contains("/backup/")) {
+                if (permitted.contains("/backup") || permitted.contains("/backup/")) {
                     buildVirtualDirectory("服务器根目录(backup)", "/backup")
                 }
                 buildVirtualDirectory("其他文件夹", "/permitted")
@@ -248,15 +248,15 @@ class FileService(
             }
         }
         val pathRaw = processPathRaw(path)
-        if(pathRaw.substringBefore('/') == "permitted") {
+        if (pathRaw.substringBefore('/') == "permitted") {
             return buildList {
 
                 permitted.forEach {
-                    if(it.startsWith("/backup/")) {
+                    if (it.startsWith("/backup/")) {
                         buildVirtualDirectory("备份: ${it.substringAfter("/backup/")}", it)
                     }
 
-                    if(it.startsWith("/root/")) {
+                    if (it.startsWith("/root/")) {
                         buildVirtualDirectory("根: ${it.substringAfter("/root/")}", it)
                     }
                 }
@@ -274,7 +274,8 @@ class FileService(
 
         val filePath = processPath(path)
         fileListCheck(filePath)
-        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
+        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value).toFile()
+        val backup = Path(QSetting().type.eq(SettingType.SERVER_BACKUP_DIRECTORY).findOne()!!.value).toFile()
         val result = mutableListOf<FileListInfoVO>()
         val fileTree = filePath.toFile().walk()
         fileTree.maxDepth(1)
@@ -282,7 +283,7 @@ class FileService(
             .forEach {
                 val info = FileListInfoVO(
                     it.name,
-                    "/root/${it.relativeTo(root.toFile()).invariantSeparatorsPath}",
+                    calcRelativePath(it, root, backup),
                     it.length(), //in bytes
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
                     it.isDirectory
@@ -358,9 +359,21 @@ class FileService(
         deleteFile(path)
     }
 
+    private fun calcRelativePath(path: File, rootPath: File, backup: File): String {
+        return if (path.startsWith(rootPath)) {
+            "/root/${path.relativeTo(rootPath).invariantSeparatorsPath}"
+        } else if (path.startsWith(backup)) {
+            "/backup/${path.relativeTo(backup).invariantSeparatorsPath}"
+        } else {
+            throw FileException(FileExceptionMsg.DIRECTORY_NOT_FOUND)
+        }
+
+    }
+
     suspend fun searchFile(path: String, keyword: String): List<FileListInfoVO> {
         val filePath = processPath(path)
-        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value)
+        val root = Path(QSetting().type.eq(SettingType.SERVER_ROOT_DIRECTORY).findOne()!!.value).toFile()
+        val backup = Path(QSetting().type.eq(SettingType.SERVER_BACKUP_DIRECTORY).findOne()!!.value).toFile()
         return flow {
             val fileTree = filePath.toFile().walk()
             fileTree.maxDepth(Int.MAX_VALUE)
@@ -369,7 +382,7 @@ class FileService(
                 .forEach {
                     val info = FileListInfoVO(
                         it.name,
-                        "/root/${it.relativeTo(root.toFile()).invariantSeparatorsPath}",
+                        calcRelativePath(it, root, backup),
                         it.length(), //in bytes
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(it.lastModified()), ZoneId.systemDefault()),
                         it.isDirectory
@@ -435,7 +448,7 @@ class FileService(
             throw FileException(FileExceptionMsg.FILE_NOT_FOUND)
         }
         val newFile = processPath(newPath).toFile()
-        if(file == newFile){
+        if (file == newFile) {
             return 0
         }
         if (newFile.exists()) {
