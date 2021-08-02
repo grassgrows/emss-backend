@@ -75,23 +75,16 @@ class AttachProxy(
 
     fun attach() {
         launch {
-            suspendCancellableCoroutine<Unit> { cont ->
-                sendToClient("-----成功连接服务器终端-----")
-                DockerManager.logContainer(containerId) {
-                    sendToClient(it.payload)
+            sendToClient("-----成功连接服务器终端-----")
+            DockerManager.logContainer(containerId) {
+                sendToClient(it.payload)
 
-                }
-                sendToClient("------以上为历史消息------")
-                val result = DockerManager.attachContainer(containerId, input) {
-                    sendToClient(it.payload)
-                }
-                cont.invokeOnCancellation {
-                    result.close()
-                }
-                result.awaitCompletion()
-                sendToClient("-----断开终端连接-----")
-                cont.resume(Unit)
             }
+            sendToClient("------以上为历史消息------")
+            DockerManager.attachContainer(containerId, input) {
+                sendToClient(it.payload)
+            }
+            sendToClient("-----断开终端连接-----")
             close()
         }
     }

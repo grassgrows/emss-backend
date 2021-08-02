@@ -25,14 +25,14 @@ class DockerService(
     companion object {
         private val logger = LoggerFactory.getLogger(DockerService::class.java)
     }
-    fun init() {
+    suspend fun init() {
         try {
             DockerManager.ping()
         }catch (e: Exception) {
             logger.error("无法连接docker， 请检查你的docker并尝试重启服务器")
         }
     }
-    fun createContainer(serverId: Long) {
+    suspend fun createContainer(serverId: Long) {
         val server = QServer(db).id.eq(serverId).findOne()!!
         val rootPath = fileService.processPath("/root/${server.location}").toString()
         val image = QImage(db).id.eq(server.imageId).findOne()!!
@@ -62,25 +62,25 @@ class DockerService(
         server.update()
     }
 
-    fun getContainerId(serverId: Long): String {
+    suspend fun getContainerId(serverId: Long): String {
         val server = QServer(db).id.eq(serverId).findOne()!!
         //inspect一次，判断容器是否存在
         DockerManager.inspectContainer(server.containerId)
         return server.containerId!!
     }
 
-    fun startContainer(serverId: Long) {
+    suspend fun startContainer(serverId: Long) {
         DockerManager.startContainer(getContainerId(serverId))
     }
-    fun startContainer(containerId: String) {
+    suspend fun startContainer(containerId: String) {
         DockerManager.startContainer(containerId)
     }
 
-    fun stopContainer(serverId: Long) {
+    suspend fun stopContainer(serverId: Long) {
         DockerManager.stopContainer(getContainerId(serverId))
     }
 
-    fun tryRemoveContainer(serverId: Long) {
+    suspend fun tryRemoveContainer(serverId: Long) {
 
         val server = QServer(db).id.eq(serverId).findOne()!!
         try {
@@ -96,31 +96,25 @@ class DockerService(
         }
     }
 
-    fun terminateContainer(serverId: Long) {
+    suspend fun terminateContainer(serverId: Long) {
         DockerManager.terminateContainer(getContainerId(serverId))
     }
 
-    fun isRunning(serverId: Long): Boolean {
+    suspend fun isRunning(serverId: Long): Boolean {
         return inspectContainer(serverId) == ContainerStatus.Running
     }
 
     suspend fun waitContainer(serverId: Long): Long {
-        return suspendCancellableCoroutine<Long> {
-            val containerId = getContainerId(serverId)
-
-            val inspect = DockerManager.inspectContainer(containerId)
-            if(inspect.status == ContainerStatus.Stopped) {
-                it.resume(inspect.exitCode ?: 0)
-            }
-            it.invokeOnCancellation {
-                stopContainer(serverId)
-            }
-            val result = DockerManager.waitContainer(containerId)
-            it.resume(result.statusCode?.toLong() ?: 0L)
+        val containerId = getContainerId(serverId)
+        val inspect = DockerManager.inspectContainer(containerId)
+        if(inspect.status == ContainerStatus.Stopped) {
+            return inspect.exitCode ?: 0
         }
+        val result =  DockerManager.waitContainer(containerId)
+        return result.statusCode?.toLong() ?: 0L
     }
 
-    fun inspectContainer(serverId: Long): ContainerStatus {
+    suspend fun inspectContainer(serverId: Long): ContainerStatus {
         val server = QServer(db).id.eq(serverId).findOne()!!
         return kotlin.runCatching {
             DockerManager.inspectContainer(server.containerId).status
