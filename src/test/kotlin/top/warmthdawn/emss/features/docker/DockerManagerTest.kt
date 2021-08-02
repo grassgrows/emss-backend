@@ -1,6 +1,7 @@
 package top.warmthdawn.emss.features.docker
 
 import com.github.dockerjava.api.model.*
+import kotlinx.coroutines.runBlocking
 import org.junit.Ignore
 import org.junit.Test
 import org.koin.ktor.ext.inject
@@ -52,19 +53,19 @@ internal class DockerManagerTest {
     }
 
     @Test
-    fun startContainerTest() {
+    fun startContainerTest(): Unit = runBlocking {
         val containerName = "testContainer007"
         DockerManager.startContainer(containerName)
     }
 
     @Test
-    fun stopContainerTest() {
+    fun stopContainerTest(): Unit = runBlocking  {
         val containerName = "testContainer007"
         DockerManager.stopContainer(containerName)
     }
 
     @Test
-    fun inspectImageTest() {
+    fun inspectImageTest(): Unit = runBlocking  {
         val imageId = "2"//"c49355e8fcc5c030257a9ae819c6179dd242eac7f98792f88368dc49fe23c47e"
         val image = DockerManager.inspectImage(imageId)
 
@@ -78,7 +79,7 @@ internal class DockerManagerTest {
     }
 
     @Test
-    fun inspectContainerTest() {
+    fun inspectContainerTest(): Unit = runBlocking  {
         val containerId =
             "testContainer009" // testContainer006 0818c1f30f607aefe2a722431445af50baf526600576f5a5f3e2169511662d27
         val container = DockerManager.inspectContainer(containerId)

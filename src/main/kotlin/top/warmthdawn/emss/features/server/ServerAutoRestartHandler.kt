@@ -19,7 +19,7 @@ class ServerAutoRestartHandler(
     val dockerService: DockerService,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
-    fun init() {
+    suspend fun init() {
         QServer().findIds<Long>().forEach {
             if (dockerService.isRunning(it)) {
                 QServerRealTime(db)

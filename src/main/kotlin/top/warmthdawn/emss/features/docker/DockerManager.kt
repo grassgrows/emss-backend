@@ -9,6 +9,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.core.InvocationBuilder.AsyncResultCallback
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.slf4j.LoggerFactory
 import top.warmthdawn.emss.features.docker.dto.ContainerInfo
 import top.warmthdawn.emss.features.docker.dto.ImageMoreInfo
@@ -21,7 +22,12 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 /**
@@ -39,6 +45,23 @@ object DockerManager {
     private const val registryUrl = "https://index.docker.io/v1/"
     val dockerClient: DockerClient
     private val log = LoggerFactory.getLogger(DockerManager::class.java)
+    private val pools = Executors.newCachedThreadPool()
+
+    private suspend fun <T> runTask(task: () -> T): T {
+        return suspendCancellableCoroutine {
+            val t = pools.submit {
+                try {
+                    val result = task()
+                    it.resume(result)
+                } catch (e: Throwable) {
+                    it.resumeWithException(e)
+                }
+            }
+            it.invokeOnCancellation {
+                t.cancel(true)
+            }
+        }
+    }
 
     // 初始化并连接Docker
     init {
@@ -64,8 +87,9 @@ object DockerManager {
         dockerClient = DockerClientImpl.getInstance(clientConfig, httpClient)
     }
 
-    fun ping() {
-        dockerClient.pingCmd()
+    suspend fun ping() = runTask {
+
+        dockerClient.pingCmd().exec()
     }
 
     // 拉取镜像
@@ -169,14 +193,14 @@ object DockerManager {
     }
 
     // 创建容器
-    fun createContainer(
+    suspend fun createContainer(
         containerName: String, imageName: String,
         portBinding: List<PortBinding>,
         volumeBind: List<Bind>,
         workingDir: String,
         cmd: List<String>,
         exposedPorts: List<ExposedPort>,
-    ): String? {
+    ): String? = runTask {
 
         val container = dockerClient.createContainerCmd(imageName)
             .withName(containerName)
@@ -192,19 +216,19 @@ object DockerManager {
             .withStdinOpen(true)
             .exec()
 
-        return container.id
+        container.id
     }
 
 
     // 开启容器
-    fun startContainer(containerId: String) {
+    suspend fun startContainer(containerId: String) = runTask {
         dockerClient
             .startContainerCmd(containerId)
             .exec()
     }
 
     // 关闭容器
-    fun stopContainer(containerId: String) {
+    suspend fun stopContainer(containerId: String) = runTask {
         dockerClient
             .stopContainerCmd(containerId)
             .withTimeout(1000 * 20)
@@ -212,7 +236,7 @@ object DockerManager {
     }
 
     // 强制关闭容器
-    fun terminateContainer(containerId: String) {
+    suspend fun terminateContainer(containerId: String) = runTask {
         dockerClient
             .killContainerCmd(containerId)
             .exec()
@@ -220,9 +244,8 @@ object DockerManager {
 
 
     // 获取镜像信息
-    fun inspectImage(imageName: String): ImageMoreInfo? {
-
-        return try {
+    suspend fun inspectImage(imageName: String): ImageMoreInfo? = runTask {
+        try {
             val image = dockerClient
                 .inspectImageCmd(imageName)
                 .exec()
@@ -239,7 +262,7 @@ object DockerManager {
 
 
     // 获取容器信息
-    fun inspectContainer(containerId: String?): ContainerInfo {
+    suspend fun inspectContainer(containerId: String?): ContainerInfo = runTask {
         if (containerId == null) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
@@ -249,7 +272,7 @@ object DockerManager {
                 .exec()
             val myDateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
             val createTime = LocalDateTime.parse(container.created, myDateTimeFormatter)
-            return ContainerInfo(
+            ContainerInfo(
                 container.id,
                 container.name,
                 createTime,
@@ -271,57 +294,72 @@ object DockerManager {
             )
         } catch (e: NotFoundException) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_NOT_FOUND)
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             throw ContainerException(ContainerExceptionMsg.CONTAINER_GET_INFO_FAILED)
         }
     }
 
 
     // 监控状态
-    fun statsContainer(containerId: String): ContainerStatistics {
-
+    suspend fun statsContainer(containerId: String): ContainerStatistics = suspendCancellableCoroutine {
         val callback = dockerClient
             .statsCmd(containerId)
             .withNoStream(true)
-            .exec(AsyncResultCallback())
-        val result  = callback.awaitResult()!!
+            .exec(object : ResultCallback.Adapter<Statistics>() {
+                override fun onNext(result: Statistics) {
 
-        //CPU
-        val cpuDelta = (result.cpuStats.cpuUsage?.totalUsage ?: 0) - (result.preCpuStats.cpuUsage?.totalUsage ?: 0)
-        val systemCpuDelta = (result.cpuStats.systemCpuUsage ?: 0) - (result.preCpuStats.systemCpuUsage ?: 0)
-        val numberCpus = result.cpuStats.onlineCpus ?: result.cpuStats.cpuUsage?.percpuUsage?.size ?: 0
-        var cpuPercent = (cpuDelta * 1.0 / systemCpuDelta) * numberCpus.toDouble() * 100.0
-        if (cpuPercent > 100) {
-            cpuPercent = 100.0
+                    //CPU
+                    val cpuDelta = (result.cpuStats.cpuUsage?.totalUsage ?: 0) - (result.preCpuStats.cpuUsage?.totalUsage ?: 0)
+                    val systemCpuDelta = (result.cpuStats.systemCpuUsage ?: 0) - (result.preCpuStats.systemCpuUsage ?: 0)
+                    val numberCpus = result.cpuStats.onlineCpus ?: result.cpuStats.cpuUsage?.percpuUsage?.size ?: 0
+                    var cpuPercent = (cpuDelta * 1.0 / systemCpuDelta) * numberCpus.toDouble() * 100.0
+                    if (cpuPercent > 100) {
+                        cpuPercent = 100.0
+                    }
+
+                    //内存
+                    val totalMemory = result.memoryStats.limit ?: 0
+                    val memoryUsage =
+                        (result.memoryStats.usage ?: 0) - (result.memoryStats.stats?.cache ?: 0)
+
+                    //磁盘
+                    val (diskWriteValue, diskReadValue) = DockerStatsHelper.calculateBlockIO(result.blkioStats!!)
+
+                    //网络
+                    val (networksIn, netWorksOut) = DockerStatsHelper.calculateNetwork(result.networks!!)
+
+
+                    val data = ContainerStatistics(
+                        cpuPercent,
+                        totalMemory,
+                        memoryUsage,
+                        netWorksOut,
+                        networksIn,
+                        diskReadValue,
+                        diskWriteValue,
+                    )
+                    it.resume(data)
+                }
+
+                override fun onError(e: Throwable) {
+                    it.resumeWithException(e)
+                }
+
+                override fun onComplete() {
+                    if(it.isActive) {
+                        it.resumeWithException(EmptyResultException())
+                    }
+                }
+            })
+
+        it.invokeOnCancellation {
+            callback.close()
         }
-
-        //内存
-        val totalMemory = result.memoryStats.limit ?: 0
-        val memoryUsage =
-            (result.memoryStats.usage ?: 0) - (result.memoryStats.stats?.cache ?: 0)
-
-        //磁盘
-        val (diskWriteValue, diskReadValue) = DockerStatsHelper.calculateBlockIO(result.blkioStats!!)
-
-        //网络
-        val (networksIn, netWorksOut) = DockerStatsHelper.calculateNetwork(result.networks!!)
-
-        callback.close()
-        return ContainerStatistics(
-            cpuPercent,
-            totalMemory,
-            memoryUsage,
-            netWorksOut,
-            networksIn,
-            diskReadValue,
-            diskWriteValue,
-        )
     }
 
 
     // 删除镜像
-    fun removeImage(imageName: String) {
+    suspend fun removeImage(imageName: String) = runTask {
         dockerClient
             .removeImageCmd(imageName)
             .exec()
@@ -329,7 +367,7 @@ object DockerManager {
 
 
     // 删除容器
-    fun removeContainer(containerId: String) {
+    suspend fun removeContainer(containerId: String) = runTask {
         dockerClient
             .removeContainerCmd(containerId)
             .exec()
@@ -337,12 +375,12 @@ object DockerManager {
 
 
     // 获取容器输入输出流
-    fun attachContainer(
+    suspend fun attachContainer(
         containerId: String,
         inputStream: InputStream,
         callback: (Frame) -> Unit,
-    ): ResultCallback.Adapter<Frame> {
-        return dockerClient
+    ) = suspendCancellableCoroutine<Unit> {
+        val closeable = dockerClient
             .attachContainerCmd(containerId)
             .withStdOut(true)
             .withStdErr(true)
@@ -353,12 +391,26 @@ object DockerManager {
                     super.onNext(frame)
                     frame?.let(callback)
                 }
+                override fun onComplete() {
+                    if(it.isActive) {
+                        it.resume(Unit)
+                    }
+                }
+                override fun onError(throwable: Throwable) {
+                    it.resumeWithException(throwable)
+                }
+
             })
+        it.invokeOnCancellation {
+            closeable.close()
+        }
     }
 
-    fun logContainer(containerId: String,
-                     callback: (Frame) -> Unit,) {
-        dockerClient
+    suspend fun logContainer(
+        containerId: String,
+        callback: (Frame) -> Unit,
+    ) = suspendCancellableCoroutine<Unit> {
+        val closeable = dockerClient
             .logContainerCmd(containerId)
             .withTail(100)
             .withStdErr(true)
@@ -368,20 +420,52 @@ object DockerManager {
                     super.onNext(frame)
                     frame?.let(callback)
                 }
+
+                override fun onError(throwable: Throwable) {
+                    it.resumeWithException(throwable)
+                }
+
+                override fun onComplete() {
+                    if(it.isActive) {
+                        it.resume(Unit)
+                    }
+                }
             })
-            .awaitCompletion()
+
     }
 
-    fun waitContainer(containerId: String): WaitResponse {
-        return dockerClient
+    suspend fun waitContainer(containerId: String): WaitResponse = suspendCancellableCoroutine {
+        val closeable = dockerClient
             .waitContainerCmd(containerId)
-            .exec(AsyncResultCallback())
-            .awaitResult()
-    }
+            .exec(object : ResultCallback.Adapter<WaitResponse>() {
+                override fun onNext(result: WaitResponse) {
+                    it.resume(result)
+                }
 
+                override fun onError(e: Throwable) {
+                    it.resumeWithException(e)
+                }
+
+                override fun onComplete() {
+                    if(it.isActive) {
+                        it.resumeWithException(EmptyResultException())
+                    }
+                }
+            })
+
+        it.invokeOnCancellation {
+            closeable.close()
+        }
+    }
 
 
 }
+
+class EmptyResultException: RuntimeException() {
+
+}
+
+
 
 
 

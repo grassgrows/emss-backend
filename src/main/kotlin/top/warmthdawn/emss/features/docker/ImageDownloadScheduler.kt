@@ -52,10 +52,6 @@ class ImageDownloadScheduler(
                         pull.close()
                     }
                     downloadingActions[id] = pull
-                    pull.awaitCompletion()
-                    if (cont.isActive) {
-                        cont.resume(false)
-                    }
                 } finally {
                     downloadingActions.remove(id)
                     if (downloadingMap[id]?.status == ImageStatus.Downloading) {

@@ -1,6 +1,9 @@
 package top.warmthdawn.emss.features.statistics
 
 import io.ebean.Database
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.bouncycastle.crypto.tls.ConnectionEnd.client
 import org.slf4j.LoggerFactory
 import top.limbang.doctor.allLoginPlugin.enableAllLoginPlugin
@@ -56,6 +59,8 @@ class StatisticsService(
         }
     }
 
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     fun init() {
         mcBotList.forEach { (_, client) ->
             client.on(ConnectionEvent.Disconnect) {
@@ -72,9 +77,11 @@ class StatisticsService(
                 }
                 mcBotList.clear()
                 QServer().findList().forEach {
-                    if (dockerService.isRunning(it.id!!) && !unSupportList.contains(it.id)) {
-                        val client = mcBotBuilder(it.hostPort)
-                        if (client != null) mcBotList[it.id!!] = client
+                    scope.launch {
+                        if (dockerService.isRunning(it.id!!) && !unSupportList.contains(it.id)) {
+                            val client = mcBotBuilder(it.hostPort)
+                            if (client != null) mcBotList[it.id!!] = client
+                        }
                     }
                 }
             } else time = 1
@@ -82,17 +89,20 @@ class StatisticsService(
         fixedRateTimer("statistics_timer", true, 0, 10 * 1000L) {
             val serverList = QServer().findList()
             serverList.forEach {
-                tick(it)
-                if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
-                    val client = mcBotBuilder(it.hostPort)
-                    if (client != null) mcBotList[it.id!!] = client
+
+                scope.launch {
+                    tick(it)
+                    if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
+                        val client = mcBotBuilder(it.hostPort)
+                        if (client != null) mcBotList[it.id!!] = client
+                    }
                 }
             }
 
         }
     }
 
-    private fun tickContainer(serverId: Long, containerId: String) {
+    private suspend fun tickContainer(serverId: Long, containerId: String) {
         try {
             val result = DockerManager.statsContainer(containerId)
             val time = System.currentTimeMillis() / 1000
@@ -169,7 +179,7 @@ class StatisticsService(
 
     }
 
-    fun tick(server: Server) {
+    suspend fun tick(server: Server) {
         if (server.containerId == null) {
             return
         }
