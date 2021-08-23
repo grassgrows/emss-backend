@@ -45,18 +45,18 @@ class StatisticsService(
         private val mcBotList = mutableMapOf<Long, MinecraftClient>()
         private val unSupportList = mutableListOf<Long>()
         private val logger = LoggerFactory.getLogger(StatisticsService::class.java)
-        private fun mcBotBuilder(port: Int): MinecraftClient? {
-            val client = MinecraftClient.builder()
-                .user("1304793916@qq.com", "1234567890")
-                .authServerUrl("https://skin.blackyin.xyz/api/yggdrasil/authserver")
-                .sessionServerUrl("https://skin.blackyin.xyz/api/yggdrasil/sessionserver")
-                .plugin(TpsPlugin())
-                .plugin(AutoVersionForgePlugin())
-                .enableAllLoginPlugin()
-                .build()
-            if (!client.start("localhost", port)) return null
-            return client
-        }
+//        private fun mcBotBuilder(port: Int): MinecraftClient? {
+//            val client = MinecraftClient.builder()
+//                .user("1304793916@qq.com", "1234567890")
+//                .authServerUrl("https://skin.blackyin.xyz/api/yggdrasil/authserver")
+//                .sessionServerUrl("https://skin.blackyin.xyz/api/yggdrasil/sessionserver")
+//                .plugin(TpsPlugin())
+//                .plugin(AutoVersionForgePlugin())
+//                .enableAllLoginPlugin()
+//                .build()
+//            if (!client.start("localhost", port)) return null
+//            return client
+//        }
     }
 
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -68,34 +68,34 @@ class StatisticsService(
                 client.reconnect()
             }
         }
-        var time = 0
-        fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
-            if (time != 0) {
-                Thread.sleep(5000L)
-                mcBotList.forEach { (_, client) ->
-                    client.stop()
-                }
-                mcBotList.clear()
-                QServer().findList().forEach {
-                    scope.launch {
-                        if (dockerService.isRunning(it.id!!) && !unSupportList.contains(it.id)) {
-                            val client = mcBotBuilder(it.hostPort)
-                            if (client != null) mcBotList[it.id!!] = client
-                        }
-                    }
-                }
-            } else time = 1
-        }
+//        var time = 0
+//        fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
+//            if (time != 0) {
+//                Thread.sleep(5000L)
+//                mcBotList.forEach { (_, client) ->
+//                    client.stop()
+//                }
+//                mcBotList.clear()
+//                QServer().findList().forEach {
+//                    scope.launch {
+//                        if (dockerService.isRunning(it.id!!) && !unSupportList.contains(it.id)) {
+//                            val client = mcBotBuilder(it.hostPort)
+//                            if (client != null) mcBotList[it.id!!] = client
+//                        }
+//                    }
+//                }
+//            } else time = 1
+//        }
         fixedRateTimer("statistics_timer", true, 0, 10 * 1000L) {
             val serverList = QServer().findList()
             serverList.forEach {
 
                 scope.launch {
                     tick(it)
-                    if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
-                        val client = mcBotBuilder(it.hostPort)
-                        if (client != null) mcBotList[it.id!!] = client
-                    }
+//                    if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
+//                        val client = mcBotBuilder(it.hostPort)
+//                        if (client != null) mcBotList[it.id!!] = client
+//                    }
                 }
             }
 
@@ -189,7 +189,7 @@ class StatisticsService(
         }
 
         tickContainer(server.id!!, server.containerId!!)
-        tickMinecraft(server.id!!, server.hostPort)
+//        tickMinecraft(server.id!!, server.hostPort)
         removeStatistics()
     }
 
