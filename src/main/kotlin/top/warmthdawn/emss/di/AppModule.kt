@@ -36,7 +36,7 @@ val appModule = module {
     //docker
     single { DockerService(get(), get()) }
     //status
-    single { StatisticsService(get(), get()) }
+//    single { StatisticsService(get(), get()) }
     //file
     single { FileService(get()) }
     single { CompressService(get()) }
