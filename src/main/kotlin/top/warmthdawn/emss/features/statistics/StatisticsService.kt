@@ -62,12 +62,12 @@ class StatisticsService(
     private val scope = CoroutineScope(Dispatchers.IO)
 
     fun init() {
-        mcBotList.forEach { (_, client) ->
-            client.on(ConnectionEvent.Disconnect) {
-                Thread.sleep(1000L)
-                client.reconnect()
-            }
-        }
+//        mcBotList.forEach { (_, client) ->
+//            client.on(ConnectionEvent.Disconnect) {
+//                Thread.sleep(1000L)
+//                client.reconnect()
+//            }
+//        }
 //        var time = 0
 //        fixedRateTimer("botListener", true, 0, 30 * 60 * 1000L) {
 //            if (time != 0) {
@@ -86,20 +86,20 @@ class StatisticsService(
 //                }
 //            } else time = 1
 //        }
-        fixedRateTimer("statistics_timer", true, 0, 10 * 1000L) {
-            val serverList = QServer().findList()
-            serverList.forEach {
-
-                scope.launch {
-                    tick(it)
-//                    if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
-//                        val client = mcBotBuilder(it.hostPort)
-//                        if (client != null) mcBotList[it.id!!] = client
-//                    }
-                }
-            }
-
-        }
+//        fixedRateTimer("statistics_timer", true, 0, 10 * 1000L) {
+//            val serverList = QServer().findList()
+//            serverList.forEach {
+//
+//                scope.launch {
+//                    tick(it)
+////                    if (dockerService.isRunning(it.id!!) && mcBotList[it.id!!] == null && !unSupportList.contains(it.id)) {
+////                        val client = mcBotBuilder(it.hostPort)
+////                        if (client != null) mcBotList[it.id!!] = client
+////                    }
+//                }
+//            }
+//
+//        }
     }
 
     private suspend fun tickContainer(serverId: Long, containerId: String) {
